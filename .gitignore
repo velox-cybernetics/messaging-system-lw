@@ -13,4 +13,3 @@ tests/
 .ruff_cache/
 secrets/
 messaging-system-fw
-lone-dashboard

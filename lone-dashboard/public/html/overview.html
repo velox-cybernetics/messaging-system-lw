@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <meta name="theme-color" content="#000000">
+        <title>Overview | Lone Wraps</title>
+        <link rel="stylesheet" href="/css/base.css">
+        <link rel="stylesheet" href="/css/overview.css">
+        <script type="module" src="/js/overview.js"></script>
+    </head>
+    <body>
+        <!--TOP BAR-->
+        <header class="bar">
+            <a class="brand" href="/"><img src="/img/logo.png" alt="Lone Wraps &amp; Graphics" width="401" height="96"></a>
+            <nav class="nav" aria-label="Pages">
+                <a href="/" aria-current="page"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6M12 20V5M19 20v-9M3 20h18" /></svg>Overview</a>
+                <a href="/messages"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5h15v11h-9l-6 4z" /></svg>Messages</a>
+                <a href="/follow-ups" class="desktop-only"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>Follow ups</a>
+                <a href="/system" class="desktop-only"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></svg>System info</a>
+            </nav>
+            <button type="button" class="sign-out">Sign out</button>
+        </header>
+
+
+        <!--MAIN-->
+        <main class="overview">
+            <div class="overview-head">
+                <h1 class="wide">Overview</h1>
+                <nav class="segments ranges" id="ranges" aria-label="Date range"></nav>
+            </div>
+
+            <!--ACTIVITY-->
+            <section class="panel" aria-label="Activity">
+                <div class="panel-head">
+                    <div class="picker">
+                        <label class="visually-hidden" for="chart-picker">Chart</label>
+                        <span class="select">
+                            <select id="chart-picker">
+                                <option value="messaging">Messaging activity</option>
+                                <option value="booking">Booking activity</option>
+                            </select>
+                        </span>
+                        <p class="caption" id="caption">Loading…</p>
+                    </div>
+                    <div class="headline" id="headline"></div>
+                </div>
+                <div class="chart" id="chart"></div>
+                <ul class="legend" id="legend"></ul>
+            </section>
+
+            <!--TOTALS-->
+            <section class="strip" aria-label="Totals for the range">
+                <div class="group">
+                    <h2>Customers</h2>
+                    <div class="values">
+                        <p><span class="value wide" data-total="din">0</span><span class="label">messaged in</span></p>
+                        <p><span class="value wide" data-total="dout">0</span><span class="label">got a reply</span></p>
+                    </div>
+                </div>
+                <div class="group">
+                    <h2>Follow ups</h2>
+                    <div class="values">
+                        <p><span class="value wide" id="followups-today">0</span><span class="label">sent today</span></p>
+                    </div>
+                </div>
+                <div class="group">
+                    <h2>Bookings</h2>
+                    <div class="values">
+                        <p><span class="value wide is-booked" data-total="booked">0</span><span class="label" data-one="booked job">booked jobs</span></p>
+                        <p title="Customers the system sent at least one price"><span class="value wide" data-total="dquoted">0</span><span class="label">got a price</span></p>
+                    </div>
+                </div>
+                <div class="group">
+                    <h2>Interventions</h2>
+                    <div class="values">
+                        <p><span class="value wide is-hil" data-total="hil">0</span><span class="label" data-one="HIL">HILs</span></p>
+                        <p title="Share of the customers who messaged in that got handed to the owner"><span class="value wide is-hil" data-rate="dhil">0%</span><span class="label">HIL rate</span></p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </body>
+</html>

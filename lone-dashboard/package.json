@@ -1,0 +1,16 @@
+{
+  "name": "lone-dashboard",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build": "tsc -p ts",
+    "check": "tsc -p ts --noEmit && tsc -p . --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "~5.9.3"
+  }
+}
