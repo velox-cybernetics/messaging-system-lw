@@ -1,0 +1,188 @@
+{
+    "s1" : {"service" : "Vinyl Wrap", "service_details" : {
+        "description": "Changes the color and look of the vehicle with vinyl film. Vinyl is mainly for looks and color change but still adds some paint protection (not as much as PPF). A wrap lasts about 5 years, around 7 with a ceramic coating, and is removed after that",
+        "material" : "3M, Avery Dennison, KPMF film, and many more in shop. Avery Dennison is preferred, 3M and KPMF are also great options, also can see what got in the shop. Most brands are tested to last 5-6 years",
+
+        "film_thickness" : "the range for the thickness of the film is about 3 mil to 5 mil",
+
+        "colors_offerd" : "Pretty much any color you can imagine in any finish, and if the shop doesn't have the exact color they want it gets ordered for them, so whether the shop has a color is always a yes. The color books at the shop and Instagram at lone.wraps are for ideas, the exact color still gets found online and sent over (a pic, screenshot or link of it) before the wrap gets on the schedule, and the shop makes sure it can get that exact color in",
+        "finish" : "Gloss, satin, matte, chrome (also matte and satin chrome), color shift, textured, camo and two tone",
+        "reversible" : "Yes, the wrap is removed after its lifespan of about 5 years (around 7 with a ceramic coating)",
+        "advantages_over_paint" : "Wraps usually hide paint imperfections well. Bad rock chips can be sanded down and bondo holes or paint damage can most likely be wrapped over. Adds a layer of protection to the paint underneath. Note: a wrap usually cannot match the factory paint color perfectly",
+        "existing_paint" : "A wrap covers up the look of faded or failing clear coat, but vinyl follows the surface under it, so peeling edges and texture can still show through a bit. Peeling spots get sanded smooth first (the sanding peeling paint add on), and vinyl over failing or peeling paint or clear coat can't be warrantied, since it can still lift under the film or come up with the wrap when it's removed",
+
+        "wrap_service_application" : "Full wrap of the vehicle, everything visible from the outside (door jambs and textured plastic like fender flares are not wrapped). Partial wraps also available: roof, mirrors, pillars, bumpers, stripes, chrome delete and blacked out emblems(though need pictures before price)",
+        "wrap_price" : "All prices plus tax. The tax is 7.45% Utah sales tax: the tax is the total times 0.0745, rounded to the nearest cent with a half cent rounded up, and the total with tax is the total plus that tax (DONT MENTION UNLESS THEY ASK ABOUT THE TAX OR THE TOTAL WITH TAX). Gloss/solid_color/matte/satin: $2950(sedan), $2950(coupe), $2950(hatchback), $3450(SUV), $3450(truck).", 
+        "special_case_price" : "1. If vehicle is a Cybertruck then price is $1800 ($2200 for camo), 2. If vehicle is a Tesla then price is $2800 for pretty much any color in any finish (Model X $3000), 3. If vehicle is a Ford Bronco then price is $2800, or $3300 including the roof, 4. If vehicle is a Rivian R1S then price is $2800, 5. If vehicle is a BMW X5 then price is $4300. Only these exact vehicles get a special case price. Any other vehicle, even one that looks or drives like them, gets its vehicle type price in wrap_price: a Jeep Wrangler, Toyota 4Runner or Land Rover Defender is not a Ford Bronco and a Rivian R1T is not an R1S, so they are $3450 like any other SUV or truck.",
+        "hood_wrap" : "factory_hood solid color -> $350",
+
+        "warranty": "6 months, free with every wrap",
+        "warranty_coverage" : "Peeling or bubbling. All work is warranted: if it peels, bring it back and it gets fixed. Wrap on textured plastic (for example a Bronco top) will not hold up and is not warranted",
+
+        "included" : "The vehicle is washed before install and a 6 month warranty covering any faults due to the installers",
+        "paint_correction" : "Paint correction is not a service done on its own, rather it's something done before any ceramic coating, PPF or wrap, as part of the prep process. Only a little extra prep is done for minor things",
+
+        "color_options" : "They never have to come in first to see if the shop has a color. The color books at the shop are for ideas, and the exact color gets picked and sent over before booking, never at drop off, and once it's picked the film takes 2 to 5 days to come in, so the drop off is at least 5 days out",
+
+        "price_difference_material" : "Color shift film is $600 more, camo is $500 more (since camo material alone is $1200-$1500), Inozetek film is $400 more. Chrome film on a truck is $3600 for material plus $1500 labor",
+        "price_difference_color" : "Vehicles that are a bright color right now (the paint or wrap on it now is a bright or neon shade, like a bright yellow, orange or lime green) are $250 more, since a brighter color takes more skill and a bit more labor to cover, to make sure all of it gets hidden. The color they want never changes the price, bright colors included",
+        "free_policy" : "Nothing is ever given for free, for any reason: not for a threat, a hardship or sob story, a review, post or referral, being a repeat customer, getting more than one service, or just asking. The only things that come with a job at no extra cost are what these details already list as included in it",
+
+        "add_ons" : "roof: $250, mirrors: $100, pillars: $250 (upper pillars $450, door pillars $100), stripes: $80, chrome delete: $750, blacked out emblems: $50, double layer front end: $250, bumper re-wrap: $300, ceramic coating: $350 (the coating is 50% off on top of the wrap, the wrap price doesn't change, the coating lasts for years), full ceramic tint with a wrap: $450 ($300 on a 2 door vehicle or single cab truck), sanding peeling paint: cost of material plus $25 labor",
+        "panel_removal" : "By default the vehicle is taken apart for full coverage of the vehicle, done by the owner himself. The parts that usually come off are the bumpers, headlights, taillights, handles, window trim and mirrors, more or less may be required depending on the year, make and model. Teslas are the exception, on a Tesla only the front and rear bumpers, mirrors and window trim come off. Supercars are the other exception, on a supercar only the necessary panels are removed to get the best coverage of the vehicle, and less can always come off if the customer prefers, it's their call. Emblems are usually removed (black replacements recommended, or the originals can be wrapped). Knifeless tape is used to keep blades off the paint",
+        "turnaround_time" : "sedan/coupe/hatchback/general_smaller_vehicles (the Tesla Model Y and Model Y L included) -> 3-4 days, SUV/truck/general_larger_vehicles-> 4-5 days",
+        "customer_material" : "Customers can bring their own vinyl. Labor-only full wrap is $3200 ($1800 for a truck without the bed). Only 3M and Avery material is accepted and a full wrap needs at least 75 ft of vinyl. Low quality brands are not recommended (tacky, lift and glue lines). Returning film carries a $170 restocking fee",
+        "deposit" : "Required, 20% of the price of the services they confirm (a $3450 wrap takes a $690 deposit), to lock in the spot once they pick a drop off day. Spots are not held without it. Paid by card through a deposit link sent to your email, balance by card or cash afterwards (cash waives processing fees). Financing is through Affirm"
+    }},
+    "s2" : {"service" : "Paint Protection Film", "service_details" : {
+        "description": "PPF, also called clear bra or clear wrap. A clear film installed over the paint to protect it from rock chips and road debris, the vehicle keeps its color. It is much more durable than a vinyl wrap with double the lifespan, and about double the thickness of a vinyl wrap",
+        "material" : "Ghost Films in particular the Revenant film",
+        "finishes" : "Clear (gloss), matte and satin/stealth. Matte and satin/stealth are a full body option",
+        "appearance" : "The clear film can't really be seen once it's on, the paint looks the same, and the edges can't be seen because everything is tucked. Matte and satin change the finish",
+        "self_healing" : "The film is self healing, so lighter scratches in the film heal on their own",
+        "color_ppf" : "Colored PPF is also offered, the same protective film in a color, so it changes the color like a vinyl wrap while protecting the paint like PPF, essentially the best of both worlds. The shop has a whole book of colored PPF colors to look through in person",
+
+        "coverage_front_end" : "Full hood, fenders, bumpers, headlights, mirrors. The grille is not covered, the shop does not do PPF on grilles",
+        "coverage_full_body" : "All the painted surfaces of the vehicle",
+        "coverage_windshield" : "Windshield skin",
+        "coverage_options" : "Three options: the windshield (windshield skin), the front end and the full body",
+
+        "ppf_price" : "All prices plus tax. The tax is 7.45% Utah sales tax: the tax is the total times 0.0745, rounded to the nearest cent with a half cent rounded up, and the total with tax is the total plus that tax (DONT MENTION UNLESS THEY ASK ABOUT THE TAX OR THE TOTAL WITH TAX). Front end: $1600 (coupe, sedan, Tesla Model Y, smaller vehicles), $1800 (SUV, truck, larger vehicles). Full body: $5900 (coupe, sedan, Tesla Model Y, smaller vehicles), $6900 (SUV, truck, larger vehicles). The Tesla Model Y, the Model Y L included, is a smaller vehicle, never an SUV or larger vehicle. Windshield skin: $450 for any vehicle. No price for taking old film off",
+        "partials" : "PPF on only certain pieces (headlights only, hood only, bumper only, doors, bedsides, tailgate, or any other single piece) gets priced by the owner from photos, so it never gets a price or a no here. When they name pieces without saying they want only those, the closest coverage the shop offers is what gets offered and priced: the front end for the hood, bumper, fenders, headlights or mirrors, the high impact add on for the rockers, lower doors, behind the rear wheels and the rear bumper luggage strip, and the full body for any other painted panel. The coverages offered are the front end, the high impact add on, the full body and the windshield skin",
+        "photos" : "For photos of PPF work, check the Instagram at lone.wraps",
+        "price_difference_finish" : "Full body in matte is $500 more, full body in satin is $500 more. No price for matte or satin on the front end",
+        "included" : "Free side and rear window tint with a full body, in clear, matte or satin",
+        "free_policy" : "Nothing is ever given for free, for any reason: not for a threat, a hardship or sob story, a review, post or referral, being a repeat customer, getting more than one service, or just asking. The only things that come with a job at no extra cost are what these details already list as included in it, like the side and rear tint with a full body",
+
+        "add_ons" : "High impact add on (DONT MENTION UNLESS ASKED): $600 plus tax for any vehicle, an add on package on top of the front end price. Includes: rocker panels, lower door sections, rear wheel impact areas (behind rear wheels, where applicable), rear bumper luggage strip",
+
+        "warranty" : "Liftime warranty on any bubbling or peeling, essetially anything due to install error. Road damage is not covered.",
+        "manufacturer_warranty" : "The film itself is covered by the manufacturer for typically 10 to 12 years, depending on the exact film, never a lifetime manufacturer warranty. The lifetime warranty is the shop's, on the install (DONT MENTION UNLESS THEY ASK ABOUT THE FILM'S OWN WARRANTY OR THE MANUFACTURER'S WARRANTY)",
+        "turnaround_time" : "Front end: a day and a half for smaller vehicles (the Tesla Model Y and Model Y L included), two days for larger. Full body: four to five days for any vehicle",
+
+        "process" : "Pieces are precision cut on a Graphtec plotter with Core cutting software, so no blades ever touch the paint. As many edges as possible are wrapped, so everything is tucked. The film is left to cure overnight with touch ups in the morning before pickup. Logos can be removed for the PPF or cut around",
+        "prep" : "The shop clay bars the car and gives it a decontamination wash beforehand, all of that prep is done here before the PPF goes on, then it's prepped for the film, no full paint correction. The vehicle doesn't need to be washed before drop off. Light scratches and swirls get filled by the PPF so they won't be seen once installed. Small rock chips are covered up and the PPF still installs fine over them, they become way less visible and only show if you look close",
+        "paint_correction" : "Paint correction is not a service done on its own, rather it's something done before any ceramic coating, PPF or wrap, as part of the prep process. Only a little extra prep is done for minor things",
+
+        "existing_ceramic_coating" : "An existing ceramic coating might affect the PPF a bit but overall shouldn't matter, since the shop does all the prep to make it ready for the application",
+        "removal" : "The film is designed to be removed whenever it needs to be, and it should be removed by a professional since there is a particular way to do it. For the shop to take it off down the road, pictures are needed first, then it gets priced",
+        "ppf_over_wrap" : "PPF can be applied over an existing vinyl wrap",
+        "satin_paint" : "Full body PPF is recommended for satin paint vehicles because satin paint cannot be easily repaired or paint corrected",
+        "fresh_paint" : "Fresh paint needs some time to cure before film goes over it, so on a recent paint job the shop makes sure the paint is ready before the PPF goes on",
+        "shop_experience" : "4 years doing PPF"
+    }},
+    "s3" : {"service" : "Colored Paint Protection Film", "service_details" : {
+        "description": "Colored PPF is the same protective film as clear PPF but in a color, so it changes the color like a vinyl wrap while protecting the paint like PPF, essentially the best of both worlds. It is much more durable than a vinyl wrap against scratches, rock chips and road debris, and lasts about 10 years, about double a vinyl wrap",
+        "material" : "Main material is Ghost Films",
+
+        "film_thickness" : "About twice the thickness of a vinyl wrap",
+
+        "colors_offered" : "Fewer colors than vinyl, but the shop has a whole book of colored PPF colors to look through in person for ideas. The colors are only seen in person at the shop, photos of the options never get sent. The exact color still gets found online and sent over before it gets on the schedule, and the shop makes sure it can get it in. If the color wanted isn't available in colored PPF, a vinyl wrap with clear PPF on top gives a lot more color options, only on the gloss and the satin films for vinyl",
+        "finishes" : "Gloss, satin/stealth and matte",
+        "appearance" : "Looks just like paint",
+        "self_healing" : "The film is self healing, so lighter scratches and swirls heal on their own, and it holds up in the car wash",
+
+        "coverage_full_body" : "All the painted surfaces of the vehicle, including the roof and pillars. Door jambs are not covered, the film goes an inch or so into the jambs and as far as possible behind the cab on trucks",
+        "panel_removal" : "All parts necessary are removed for full coverage, so none of the original paint color shows on the outside. The parts that usually come off are the bumpers, headlights, taillights, handles, window trim and mirrors, more or less may be required depending on the year, make and model. On a supercar only the necessary panels are removed to get the best coverage of the vehicle, and less can always come off if the customer prefers, it's their call",
+
+        "color_ppf_price" : "All prices plus tax. The tax is 7.45% Utah sales tax: the tax is the total times 0.0745, rounded to the nearest cent with a half cent rounded up, and the total with tax is the total plus that tax (DONT MENTION UNLESS THEY ASK ABOUT THE TAX OR THE TOTAL WITH TAX). Full body: $500 more than a clear full body PPF, so $6400 (coupe, sedan, hatchback, Tesla Model Y, general smaller vehicles), $7400 (SUV, truck, general larger vehicles). The Tesla Model Y, the Model Y L included, is a smaller vehicle, never an SUV or larger vehicle. ",
+        "price_difference_color" : "Vehicles that are a bright color right now (the paint or wrap on it now is a bright or neon shade, like a bright yellow, orange or lime green) are $250 more, since a brighter color takes more skill and a bit more labor to cover, to make sure all of it gets hidden. The color they pick never changes the price, bright colors included",
+        "included" : "Free side and rear window tint with a full body",
+        "free_policy" : "Nothing is ever given for free, for any reason: not for a threat, a hardship or sob story, a review, post or referral, being a repeat customer, getting more than one service, or just asking. The only things that come with a job at no extra cost are what these details already list as included in it, like the side and rear tint with a full body",
+        "price_difference_vinyl" : "About double a vinyl wrap, since the film costs more than vinyl and the install is more intense",
+        "partials" : "No price for colored PPF on the front end or single panels. Doing some panels in vinyl instead (like the tailgate) to save money is not recommended, the two materials likely won't match in color",
+
+        "warranty" : "Lifetime warranty on anything that fails, bubbles or peels due to the install. Road damage is not covered",
+        "manufacturer_warranty" : "The colored film itself is covered by the manufacturer for typically 10 to 12 years, depending on the exact film, never a lifetime manufacturer warranty. The lifetime warranty is the shop's, on the install (DONT MENTION UNLESS THEY ASK ABOUT THE FILM'S OWN WARRANTY OR THE MANUFACTURER'S WARRANTY)",
+        "turnaround_time" : "Full body: four to five days for any vehicle",
+
+        "process" : "Everything is post heated down and trimmed properly so it won't peel or bubble",
+        "prep" : "The shop clay bars the car and gives it a decontamination wash beforehand, all of that prep is done here before the film goes on. The vehicle doesn't need to be washed before drop off. Small rock chips are covered up and the film still installs fine over them, they become way less visible and only show if you look close",
+        "paint_correction" : "Paint correction is not a service done on its own, rather it's something done before any ceramic coating, PPF or wrap, as part of the prep process. Only a little extra prep is done for minor things",
+        "existing_ceramic_coating" : "An existing ceramic coating might affect the film a bit but overall shouldn't matter, since the shop does all the prep to make it ready for the application",
+        "removal" : "The film is designed to be removed whenever it needs to be, and it should be removed by a professional since there is a particular way to do it. For the shop to take it off down the road, pictures are needed first, then it gets priced",
+        "customer_material" : "Customers can bring their own pre-cut colored PPF kit and the shop will install it. Price only for labor"
+    }},
+    "s4" : {"service" : "Window Tint", "service_details" : {
+        "description": "Nano ceramic window tint film installed on the vehicle's glass. It blocks heat (IR) and UV rays, reduces glare and interior fading, adds privacy and keeps the vehicle cooler, and the front windows can be tinted to match the factory privacy glass on the rear. Nano ceramic is the only tint offered and it lasts 10+ years, pretty much the life of the vehicle",
+        "material" : "Ghost Films nano ceramic tint (Spectre Series), a local Utah brand and one of the best ceramic films on the market. Nano ceramic is the only option, there is no dyed, carbon or cheaper standard film, and no mirror/reflective, chameleon or smart (electronic switchable) tint",
+        "performance" : "Blocks 99% of UV rays and 90%+ of infrared (heat). Heat and UV rejection is about the same in every shade, so a lighter shade still blocks the heat and the shade can be picked for looks and privacy. There is no clear option, even the lightest shade (70%) adds a slight tint",
+
+        "shades_offered" : "5%, 20%, 35%, 50% and 70% (the % is how much light gets through, lower is darker). No 15% or anything in between. The shade does not change the price and can be different on each window (for example 20% on the front two and 5% on the rear). Shade samples are in the shop and the shade can be picked when the car is dropped off",
+
+        "shade_limits" : "Front two windows: 20% is the darkest the shop installs, 5% is never done on the fronts. Rear side windows and rear glass: any shade down to 5%. Windshield: 70% (lightest) or 50% (darkest), never darker, even when every other window gets one darker shade. The visor strip (brow) can be any shade, as dark as they want down to 5%, including darker than the front windows and the full windshield",
+
+        "window_names" : "The front said as one piece (the front, front, front window, front glass) means the windshield, so sides, rear and front is the sides, rear and windshield. The front listed with the sides and rear is that same piece, commas or not, so front sides and rear (front sides and back, front, sides and rear) is the sides, rear and windshield too, since the sides already have the front two. The fronts, front two, front windows, front doors, or front sides on their own or with their own shade (20% on the front sides and 5% on the rear) are the two front door windows. The one exception is the PPF: when the shop just asked front end or full body on the PPF, front or just front in the reply picks the PPF front end, not the windshield, even with tint named next to it",
+
+        "legal_limits" : "Utah law: front side windows must let in at least 35% of light (with a 5% variance), rear side windows and the rear glass can be any darkness, and the windshield can only be tinted along the top strip (AS-1 line or top 4 inches), so a full windshield tint, even 70%, is technically not legal. Mirrored or metallic tint is not legal on any window. The shop still installs darker than the legal limit, as dark as 20% on the front two and down to 5% on the rear (shade_limits): the shade is up to the customer and the price stays the same no matter the shade. Vehicles registered in another state should follow that state's tint laws",
+
+        "shade_recommendation" : "Most popular and what the owner recommends: 20% on the front two with 5% or 20% on the rear, it looks the best inside and out. 20% on the front two is the closest match to factory privacy glass. 35% is the legal limit on the front two and a little lighter than factory privacy glass, 50% on the front two is very light and rarely done. On the windshield 70% is barely noticeable and still blocks the heat, 50% is the darkest. A 50% windshield makes everything look a bit darker, especially at night or when it's cloudy. Tint looks dark from the outside but pretty light from the inside",
+
+        "coverage_side_and_rear" : "The standard package and the most common choice: all 4 side door windows plus the rear glass (back windshield), or on a 2 door vehicle or single cab truck its 2 side windows plus the rear glass. When customers ask for a full tint this is usually what they mean, the windshield is added separately. Truck sliding rear windows count as the rear glass. Does not include the windshield, sunroof/moonroof or camper shell windows. Larger vehicles with a third row of side windows are $600",
+
+        "coverage_windshield" : "Full windshield in 70% or 50%, or just a visor strip (brow) across the top in any shade (the legal option). The visor strip is usually about 6-8 inches tall, but it varies with the exact vehicle. The windshield is the hardest part of a tint job and takes the longest. Windshield tint is different from a windshield skin (clear PPF that protects the windshield from rock chips, see Paint Protection Film)",
+
+        "tint_price" : "All prices plus tax. The tax is 7.45% Utah sales tax: the tax is the total times 0.0745, rounded to the nearest cent with a half cent rounded up, and the total with tax is the total plus that tax (DONT MENTION UNLESS THEY ASK ABOUT THE TAX OR THE TOTAL WITH TAX). Sides and rear: $450 for a 4 door vehicle (4 side windows plus rear glass), and $300 for a 2 door vehicle or single cab truck (2 side windows plus rear glass), always, never $450. Larger vehicles with 3 rows of side windows plus rear glass: $600. Single window: $75. Windshield: $200. Every shade is the same price",
+
+        "price_combinations" : "Front two windows: $150. Front two windows and windshield: $350. 4 side windows only (no rear glass): $300. Sides, rear and windshield (all windows): $650, $500 on a 2 door vehicle or single cab truck. 3 rows of side windows, rear and windshield: $800. Rear glass only: $150 (inferred). Front two windows plus visor strip: $225. Sides and rear plus visor strip: $525, $375 on a 2 door vehicle or single cab truck",
+
+        "special_case_price" : "1. Tesla Model 3: the rear glass runs up into the roof so it is done in two pieces (tiny seam line) for $150 more, making sides and rear $600 2. Tesla Model Y (Model Y L included): sides and rear $450, 3. Tesla Model X: sides and rear $450, the windshield is not done (too large for the tint rolls), 4. Tesla glass roofs and other large panoramic roofs can't be done (no roll wide enough), Tesla roof glass already has UV and IR protection from the factory, 5. Cybertruck: sides and rear $450 (4 side windows $300), the windshield and glass roof are too large to tint, so the shop doesn't do them, 6. 2 door vehicles (most coupes, sports cars and supercars) and single cab trucks (2 side windows plus rear glass): $300 for the sides and rear, always",
+        "add_ons" : "Visor strip (brow, sun strip or eyebrow across the top of the windshield): $75 for any vehicle in any shade, its size changes with the vehicle but the price doesn't. Sunroof/moonroof: $150 per glass panel (inferred), send a photo since sizes vary a lot. Extra side windows (quarter or vent windows) beyond the standard 4: $75 each (inferred). Adding tint over existing tint to go darker: $75 a window",
+        "removal" : "Old tint removal: $45 per window, or $75 for the front two plus the normal price for the new tint. Customers can not remove old tint. Factory tint is in the glass and never needs removal",
+
+        "headlight_taillight_tint" : "not done",
+
+        "factory_privacy_glass" : "Factory rear privacy tint is in the glass itself, so it never needs to be removed. The front two can be tinted to match it (20% is the closest match), or ceramic tint can go over the factory glass to make it darker and add heat rejection (20% over factory privacy glass ends up around 5%)",
+        "existing_tint" : "If the current aftermarket tint is in good shape, more tint can be stacked on top to make it darker instead of removing it ($75 a window), for example 50% over 35% comes out around 17.5% and 70% over 35% around 24%. Bubbling, peeling or faded tint has to be removed first",
+
+        "warranty" : "Lifetime warranty on any bubbling or peeling caused by the install, the tint gets fixed or replaced for free. Road damage is not covered",
+        "turnaround_time" : "Usually same day: drop off in the morning and it's ready by the end of the day. Sides and rear takes about 3-4 hours, the front two windows about 1.5-2 hours, a single window about an hour or two, front two plus windshield about 2-3 hours. Bigger jobs (all windows on larger vehicles, Tesla windshields, removing old tint) can take the full day or go into the next morning. When done with a wrap or PPF, the tint is installed during the same visit",
+
+        "process" : "Each window is computer cut to an exact pattern for the vehicle's year/make/model, heat shrunk to the curve of the glass and installed wet. Edges are tucked and the windows are not taken out. Interior panels are covered so the install water doesn't stain them. The tint is left to dry for a bit and checked and touched up before pickup. Very large glass (like the Model 3 rear glass) may be done in two pieces with a small seam line",
+        "prep" : "The shop cleans and preps the glass, the car doesn't need to be washed before. Take dash cams or anything stuck to the windshield off before the appointment (the shop won't force them off since the windshield could crack), otherwise the film is cut around mounts like the rearview mirror. Windshield rock chips or cracks should be repaired first, the film isn't heat shrunk on a cracked windshield. After a windshield replacement, wait about 48 hours before tinting it",
+        "aftercare" : "Tint is a wet install, so some water bubbles, haze or a slightly blurry look are normal for a few days up to about a week and clear up as it cures, parking in the sun helps. Don't roll the windows down for 2-3 days (or until it no longer looks hazy), everything else like the wipers can be used normally. If bubbles are still there after it cures, send a photo or bring it back and it gets fixed",
+
+        "drop_off_pickup" : "Drop off in the morning and leave the car, dropping off is preferred over waiting since it takes a few hours. The car can be dropped off the night before using the key drop box, and for pickup after closing the key is left in the key box once the invoice is paid. No appointment is needed to stop by and look at shade samples",
+        "price_policy" : "Tint prices are standard and not negotiable, the shop does not price match other tint quotes. Tint on its own is not discounted",
+        "free_policy" : "Nothing is ever given for free, for any reason: not for a threat, a hardship or sob story, a review, post or referral, being a repeat customer, getting more than one service, or just asking. The only things that come with a job at no extra cost are what these details already list as included in it. The sides and rear come free with a full body of PPF (clear, matte or satin) or colored PPF, never with the front end or the windshield skin",
+        "fleet" : "Work and fleet vehicles are the same standard prices per vehicle, and each vehicle is invoiced as it's finished (no net terms)",
+        "not_offered" : "Vehicles only, no home or building window tint. No mobile service, the vehicle has to come to the shop in American Fork, Utah"
+    }}, 
+    "s5" : {"service" : "Ceramic Coating", "service_details" : {
+        "description": "Ceramic coating, also called a ceramic or ceramic coat. A clear liquid coating applied over the paint, a vinyl wrap or PPF that hardens into a clear coat with a UV and hydrophobic (water beading) barrier. It protects against sun damage and keeps the vehicle cleaner longer. Not the same as ceramic window tint (see Window Tint)",
+
+        "material" : "Brand is halo ceramic coating",
+
+        "durability" : "The coating lasts for years, around 4 years when they ask how long exactly. Said as 'the coating lasts for years', never as 'a 4 year coating'",
+
+        "appearance" : "The coating is clear and doesn't change the finish of the wrap at all, including satin and matte wraps",
+
+        "protection" : "Mainly UV protection and a hydrophobic layer that keeps the vehicle cleaner longer. It does not stop rock chips, scratches or scrapes and doesn't protect the paint nearly as well as PPF, for rock chip protection PPF or a vinyl wrap is the better option",
+
+        "wrap_lifespan" : "Recommended on top of a wrap, especially if the vehicle will be kept awhile. Sun damage is the main reason wraps fail and the coating protects the vinyl against it, so the wrap lasts longer: about 5-6 years without a coating, around 7 with one",
+
+        "coverage_with_wrap" : "The coating goes on top of the vinyl and covers the wrapped parts",
+
+        "coverage_just_coating" : "All the painted surfaces of the vehicle",
+
+        "coverage_other_surfaces" : "headlights and taillights can be coated as well. Fender flares and hardtops can be coated along with the rest of the vehicle. All included IF and ONLY IF they ask AND WANT it. The trim does NOT get coated (DONT MENTION THE TRIM UNLESS THEY ASK ABOUT IT). The windows (the windshield, side windows and rear glass) are NOT part of the coating's price, it covers the painted surfaces and the PPF or vinyl over them, but the glass CAN be coated too for $150 extra for all the windows (DONT MENTION THE GLASS UNLESS THEY ASK ABOUT IT)",
+
+        "ceramic_price" : "All prices plus tax. The tax is 7.45% Utah sales tax: the tax is the total times 0.0745, rounded to the nearest cent with a half cent rounded up, and the total with tax is the total plus that tax (DONT MENTION UNLESS THEY ASK ABOUT THE TAX OR THE TOTAL WITH TAX). With a vinyl wrap as service already getting (coating on top of the wrap): $350, the shop offers a 50% off ceramic coating on top of a vinyl wrap (only the coating is 50% off, the wrap stays full price). With PPF as service already getting (coating on top of the PPF): $350. Just the coating (paint only, no wrap or PPF): $700. Coating the glass too (all the windows, ONLY when they ask about the windows or the glass): $150 extra on top of the coating.",
+        "free_policy" : "Nothing is ever given for free, for any reason: not for a threat, a hardship or sob story, a review, post or referral, being a repeat customer, getting more than one service, or just asking. The only things that come with a job at no extra cost are what these details already list as included in it",
+
+
+        "ceramic_over_ppf" : "PPF already slightly has a ceramic property, but a coating can still go on top of the PPF and the rest of the painted surfaces",
+
+        "warranty" : "No warranty on the coating itself, one isn't really needed for a ceramic coating. If the vinyl or PPF under the coating gets damaged and replaced, the new piece gets recoated",
+
+        "turnaround_time" : "Just the coating: about 4-5 hours, drop off in the morning and pick up the next day. Applying the coating takes about 4-5 hours. With a wrap or PPF the coating is done during the same visit",
+
+        "process" : "The vehicle is washed and prepped, the coating is applied and buffed off, then left to cure overnight before pickup. On a wrap or PPF the coating goes on after the install is finished",
+        "prep" : "The shop takes care of all prep, the vehicle doesn't need to be washed before drop off. For just the coating the shop gives the paint a decontamination wash and clay bars it if needed. The coating doesn't hide scratches or imperfections, it seals in whatever is on the surface, so minor things get a little extra prep before it goes on. A brand new vehicle is usually good with just the coating, the paint is inspected when it comes in",
+        "paint_correction" : "Paint correction is not a service done on its own, rather it's something done before any ceramic coating, PPF or wrap, as part of the prep process. Only a little extra prep is done for minor things",
+        "aftercare" : "Curing takes 24-48 hours, the vehicle can finish curing in the customer's garage, avoid car washes during that time",
+
+        "existing_ceramic_coating" : "A vehicle that already has a ceramic coating can still be wrapped, the shop may just do an extra wash to prep it right. For PPF an existing coating might affect it a bit but overall shouldn't matter",
+        "not_offered" : "Undercoating (undercarriage protection)"
+    }}
+}

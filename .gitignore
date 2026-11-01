@@ -1,0 +1,16 @@
+.venv/
+venv/ 
+env/
+.env
+__pycache__/
+prompts-ref/
+.DS_Store
+src/prompts-reference
+conversations/
+conversations_*.json
+conversations.json
+tests/
+.ruff_cache/
+secrets/
+messaging-system-fw
+lone-dashboard

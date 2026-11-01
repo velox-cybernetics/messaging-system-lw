@@ -1,0 +1,148 @@
+#**********PICK EXAMPLES**********
+#example replies to the closest materials the shop sent: which one they picked, and if they ask more
+
+
+#MATERIAL PICK
+MATERIAL_PICK_EXAMPLES_TEXT: str = r"""
+    # Examples showing correct classifications are the following, each with the materials the shop sent numbered the way the categories are:
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:15 AM","current_user_message":{"user_media":{},"user_text":"the second one"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: material_2
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:20 AM","current_user_message":{"user_media":{},"user_text":"ooo the satin one is sick"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done","user_message_1":{"user_media":{},"user_text":"how long does the wrap take?"},"system_response_to_user_message_1":"We'd need the Tacoma for about 4 to 5 days for the wrap\nAlso, the material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: material_2
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:25 AM","current_user_message":{"user_media":{},"user_text":"last one, how long would the wrap take?"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: material_3
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:30 AM","current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a vinyl color swatch showing a satin dark green film.\nservice_ques: a color change wrap\ntext_overlays: Avery Dennison, Satin Dark Green\nbright_vehicle: no"}},"user_text":"this one"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: material_2
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:35 AM","current_user_message":{"user_media":{},"user_text":"none of those are really it, they're all too dark"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: none
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:38 AM","current_user_message":{"user_media":{},"user_text":"#1 do you guys take card?"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: material_1
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:39 AM","current_user_message":{"user_media":{},"user_text":"2"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: material_2
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:40 AM","current_user_message":{"user_media":{},"user_text":"which one is closest to the one I sent?"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: other
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:45 AM","current_user_message":{"user_media":{},"user_text":"let me think about it and get back to you"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: other
+
+    materials: material_1 is 3M Gloss Dark Green, material_2 is Avery Satin Dark Green, material_3 is Avery Gloss Forest Green
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:50 AM","current_user_message":{"user_media":{},"user_text":"idk they all look kinda the same lol"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Toyota Tacoma wrapped in a gloss dark olive green on an Instagram post, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    category: other
+
+    materials: material_1 is Ghost Films Gloss Midnight Blue
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:05 AM","current_user_message":{"user_media":{},"user_text":"yeah that works"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a color PPF product page showing a gloss navy blue swatch.\nservice_ques: colored PPF\ntext_overlays: Gloss Navy\nbright_vehicle: no"}},"user_text":"its white, want this blue"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Tahoe. Let me check the color books to see if we can get something like that done\nThe material we can order for the colored PPF is this one: [pics: 1. Ghost Films Gloss Midnight Blue] Does that one work for you?"}}
+    category: material_1
+
+    materials: material_1 is Ghost Films Gloss Midnight Blue
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:10 AM","current_user_message":{"user_media":{},"user_text":"nah not really feeling that one"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a color PPF product page showing a gloss navy blue swatch.\nservice_ques: colored PPF\ntext_overlays: Gloss Navy\nbright_vehicle: no"}},"user_text":"its white, want this blue"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Tahoe. Let me check the color books to see if we can get something like that done\nThe material we can order for the colored PPF is this one: [pics: 1. Ghost Films Gloss Midnight Blue] Does that one work for you?"}}
+    category: none
+
+    materials: material_1 is its color not read
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:12 AM","current_user_message":{"user_media":{},"user_text":"ok"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A solid matte olive green swatch filling the frame.\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green on my bronco"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Bronco. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is this one: [pics: 1. color not read] Does that one work for you?"}}
+    category: material_1
+
+    materials: material_1 is Ghost Films Gloss Midnight Blue
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:14 AM","current_user_message":{"user_media":{},"user_text":"bet, how long does it take?"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a color PPF product page showing a gloss navy blue swatch.\nservice_ques: colored PPF\ntext_overlays: Gloss Navy\nbright_vehicle: no"}},"user_text":"its white, want this blue"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Tahoe. Let me check the color books to see if we can get something like that done\nThe material we can order for the colored PPF is this one: [pics: 1. Ghost Films Gloss Midnight Blue] Does that one work for you?"}}
+    category: material_1
+
+    materials: material_1 is Ghost Films Gloss Midnight Blue
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:15 AM","current_user_message":{"user_media":{},"user_text":"yeah, when could I drop it off?"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a color PPF product page showing a gloss navy blue swatch.\nservice_ques: colored PPF\ntext_overlays: Gloss Navy\nbright_vehicle: no"}},"user_text":"its white, want this blue"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Tahoe. Let me check the color books to see if we can get something like that done\nThe material we can order for the colored PPF is this one: [pics: 1. Ghost Films Gloss Midnight Blue] Does that one work for you?"}}
+    category: material_1
+
+    materials: material_1 is Avery Gloss Blue Metallic
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:18 AM","current_user_message":{"user_media":{},"user_text":"yeah I like it, whats the warranty on the wrap? and the tint"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a bright blue sports coupe with glossy paint parked on a gravel lot, rear three quarter view.\ntext_overlays: none\nbright_vehicle: yes"}},"user_text":"something like this"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Mustang. Let me check the color books to see if we can get something like that done","user_message_1":{"user_media":{},"user_text":"yall do tint too?"},"system_response_to_user_message_1":"Yeah, we do window tint. Sides and rear on the Mustang would be $300 + tax for our ceramic tint, and if you wanted to add the windshield that would be an extra $200\nAlso, the material we can order for the wrap is this one: [pics: 1. Avery Gloss Blue Metallic] Does that one work for you?"}}
+    category: material_1
+
+    materials: material_1 is Avery Gloss Blue Metallic
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:19 AM","current_user_message":{"user_media":{},"user_text":"yeah"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a bright blue sports coupe with glossy paint parked on a gravel lot, rear three quarter view.\ntext_overlays: none\nbright_vehicle: yes"}},"user_text":"something like this"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Mustang. Let me check the color books to see if we can get something like that done","user_message_1":{"user_media":{},"user_text":"yall do tint too?"},"system_response_to_user_message_1":"Yeah, we do window tint. Sides and rear on the Mustang would be $300 + tax for our ceramic tint, and if you wanted to add the windshield that would be an extra $200\nAlso, the material we can order for the wrap is this one: [pics: 1. Avery Gloss Blue Metallic] Does that one work for you?"}}
+    category: material_1
+
+    materials: material_1 is its color not read
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:20 AM","current_user_message":{"user_media":{},"user_text":"yep"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A solid matte olive green swatch filling the frame.\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green on my bronco"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Bronco. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is this one: [pics: 1. color not read] Does that one work for you?","user_message_1":{"user_media":{},"user_text":"oh nice, how long would the wrap take?"},"system_response_to_user_message_1":"We'd need the Bronco for about 4 to 5 days for the wrap. Also, just to make sure, you're wanting to go with that one for the wrap?"}}
+    category: material_1
+
+    materials: material_1 is its color not read
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:21 AM","current_user_message":{"user_media":{},"user_text":"not sure yet tbh"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A solid matte olive green swatch filling the frame.\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this green on my bronco"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Bronco. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is this one: [pics: 1. color not read] Does that one work for you?","user_message_1":{"user_media":{},"user_text":"oh nice, how long would the wrap take?"},"system_response_to_user_message_1":"We'd need the Bronco for about 4 to 5 days for the wrap. Also, just to make sure, you're wanting to go with that one for the wrap?"}}
+    category: other
+
+    materials: material_1 is Ghost Films Gloss Midnight Blue
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:16 AM","current_user_message":{"user_media":{},"user_text":"thanks, let me think on it"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a color PPF product page showing a gloss navy blue swatch.\nservice_ques: colored PPF\ntext_overlays: Gloss Navy\nbright_vehicle: no"}},"user_text":"its white, want this blue"},"system_response_to_user_message_0":"Sweet, that blue would look clean on the Tahoe. Let me check the color books to see if we can get something like that done\nThe material we can order for the colored PPF is this one: [pics: 1. Ghost Films Gloss Midnight Blue] Does that one work for you?"}}
+    category: other
+
+    materials: material_1 is 3M Satin Black, material_2 is Avery Matte Black
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:30 AM","current_user_message":{"user_media":{},"user_text":"thanks!"},"message_history":{"user_message_0":{"user_media":{"media_element_0":{"media_description":"brief_description: A screenshot of a Dodge Charger wrapped in satin black on an Instagram post, side view.\nservice_ques: vinyl wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"this satin black"},"system_response_to_user_message_0":"Sweet, that satin black would look clean on the Charger. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Satin Black, 2. Avery Matte Black] Which one are you liking?"}}
+    category: other
+"""
+
+
+#ASKS MORE
+MATERIAL_ASKS_EXAMPLES_TEXT: str = r"""
+    # Examples showing correct answers are the following:
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:15 AM","current_user_message":{"user_media":{},"user_text":"the second one"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: False
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:25 AM","current_user_message":{"user_media":{},"user_text":"last one, how long would the wrap take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: True
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:50 AM","current_user_message":{"user_media":{},"user_text":"2nd one, when can I bring it in?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: False
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:35 AM","current_user_message":{"user_media":{},"user_text":"none of those, they're all too light"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: False
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 10:55 AM","current_user_message":{"user_media":{},"user_text":"the first one! and how much to tint the windows?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: True
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:00 AM","current_user_message":{"user_media":{},"user_text":"the satin one looks sick 🔥"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: False
+
+    state: {"current_date_time":"Monday, October 26, 2026 at 11:15 AM","current_user_message":{"user_media":{},"user_text":"#1, do you guys take card?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"this green"},"system_response_to_user_message_0":"Sweet, that green would look clean on the Tacoma. Let me check the color books to see if we can get something like that done\nThe material we can order for the wrap is one of these: [pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green, 3. Avery Gloss Forest Green] Which one are you liking?"}}
+    answer: True
+"""
+
+
+
+#**********PICK PROMPTS**********
+#the questions the decisions model answers about their reply to the materials, and their examples
+
+
+#PICK EXAMPLES
+#the samples for the question of which of the closest materials they picked
+def material_pick_examples() -> str:
+    return MATERIAL_PICK_EXAMPLES_TEXT
+
+
+#ASKS EXAMPLES
+#the samples for the question of whether they asked something next to their pick
+def material_asks_examples() -> str:
+    return MATERIAL_ASKS_EXAMPLES_TEXT
+
+
+#PICK QUESTION
+#which of the closest materials they picked, none when they turned them all down and other when they did neither
+def material_pick_instructions() -> str:
+    return "Which of the closest materials the shop sent does the customer pick, if any? Read the message history first: the shop couldn't get the exact color they sent for their wrap or colored PPF, so a reply of the shop's sent pics of the closest materials it can order, noted in order in brackets ('[pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green]'), and asked which one they're liking, or whether the one it sent works. A later reply can ask it again, or make sure of the one they're going with ('just to make sure, you're wanting to go with that one for the wrap?'), and the current message answers the shop's last ask: a yes to it picks it, and a maybe or not sure yet is other, whatever an earlier message said. Classify the current message in light of it. Pointing to one of them is that material: where it is in the order ('the first one', 'the 2nd', 'the last one', '#3', '2') or its color or finish ('the satin one', 'the darker green'). When only one was sent, the shop asked if that one works for them, so any yes to it picks it, even one whose color wasn't read: a yes, a bare 'yeah', 'yep' or 'ok' included, 'that works', saying they like it ('I like it', 'love it', 'looks clean'), a short or slang yes ('k', 'bet', 'down'), or going ahead with it or saying to do it, even when it asks something too, about the wrap or colored PPF itself included ('yes, how long does it take?', 'yeah I like it, whats the warranty on the wrap?'). A number the message opens with, with or without a #, is the material with that number, never a numbered question or a list, since the shop just asked which one they're liking ('#1 do you guys take card?' picks material 1, '2 how long does it take' picks material 2). The pick counts even when the message also asks or says something else ('the second one, how long does the wrap take?'). Not wanting any of them is none: none of them work, they don't like them, they want a different color than all of them, or none are close enough. Anything that neither picks one nor turns them all down is other: a question, a maybe, still deciding, asking which one the shop would go with, a thanks or an ok when more than one was sent, or anything else."
+
+
+#ASKS QUESTION
+#whether they asked or said something next to their pick that needs its own answer
+def material_asks_instructions() -> str:
+    return "Besides picking one of the closest materials the shop sent or turning them down, does the customer ask or say something in `current_user_message` that needs its own answer? Read the message history first: the shop's last reply sent pics of the closest materials it can order for their wrap or colored PPF and asked which one they're liking. A question about a service, a price, how long it takes, the warranty, care or the shop itself is Yes ('the second one, how long would it take?'). A pick or turning them down with a few words about it ('the 2nd one looks sick', 'none of those, they're all too light'), a thanks, an emoji, or asking to get on the schedule or when they can bring it in is No, since the reply to a pick asks about the schedule."

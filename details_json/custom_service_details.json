@@ -1,0 +1,128 @@
+{
+    "c1" : {"service" : "Commercial Wrap", "service_details" : {
+        "description" : "A full, half or partial wrap, logos, decals, lettering or printed graphics for a business, a company or work vehicle, a fleet, a van, box truck, food truck or trailer, business info on it like a phone number, website or QR code, or designing a custom printed wrap",
+
+        "wrap_types" : "Every commercial job is one of three, decals, a half wrap or a full wrap, and each one gets priced differently, so which one it is comes first. Different vehicles on the same job can get different ones, like a full wrap on the trailer and decals on the trucks",
+        "decals" : "Their logo, lettering and business info (the company name, phone number, website, socials, a QR code, their services) put on over the paint, while the rest of the vehicle stays its own color. Also called a logo package, lettering or spot graphics. Solid color lettering gets cut from colored vinyl, and logos and multicolor graphics get printed, laminated and cut out. The simplest of the three, priced by how many decals and how big",
+        "half_wrap" : "Printed vinyl with their design covering part of the vehicle, rear and half the sides, with the logo and info printed right into it. Also called a partial wrap",
+        "full_wrap" : "Vinyl over the whole vehicle, everything painted on the outside, back doors included. Either a fully printed custom design, or one solid color all the way around in any color and finish with their logo and info cut and put on top",
+        "choosing" : "Simple logos are the cheaper option. A full wrap looks the most put together and custom, protects all of the paint from the sun and lets the design flow, and the step up from a half wrap to a full wrap isn't a whole lot, so a full wrap tends to be the best value. All three hold up great",
+        "price_depends_on" : "Which of the three it is, the vehicles and their size, how many vehicles, how many decals and how big, the design, and whether the logo has to be recreated. The owner prices it himself once he has the job, the vehicles and whether there's a vector file for the logo",
+        "price_ranges" : "What each of the three usually runs, plus tax: decals $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500. Each range is per vehicle, not for the whole job, so every vehicle on it gets its own price (DONT MENTION UNLESS ASKED). Where it lands in the range just depends on the year, make, model and design, and a trailer, box truck or food truck goes by its size. The exact price comes from the owner once he has the job, the vehicles and the logo files",
+
+        "fleet" : "Every vehicle on the job gets priced, and the same design goes on all of them, resized to fit each one. With identical vehicles the first ones get dialed in and the rest get printed together. They can come in one or two at a time. A trailer counts as a vehicle",
+        "fleet_discount" : "Every 4th vehicle for FULL WRAPS, gets a discount of $600 off",
+        "vehicle_template" : "The design gets built on a template made for the exact year, make and model, so the vehicle decides the template and how much vinyl it takes, and on a van the roof height and length matter too (a high roof Transit or Sprinter is a bigger van than a standard roof). Trailers, box trucks and food trucks go by their size, the length and the height. The vehicle doesn't have to come in before the install day, and photos of its sides help",
+
+        "vector_files" : "A vector file is the logo drawn as shapes and lines instead of pixels, so it prints sharp at any size, from a door logo to the side of a box truck, and the designer can edit its colors and layout. It's made in a design program like Adobe Illustrator and usually comes as an AI, EPS, SVG or vector PDF file. A PNG, JPG, screenshot, a logo saved off a website or social media, or one made with AI is pixels, not vector, so it turns blurry printed big. Whoever made the logo (their designer, or the shop that did their shirts, signs or business cards) usually has the vector file",
+        "design_fee" : "With no vector file for the logo, the designer recreates it as a vector file first, and that adds a design fee of $250",
+        "design" : "The shop has a full time designer and does all the design and printing in house. The designer can recreate a design, mockup or AI render they send, build off photos of wraps they like, or start from scratch, and can hop on a call to dial it in. Design work starts once the deposit is in, with unlimited revisions until it's exactly what they want",
+        "design_needs" : "Their logo as a vector file, any special font, their brand colors, everything that goes on it (the business name, phone number, website, socials, services, and where a QR code should take people) and photos of wraps they like. A QR code has to work, and the shop can make one when they say where it should go. Files and photos can be sent right here or by email",
+        "proof" : "Nothing gets printed until they approve the proof, and it gets tweaked until it's right. Printed colors can come out a little different than a screen or a hex code, so a sample can get printed to check a brand color in person",
+
+        "process" : "The deposit goes in, the design and proofs get made on the vehicle's template, they approve it, it gets printed, laminated and cut, then the vehicle comes in to get prepped and installed. No need to wash it first, the shop does all the prep",
+        "material" : "Printed on Avery 1105 print film with a laminate over the print, in gloss or satin. Solid color lettering is cut from colored vinyl. Perforated window film can go over the back windows so the driver can still see out",
+        "turnaround_time" : "Decals usually take a day, dropped off in the morning and ready by 5PM, and a small logo on the doors can be about an hour. A half wrap or a trailer takes about 2 to 3 days, and a full wrap on a van or truck about 3 to 5 days. The design and printing usually take about a week before the install",
+        "lifespan" : "Printed decals and wraps last about 5 to 6 years, and they peel off clean when they come off within about 4 to 5 years",
+        "care" : "Keep it dry for the first few days while it cures. Hand washing or a touchless wash is best, and decals handle car washes a little less well than a wrap, so after the first few days an occasional car wash is fine",
+        "warranty" : "Any bubbling or peeling from the install gets fixed, the piece gets reprinted and put back on at no cost",
+        "removal" : "Old decals, lettering or a wrap on the vehicle now can come off before the new one goes on, and how long it's been on changes how much work that is",
+        "deposit" : "A deposit gets the design started and holds the spot on the schedule, its amount comes with the price, and the rest gets paid when the job is done",
+        "not_offered" : "Door magnets. Installs only happen at the shop"
+    }},
+    "c2" : {"service" : "Custom Wrap", "service_details" : {
+        "description" : "Any wrap that isn't a full wrap in one gloss, satin or matte color. A partial like just the hood, roof, mirrors, pillars, bumpers, one panel, the top half or just the cab, stripes or racing stripes, a two tone or a piece in its own color or finish next to a full wrap like a gloss black roof, hood or pillars, a specialty film like chrome, satin or matte chrome, color shift, camo, Inozetek, carbon fiber or another textured film, or a custom design or effect like a printed design, a fade, flames, a pattern, splatter or a livery",
+
+        "partials" : "Single pieces or sections in vinyl, like the roof, hood, mirrors, pillars, bumpers, a fender, the top half or just the cab, and stripes or racing stripes. A tuxedo or windows up black look is the pillars, the roof and the mirror caps in black, with the chrome trim done too if they want it",
+        "two_tone" : "A piece or the whole top in its own color or finish next to the rest of the vehicle, like a gloss black roof, hood or pillars on a full wrap or on the paint",
+        "specialty_films" : "Chrome (satin and matte chrome too), color shift, brushed, carbon fiber, camo and other textured films, and Inozetek. The material costs more than standard colors and takes longer to install. Brushed films mostly come in black and grays, and a specialty color depends on finding that exact film",
+        "custom_design" : "Printed designs, fades, flames, patterns, splatter and liveries get designed by the shop's designer and printed in house, from their own design or from scratch",
+        "with_full_wrap" : "Custom pieces on a full wrap, like a gloss black roof, mirrors or pillars, get priced together with the wrap",
+        "photo_needed" : "The owner prices it by seeing the vehicle as it is now, so he needs a photo of it, and of the design or look they want when they have one",
+
+        "material" : "3M, Avery Dennison and KPMF films, with Avery and 3M the favorites",
+        "finishes" : "Gloss, satin and matte. Gloss scratches easier than satin, and matte is less shiny than satin",
+        "colors" : "Pretty much any color, from the color books at the shop or a color they find online. Film that isn't in stock gets ordered in, which can take up to a couple weeks, and the job starts once it's here",
+        "paint_match" : "Vinyl rarely matches factory paint exactly, so a piece meant to match the paint gets the closest film from the color books",
+        "colored_ppf_look" : "When the look in their photo is colored PPF, the closest look in vinyl gets matched to it, colored PPF is its own service",
+
+        "coverage" : "We take it apart for full coverage: pieces come apart where needed and every edge gets tucked and trimmed so it doesn't lift. Door jambs aren't wrapped, and textured plastic like fender flares isn't either, since vinyl doesn't stick to it",
+        "existing_paint" : "Vinyl over failing or peeling paint or clear coat can't be warrantied since the paint under it can still lift, and peeling spots can get sanded smooth first",
+        "turnaround_time" : "A tuxedo or pillar wrap is about 4 hours, a hood stripe about 2, a single panel like the roof usually a day, the top half with a chrome delete 2 to 3 days, and a full wrap with custom pieces 4 to 5 days",
+        "lifespan" : "Vinyl lasts about 5 years, and satin holds up well over that time",
+        "care" : "Treated like paint, hand washing or a touchless wash is best",
+        "warranty" : "A free 6 month warranty, the same as a wrap: any peeling or bubbling from the install gets fixed. Vinyl on textured plastic doesn't hold up and isn't covered"
+    }},
+    "c3" : {"service" : "PPF Removal", "service_details" : {
+        "description" : "PPF or clear bra that's on the vehicle now, old, yellowed, peeling, bubbling, torn or chipped, getting taken off, redone or replaced, or coming off before a wrap or new film goes on",
+
+        "under_a_wrap" : "Old PPF usually doesn't have to come off before a vinyl wrap. The shop wraps over PPF all the time and it stays on as extra protection under the wrap, though the film's edges and seams can show a little through the vinyl",
+        "emblem_cutouts" : "Where the old film was cut around an emblem, a small dip can show through the wrap, so the film on that one panel may come off while the rest stays",
+        "under_new_ppf" : "Before new PPF goes on, taking the old film off is recommended so the new install can be guaranteed and warrantied, since old film under it can cause problems in the install. The new film can still go over it if they'd rather",
+        "its_own_job" : "Taking old film off is its own job on top of the wrap or the new film, never part of the new film's price",
+        "info_needed" : "The vehicle, how long the film has been on, a photo of the film on it now, which panels have film and which need redoing, and whether they want it just taken off or new film put on too",
+
+        "removal_process" : "The old film comes off with a little heat and a slow pull (too much heat can hurt the paint), the leftover glue comes off with adhesive remover, and the panel gets cleaned and prepped before anything new goes on. It's best done by a pro since there's a particular way to take it off",
+        "time" : "Old film on one small panel comes off in about 15 minutes, and on a full front end in about a couple hours. Taking it off and putting a new front end on takes about 2 days, since the new film sits overnight",
+        "yellowed_film" : "Old film that's yellowed, cracked, peeling or bubbling coming off and new film going on makes it look brand new again, and swapping it so it matches new film or new panels is common",
+        "bubbles" : "Bubbles in film can often be worked out, and when one can't, the whole panel gets a new piece",
+        "new_film_bubbles" : "A little water under brand new film is normal and cures out over the next few days",
+
+        "paint_check" : "Before a redo the owner checks whether rock hits went through the old film into the paint. Chips, scratches or touch up paint already under the film still show under new film",
+        "paint_not_included" : "Paint and body work aren't part of a PPF job, and fixing chips that were under the film is separate work, not a warranty fix",
+        "single_panel" : "The film on a single panel can come off so a dealer or body shop can fix the paint under it",
+        "new_film" : "New film after the old comes off is the shop's own PPF, the front end, the full body or the windshield, the same film and warranty as any PPF job",
+        "down_the_road" : "PPF the shop puts on is made to come off whenever it needs to, and taking it off down the road gets priced from pictures of it at that point"
+    }},
+    "c4" : {"service" : "Chrome Delete", "service_details" : {
+        "description" : "Covering or blacking out the chrome on the vehicle, like the window trim, grille, bumpers, roof rails, door handles, emblems and badges, also called a dechrome, blackout or de-badge, or redoing an old chrome delete",
+
+        "coverage" : "Any chrome on the outside: the window trim, mirror caps and trim, door handles, belt moldings, roof rails, bumper trim, the grille and its surround, fog light bezels, the rear hatch trim, running boards and badges. A full chrome delete covers all of it, and any piece they want to keep chrome can stay",
+        "price_depends_on" : "How much chrome is on the vehicle and which pieces get done, so it gets priced from a photo",
+        "photo_needed" : "A photo of the whole vehicle, the front, the sides and the rear, so the owner can see all the chrome on it, plus the vehicle and which pieces they want done. Some vehicles have little or no chrome (a Model Y has none), so the job might just be the emblems or other pieces",
+        "with_a_wrap" : "It isn't included with a full wrap or PPF, it's its own job, but it can be done while the vehicle is in for the wrap, in the wrap's color so it all flows",
+
+        "colors" : "Mostly done in black, gloss, satin or matte, and satin black usually looks better than matte for a blackout. Any color from the color books works too, but vinyl rarely matches paint exactly, so a body color piece gets the closest film. The finish can differ from a wrap on the rest of it, like a gloss black delete on a satin wrap",
+        "material" : "3M and Avery Dennison vinyl",
+        "emblems" : "Factory emblems are hard to black out and don't hold up well wrapped, so ordering black ones from the dealer or online is recommended, and the shop puts them on. Wrapping the factory emblems can be tried, but those don't get a warranty",
+        "debadge" : "Badges and dealer lettering can come off for a clean look. Lettering that comes off doesn't go back on, the old adhesive makes that too much work",
+        "grille" : "A simple grille can be wrapped. An intricate grille doesn't hold vinyl well, so it gets sprayed black with a peelable spray vinyl that comes off like a wrap later, or they swap in a black grille and the shop can put it on",
+        "door_handles" : "Door handles can go black, body color or an accent color. Worn plastic handles may need primer first, and handles with tricky end caps can peel over time from being grabbed",
+        "surfaces" : "Vinyl needs smooth chrome or smooth plastic. It won't stick to textured plastic or textured paint, so black textured trim stays as it is",
+        "plasti_dip" : "Old Plasti Dip has to come off before the vinyl goes on, they can take it off themselves or the shop can as extra work",
+        "redo" : "An old chrome delete that's peeling gets the old vinyl taken off and done again",
+        "not_included" : "Wheels and rims aren't part of a chrome delete",
+
+        "turnaround_time" : "A full chrome delete takes about 2 days, 2 to 3 on bigger trucks and SUVs. A small job like just the window trim can be same day when it's dropped off in the morning, and with a full wrap it's 4 to 5 days. The shop likes to keep it overnight so the vinyl sets before it goes outside",
+        "warranty" : "Any peeling or bubbling from the install gets fixed when they bring it back, and most of that shows up in the first few days to couple weeks. Factory emblems the shop wraps don't get a warranty",
+        "care" : "Hand washing makes it last longest, but it holds up fine going through car washes"
+    }},
+    "c5" : {"service" : "Other Job", "service_details" : {
+        "description" : "Any other job the services don't list that the shop doesn't say it won't do, like body work, dents, paint or touch up paint, a wrap or film going over hail damage, dents or body damage, PPF or clear bra on just one piece like just the hood, just the bumper or just the headlights, redoing a wrap or PPF on certain panels after an accident, for insurance or because a piece is lifting, wheels, rims, calipers, motorcycles, boats, jet skis, RVs and motorhomes, side by sides and UTVs, ATVs, snowmobiles, golf carts and interior pieces",
+
+        "seen_first" : "Whether the shop takes one of these on, and what it costs, gets decided once the owner sees it, so nobody can say yes or no on it before that. Motorcycles are the one exception (see motorcycles)",
+        "info_needed" : "A photo of the vehicle or the piece, and what they want done to it only when they haven't said yet. Asking whether the shop wraps a boat already says what they want done, a wrap, so then it's just the photo",
+        "surfaces" : "Vinyl and PPF need a smooth, solid surface. They don't stick well to textured plastic, and failing or peeling paint or clear coat can still lift under them",
+        "paint_condition" : "The film is only as good as the paint under it, so on an older vehicle, an RV or anything with paint damage the paint condition gets looked at first. Peeling paint gets sanded smooth before vinyl goes over it, and some waviness can still show",
+        "scratches_dents" : "Light scratches and small dings usually don't matter under vinyl, the film covers them, but bigger dents still show through",
+        "paint_match" : "Vinyl rarely matches paint exactly, and a mismatched repaint can't be matched any better with vinyl than with paint",
+        "wheels" : "Vinyl on a wheel only covers the flat face, and powder coating is the more durable way to change a wheel's color",
+        "single_piece_ppf" : "The shop's PPF goes on as the front end, the full body or the windshield, so PPF on just one piece gets looked at by the owner first",
+        "panel_redo" : "Redoing a wrap or PPF on certain panels, after an accident, for insurance or because a piece is lifting, gets looked at from photos first, and a lifting piece usually means a new piece for that panel",
+        "side_by_sides" : "On side by sides, ATVs and the like, smooth painted panels can take vinyl but textured plastic usually can't",
+        "motorcycles" : "The shop wraps motorcycles, the whole bike or pieces of it like a fender, the tank or the fairings, so asking whether the shop does them gets a yes. The price comes from a photo of the bike"
+    }},
+    "c6" : {"service" : "Wrap Removal", "service_details" : {
+        "description" : "A vinyl wrap that's on the vehicle now, old, peeling, cracking, faded or bubbling, getting taken off, redone or replaced, on its own or before a new wrap, PPF or colored PPF goes on",
+
+        "info_needed" : "How long the wrap has been on and a photo of it as it is now, so the owner can see the shape it's in",
+        "price_depends_on" : "How long the wrap has been on and the shape it's in. A wrap that's cracking, sun faded or hard to work with takes more work to come off, and one that isn't comes off a lot easier",
+        "its_own_job" : "Taking the old wrap off is its own job on top of the new wrap or film, never part of the new one's price",
+        "with_new_film" : "The old wrap can come off and a new wrap, PPF or colored PPF can go on in the same visit",
+
+        "removal_process" : "The old vinyl comes off with heat and a slow pull, any glue left behind gets cleaned off with adhesive remover, and the paint gets cleaned and prepped before anything new goes on",
+        "leftover_adhesive" : "Glue left behind on the paint takes extra work to clean off and prep, and that adds to the price",
+        "customer_removal" : "They can take the old wrap off themselves instead, and any glue left behind still gets cleaned and prepped at the shop",
+        "paint_condition" : "Paint in good shape usually comes through fine. Paint or clear coat that was already failing under the wrap can come up with it"
+    }}
+}

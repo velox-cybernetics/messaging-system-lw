@@ -1,0 +1,686 @@
+#**********SERVICE EXAMPLES**********
+#what asking about a wrap, PPF, colored PPF or tint looks like, so the analyzer finds what they want
+
+
+#WINDOW TINT
+#what asking about window tint looks like, read with the analyzer's tint question
+def window_tint_examples() -> str:
+    return r"""Yes: film on the vehicle's glass. "tint", "window tint", "ceramic tint", "tinting", "tint the windows", a shade or percentage ("20%", "5% on the back", "limo", "as dark as legal"), the front two, the sides and rear, the back glass, the windshield, a visor, sun strip, brow or eyebrow, a sunroof or moonroof, matching the factory privacy glass, taking old tint off or redoing it, stacking darker tint, tint laws, blocking heat or UV through the windows, a question about tint's price, brand, film type (ceramic, carbon, dyed, mirror, smart tint), shades, warranty, how long it takes or lasts, bubbles or haze after a tint install, coming by to see tint shade samples, or a follow up to a tint quote. Headlight, taillight and home window tint are Yes too, the tint details answer them. Tint asked for together with a wrap, PPF or colored PPF ("full wrap and window tinting", "front end PPF and tint the front two", "full, colored, and window tint") is still Yes. Customers text fast, so a misspelled tint is still tint ("timt", "tibt", "tnit", "tinr"), and so is one tacked onto the job the shop just priced: "how much we talking for this and some timt" right after a PPF quote asks what the PPF and some tint cost.
+No: a wrap, PPF or colored PPF with no tint in `current_user_message` and none asked about with it earlier (a follow up that names no service after they asked about the tint with it is the whole job, see below), a windshield skin or any clear film to protect the windshield from rock chips (that's PPF, not tint), ceramic coating on its own ("ceramic" meaning a coating on the paint), paint or body work, any other service, business questions like hours, address or phone number, how much time a job with no tint takes ("how much time", "how much timt does the full body take"), or a message that names no service ("Could I get a quote on my car?").
+Read `current_user_message` in light of `message_history`, never on its own: a short reply ("Sides and rear", "all of them", "20%", "2019 civic", "yes") or a follow up question ("how long would it take?", "is that ceramic?", "whats the warranty?") continues the tint already being discussed. That includes tint the customer asked to have done together with another service: once they asked about the tint with the PPF, a wrap or a coating ("what is cost if do full frontal and tint") and the shop priced it, a follow up that names no service ("how long does it have to be there?", "what brand do you use?", "warranty?") asks about that whole job, so it's Yes for the tint too, even when the PPF or the wrap came up first and the shop's reply in between only answered for it. The free side and rear tint the shop says comes with a full body of PPF or colored PPF isn't tint they asked about, so a follow up after only that is No. Lead forms arrive as one sentence: a Meta form "hello my name is <name>, I am looking to get the service of <service> ... the vehicle I have is <vehicle>" is Yes only when the service it names is window tint, and a website form "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>." names no service, so No. Tint discussed only in earlier turns does NOT count once the current message clearly moves on to a different service. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys do tint"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much for tint on a 1996 Buick Roadmaster sedan"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Window Tint the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2010 Infiniti G37x sedan."},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Window tint"},"message_history":{"user_message_0":{"user_text":"hello my name is Faith, I am interested in your services, the vehicle I have is 2010 Honda Accord."},"system_response_to_user_message_0":"Heyy Faith, this is Hazel at the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a full wrap and window tinting"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Thanks how much for a window tint?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Can you quote us on a 2024 model Y, its white, want sand color"},"system_response_to_user_message_0":"Sweet, so sand color on the Model Y would run $2800 plus tax for a full wrap."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"4 doors and the back glass"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much to tint my 2019 civic"},"system_response_to_user_message_0":"Which windows are you wanting tinted?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2021 f150"},"system_response_to_user_message_0":"Sweet, so sides and rear on the F150 would run $450 plus tax for our ceramic tint. Did you want to hop on the schedule?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"ok how long would you need it? and what film do you guys use"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf on my 2022 civic"},"system_response_to_user_message_0":"Front end PPF on the Civic would run $1600 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and full body is $5900 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. The full body also comes with free side and rear window tint. Which option are you leaning towards?","user_message_1":{"user_media":{},"user_text":"whats it cost if i do the front end and tint"},"system_response_to_user_message_1":"With the front end, our ceramic tint on the sides and rear of the Civic would be $450 on top, so front end PPF and the tint together would come out to $2050 + tax. Did you want to hop on the schedule?","user_message_2":{"user_media":{},"user_text":"Warranty?"},"system_response_to_user_message_2":"Yeah, lifetime warranty on any bubbling or peeling, essentially anything due to install error. Road damage isn't covered though"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for full body ppf on my 2023 model y"},"system_response_to_user_message_0":"Sweet, so full body PPF on the Model Y would run $5900 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. It also comes with free side and rear window tint"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"how long does each one take"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to change the color on my 2023 f150"},"system_response_to_user_message_0":"A wrap on the F150 typically runs $3450 + tax and colored PPF typically runs $7400 + tax for the full body, it just depends on what color it is right now. The wrap is the more affordable way to change it, and colored PPF changes the color while protecting the paint from rock chips, lasts about double a wrap and comes with free side and rear window tint. Which route are you leaning towards?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Is 20% legal on the front in utah?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"whats the difference between ir and uv"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Can you guys tint headlights?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Side windows have lots of bubbles though"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear and the windshield on my ranger"},"system_response_to_user_message_0":"Sweet, so sides, rear and windshield on the Ranger would run $650 plus tax for our ceramic tint. Did you want to hop on the schedule?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full, colored, and window tint"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Paint Protection Film the vehicle I have is 2024 Tesla Cybertruck"},"system_response_to_user_message_0":"Heyy Kade, this is Hazel at the Lone Wraps team, saw your quote request for paint protection film on the Cybertruck. Are you looking for just the front end or full body on the Cybertruck?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Front end ppf on my 2023 camry, and how much to tint the front two windows?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Got it boss, so how muchwe talking tho for this and some timt "},"message_history":{"user_message_0":{"user_text":"hello my name is g p, I am interested in your services, the vehicle I have is Porche 9111 gt3rs 2025."},"system_response_to_user_message_0":"Heyy G, this is Hazel at the Lone Wraps team, saw your quote request on the 911 GT3 RS. What are you looking to get done on the 911 GT3 RS?","user_message_1":{"user_media":{},"user_text":"So what does ppf cost "},"system_response_to_user_message_1":"Front end PPF on the GT3 RS is $1600 + tax, that covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $5900 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Which option are you leaning towards?","user_message_2":{"user_media":{},"user_text":"Depending on the coverage Like warranty And the amount covered for full "},"system_response_to_user_message_2":"The warranty is the same either way, lifetime on any bubbling or peeling from the install, road damage isn't covered\nThe full body covers all the painted surfaces, so the whole car"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much pof "},"message_history":{"user_message_0":{"user_text":"hello my name is Gabriel doe, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Gabriel, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much is the windshield protection film for rock chips?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much for ceramic coating on my 2021 camry?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Whats colored ppf run on a 2024 tahoe?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Actually forget the tint, what would a full wrap in satin black run? its white"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2022 kia k5"},"system_response_to_user_message_0":"Sweet, so sides and rear on the K5 would run $450 plus tax for our ceramic tint. Did you want to hop on the schedule?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Are you guys open today"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
+answer: False"""
+
+
+#COLOR CHANGE
+#what asking about a vinyl wrap or a color change looks like, read with the analyzer's wrap question
+def color_change_examples() -> str:
+    return r"""Yes: vinyl film that changes the color or look of the vehicle's body. "wrap", "vinyl", "color change", "full wrap", "partial wrap", matte, satin, gloss, chrome, color shift, camo or two tone film, a roof, hood, mirror, pillar, bumper or stripe wrap, chrome delete, blacked out emblems, a question about a wrap's price, colors, finishes, material, warranty, how long it takes or lasts, deposit, prep or a paint correction before it, or bringing their own vinyl, coming by the shop to see wrap colors, samples or the color books (even when it also asks when the shop is open or where it is), or a follow up to a wrap quote. Window tint asked for together with a wrap, or asked about while a wrap quote is being discussed, is still Yes (full ceramic tint with a wrap is a wrap add on).
+A color change with no film named ("wanna change the color", "thinking about changing the color", "want it a different color", "how much to change the color on my civic") is Yes, including when it answers the shop asking which service they want after a website form, and so is a follow up naming the colors they're thinking about after the shop asked.
+No: window tint on its own with no wrap in the conversation, PPF (paint protection film, clear bra, clear wrap, "stealth" or "matte clear" film, "protect the paint") on its own, colored PPF on its own ("colored ppf", "PPF in a color", "color change PPF", "matte black PPF", a follow up to a colored PPF quote), ceramic coating on its own, paint or body work, any other service, the shop's services in general ("What are all the services you offer?"), which has its own question, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?", "Could you give me a price on that?"). A graphic wrap, graphics, a printed or custom design, a livery or a fade on their car ("Im looking to do a graphic wrap on my car", "can you wrap a cool design on my carbon fiber", "want a red to black fade on my mustang") is a custom wrap the owner prices himself, never the one color wrap, so No, while a plain "wrap", "full wrap", "wrap my car" or "color change" with no design named is still Yes. A message that asks about both a wrap and PPF or colored PPF ("stealth ppf or a nardo grey wrap", "ppf vs a wrap", "colored ppf or just a vinyl wrap?", a wrap with PPF on the bumper) is Yes, as is a "full wrap" that could be either a color change or PPF with nothing in the conversation saying which. How dark they want the tint while tint is being discussed with no wrap ("I want dark as you got all around", "5% all the way around", "your darkest") is the tint's shade, not a color change, so No.
+A clear wrap or a clear matte or satin film over the paint they have, wanting a matte or satin look that keeps their color, is PPF, the stealth or matte finish, so it's No here, even when they hope it makes their color look a little darker or deeper, since vinyl always has its own color.
+Read `current_user_message` in light of `message_history`, never on its own: a short reply ("Black", "2023", "yes", "matte black all the way around") or a follow up question ("how long would it take?", "any color?") continues the wrap already being discussed. That includes a wrap they asked to have done together with another service (a wrap and tint, a wrap with a coating on top): a follow up that names no service ("how long would you need it?", "what brand do you use?") asks about that whole job, so it's Yes for the wrap too. Lead form replies that only name the job ("Color change", "Full matte black") are a wrap. Lead forms arrive as one sentence: a Meta form "hello my name is <name>, I am looking to get the service of <service> ... the vehicle I have is <vehicle>" is Yes only when the service it names is a wrap, and a website form "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>." names no service, so No. A wrap discussed only in earlier turns does NOT count once the current message clearly moves on to a different service or drops the vinyl ("just do the whole thing in ppf" after asking for vinyl on part of it is No). Media in `current_user_message.user_media` counts when the customer's text points at it ("I want this color", "can you do this?"). A pic or video of their own vehicle sent while a wrap or a color change is being discussed carries on with it too, one pic or several, with no text or only a few words ("here she is", "thats the car"), like right after the shop asked for a pic of it or what color it is now, so it's Yes even with nothing in the text pointing at it. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Can I swing by the shop to see wrap colors"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Yall open today"},"system_response_to_user_message_0":"Yeah, we're open today until 5PM."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What is your address so i can see samples? In person"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a quote to wrap a 2024 ram 1500"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Vinyl Wraps the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2010 Infiniti G37x sedan."},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Window Tint the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Color change"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full matte black"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Hey I was trying to send you guys a message but it wasnt working, how much would it be to wrap a 2022 Chevy suburban in z71? We were thinking flat forest green or Matt black"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"I want to black out the entire truck. Matte black."},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Hello, looking to do chrome delete"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how much does it cost for a full wrap, if i buy the wrap myself"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a full wrap and window tinting"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Black"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Yo yo, how much for a wrap on my 2023 raptor"},"system_response_to_user_message_0":"What color is it currently and what color are you wanting to go?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how long would it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Possibly. What would it cost to do a full body wrap on a 2013 Lexus GS 350? Its red, want gloss black"},"system_response_to_user_message_0":"Sweet, so gloss black on the GS would run $2950 plus tax for a full wrap, and that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Thanks how much for a window tint?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Can you quote us on a 2024 model Y, its white, want sand color"},"system_response_to_user_message_0":"Sweet, so sand color on the Model Y would run $2800 plus tax for a full wrap."}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description(if applicable)":"brief_description: A satin dark grey SUV parked outside a shop.\nservice_ques: Vinyl wrap color change.\ntext_overlays: none\nbright_vehicle: no","post_description(if applicable)":"Satin dark grey on this Tahoe, full wrap by Lone Wraps #lonewraps #wrap"}},"user_text":"I would like to put that color on my car"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What are all the services you offer?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much for tint on a 1996 Buick Roadmaster sedan"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys do tint"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much is PPF on the front end of a 2024 X5?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Are you guys open today"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"I was between full stealth ppf or like a nardo grey wrap, its a 2021 bmw m340i, its black"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Well I'm deciding on a vinyl wrap or the ceramic coating protective film"},"message_history":{"user_message_0":{"user_text":"hello my name is tristan walker, I am interested in your services, the vehicle I have is 2026 Tesla model Y."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel at the Lone Wraps team, saw your quote request on the Model Y. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full wrap\nHigh gloss, same as current truck. The truck is brand new, 2025 denali"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for pricing to do a stealth wrap on my wife's 2023 Kia Telluride with some black accents (chrome delete)"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Hi I just want the clear paint protection wrap on my 2025 silverado, front end quote please"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Full wrap matte clear on my 2023 corvette z06"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Is there a clear film that would give my 2024 bronco a matte look but keep the eruption green? kinda want it a touch darker too"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Actually forget the wrap, what would just PPF on the front end run?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Full gloss black on my 2019 chrysler 300, its silver"},"system_response_to_user_message_0":"Sweet, so gloss black on the 300 would run $2950 plus tax for a full wrap, and that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Nah thats fine just do the whole car in ppf. Ill grab some pics"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Want colored ppf and tint on my 2023 porsche 911. Could you do ppf on the front and vinyl on the rest?"},"system_response_to_user_message_0":"Yeah, we can look at that, a mix of colored PPF up front and vinyl on the rest is something the owner would price out from photos. Do you have a photo of the car?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"What would colored ppf run on my 2022 bmw x5?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Whats the difference between colored ppf and just a vinyl wrap?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Wanna change the color "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"thinking about changing the color"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"want it a different color"},"message_history":{"user_message_0":{"user_text":"hello my name is Faith, I am interested in your services, the vehicle I have is 2010 Honda Accord."},"system_response_to_user_message_0":"Heyy Faith, this is Hazel at the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how much to change the color on my 2020 civic"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"It’s red thinking I wanna do like a maroon or beige It’s a bright red "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Wanna change the color "},"system_response_to_user_message_1":"For sure, a vinyl wrap is the more affordable way and comes in pretty much any color and finish, and colored PPF changes the color while protecting the paint from rock chips at the same time. What color are you thinking, and could you send a pic of the 570S?"}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a glossy bright red McLaren P1 sports car in a showroom, shown in a three quarter front view with its doors open upward, black wheels and dark trim, and a blue sports car partly visible at the left.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"},"media_element_1":{"media_description":"brief_description: A photo of a dark metallic red supercar with a gloss finish, front three quarter view, with a black roof, black multi-spoke wheels, blacked out lower body accents and a carbon fiber front splitter, parked indoors in a showroom with other sports cars including a bright green one behind it.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"},"media_element_2":{"media_description":"brief_description: A photo of a glossy deep red two door supercar, front three quarter view, with a black roof, large rear wing, black multi spoke wheels, dark tinted windows and a black front splitter, parked on a brick paved drive with grass and trees behind it.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"},"media_element_3":{"media_description":"brief_description: A photo of a glossy bright red exotic sports car, rear view, parked indoors in a glass walled showroom, with a raised rear wing, black mesh grille panel, black lower diffuser and a silver exhaust outlet, and other cars visible in the background.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"}},"user_text":""},"message_history":{"user_message_0":{"user_text":"hello my name is Damien G, I am interested in your services, the vehicle I have is 2015 McLaren p1."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the P1. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Sup Hazel\nWanna change the color"},"system_response_to_user_message_1":"What's up, there's two ways we can go on the P1. A vinyl wrap is the more affordable one in pretty much any color and finish, and colored PPF is a thicker self healing film in a color, so it protects the paint from rock chips at the same time and lasts about double a wrap. What color are you thinking, and what color is the P1 right now? Send me a pic if you can"}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a gray Ford Mustang GT in a parking lot, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2021 mustang gt"},"system_response_to_user_message_0":"For sure, a wrap on the Mustang typically runs $2950 + tax, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color are you wanting to go, and what color is it right now? Send me a pic if you can"}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a white Honda Accord sedan in a driveway, side view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"here she is"},"message_history":{"user_message_0":{"user_media":{},"user_text":"sides and rear tint on my 2020 accord"},"system_response_to_user_message_0":"Sides and rear on the Accord would run $450 + tax for our ceramic tint, it blocks 99% of the UV and 90% of the heat, and if you wanted to add the windshield that would be an extra $200"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"I want dark as you got all around "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Im thinking window tint With a frontal ppf on my mclaren p1"},"system_response_to_user_message_0":"Sweet, so front end PPF on the P1 would run $1600 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and ceramic tint on the sides and rear is $300 on top since it's a 2 door, and if you wanted to add the windshield that would be an extra $200. Do you know how dark you're wanting to go?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a graphic wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"can you wrap a cool design on my carbon fiber"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
+answer: True"""
+
+
+#PPF
+#what asking about clear PPF looks like, read with the analyzer's PPF question
+def ppf_examples() -> str:
+    return r"""Yes: clear film installed over the paint to protect it. "PPF", "paint protection film", "paint protection", "clear bra", "clear wrap", "clear film", "clear protection", "protect the paint", "rock chip protection", "stealth" or "matte clear" film, satin or matte PPF, a front end, full body, high impact or windshield (windshield skin) install, PPF on the headlights, hood, bumper, doors or any other panel, a question about PPF's options ("what are the options for ppf?"), price, coverage, the free side and rear tint with a full body, film brand, thickness, finish, warranty, how long it takes or lasts, prep or paint correction before it, rock chips or scratches under it, whether it's self healing, PPF over a wrap or a ceramic coating, bringing their own film, taking old PPF off, or a follow up to a PPF quote. The coating mixed up with the film ("the ceramic coating protective film", "ceramic coating film") is Yes too, the reply clears up that they're two different things.
+No: a vinyl wrap or color change on its own, colored PPF on its own ("colored ppf", "PPF in a color", "color change PPF", "satin black PPF" on a white car, or a follow up to a colored PPF quote), which has its own question, window tint on its own, ceramic coating on its own, paint or body work, any other service, the shop's services in general ("What are all the services you offer?"), which has its own question too, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?"). A message about both PPF and a wrap ("stealth ppf or a nardo grey wrap", a wrap with PPF on the bumper) is Yes, as is a "full wrap" that could be either a color change or PPF with nothing in the conversation saying which, and a "clear", "transparent" or "same color, just protection" reply to a question about the wrap color. A message that compares clear and colored PPF ("stealth or colored", "how much more for color ppf" after a clear quote, "what the difference to colored ppf is") is Yes, and so is a matte or satin color that could be a clear finish or colored PPF ("full ppf matte white").
+A clear wrap or a clear matte or satin film over the paint they have, wanting a matte or satin look that keeps their color, is Yes, the stealth or matte finish, even when they hope it makes their color look a little darker or deeper.
+Read `current_user_message` in light of `message_history`, never on its own: a short reply ("Front end", "Full body", "2023 tahoe", "yes", "Matte") or a follow up question ("how long would it take?", "what brand?") continues the PPF already being discussed. That includes PPF they asked to have done together with another service (the front end PPF and tint, PPF with a coating on top): a follow up that names no service ("how long does it have to be there?", "what brand do you use?") asks about that whole job, so it's Yes for the PPF too. A pick of the coverage the shop's last reply asked about ("Are you leaning towards front end or full body on the PPF?") is Yes even when it's one short word next to another service: "front", "just front" or "the front" there picks the front end PPF, so "Im thinking probably just front and window tint for now" is Yes. "Front" in a tint conversation with no PPF coverage question before it is the windshield, not PPF. Lead form replies that only name the job ("Clear protection", "Partial- front, just PPF") are PPF. Lead forms arrive as one sentence: a Meta form "hello my name is <name>, I am looking to get the service of <service> ... the vehicle I have is <vehicle>" is Yes only when the service it names is paint protection film, and a website form "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>." names no service, so No. PPF discussed only in earlier turns does NOT count once the current message moves to something else ("Actually forget the PPF, what would a full wrap run?" is No). "PPF" in a conversation about colored PPF is the colored PPF ("just do the whole thing in ppf" after asking for colored PPF on part of it is No).
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Can I come by and look at the colored ppf colors?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"What would colored ppf run on my 2022 bmw x5?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Hey man! Looking just for some PPF. debating between stealth or colored"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Well I'm deciding on a vinyl wrap or the ceramic coating protective film"},"message_history":{"user_message_0":{"user_text":"hello my name is tristan walker, I am interested in your services, the vehicle I have is 2026 Tesla model Y."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel at the Lone Wraps team, saw your quote request on the Model Y. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much more for color ppf"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf full vehicle on my 2026 tesla model y?"},"system_response_to_user_message_0":"Full body PPF on the Model Y would be $5900 plus tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Did you want to hop on the schedule?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much is PPF on the front end of a 2024 X5?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Clear protection"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys do PPF?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Paint Protection Film the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2010 Infiniti G37x sedan."},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much pof "},"message_history":{"user_message_0":{"user_text":"hello my name is Gabriel doe, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Gabriel, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"I'm looking for a quote on a full clear bra for the vehicle, 2022 porsche macan"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Hey! We are just looking for paint protection for the front of our car. We are shopping around to try and find the best quote"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full wrap matte clear on my 2023 corvette z06"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Is there a clear film that would give my 2024 bronco a matte look but keep the eruption green? kinda want it a touch darker too"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for pricing to do a stealth wrap on my wife's 2023 Kia Telluride with some black accents (chrome delete)"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Just looking to have my headlights ppfd"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Do you also do windshield ppf and how much is that?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"I was between full stealth ppf or like a nardo grey wrap, its a 2021 bmw m340i, its black"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"2019 mustang gt, its red, want matte black. Can you guys do PPF on the front bumper too?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full wrap\nHigh gloss, same as current truck. The truck is brand new, 2025 denali"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Transparent\nOr i guess it's called clear"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Full wrap on my 2026 model 3"},"system_response_to_user_message_0":"What color is it now and what color are you wanting to go?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Front end"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Just ppf, 2022 honda accord"},"system_response_to_user_message_0":"Are you looking for just the front end or full body on the Accord?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Im thinking probably just front and window tint for now So what is warranty "},"message_history":{"user_message_0":{"user_text":"hello my name is Gabriel Perez, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Gabriel, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Want window tint On my car Maybe ppf As well "},"system_response_to_user_message_1":"Sweet, so sides and rear tint on the 570s would run $300 plus tax since it's a 2 door, and it's our ceramic tint that blocks 99% of the UV and 90% of the heat, and if you wanted to add the windshield that would be an extra $200. On the PPF, the front end is $1600 plus tax and covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $5900 plus tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Are you leaning towards front end or full body on the PPF?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Is there a warranty?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for PPF on a 2025 Ford Raptor R? Please quote both clear and satin. Thanks"},"system_response_to_user_message_0":"Full body PPF on the Raptor would be $6900 plus tax in clear, and satin is $500 more so $7400 plus tax."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How does the automatic car wash affect Ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Mat PPF on my 2024 model 3"},"system_response_to_user_message_0":"Full body matte PPF on the Model 3 would be $6400 plus tax, matte runs $500 over the clear film."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What are all the services you offer?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a quote to wrap a 2024 ram 1500"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Full matte black"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much for tint on a 1996 Buick Roadmaster sedan"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Ok nice so how much for fromt sides and rear ? "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Looking to get a window tint on my 2021 model y"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Model Y would run $450 plus tax for our ceramic tint, it blocks 99% of the UV and 90% of the heat, and if you wanted to add the windshield that would be an extra $200."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much for ceramic coating on my 2021 camry?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Are you guys open today"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Actually forget the PPF, what would a full wrap run? Its white, want gloss black"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for front end PPF on my 2019 chrysler 300"},"system_response_to_user_message_0":"Front end PPF on the 300 is $1600 plus tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Nah thats fine just do the whole car in ppf. Ill grab some pics"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Want colored ppf and tint on my 2023 porsche 911. Could you do ppf on the front and vinyl on the rest?"},"system_response_to_user_message_0":"Yeah, we can look at that, a mix of colored PPF up front and vinyl on the rest is something the owner would price out from photos. Do you have a photo of the car?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"what are the options for ppf?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"does the full body come with tint?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for full body ppf on my 2022 audi q5"},"system_response_to_user_message_0":"Full body PPF on the Q5 is $6900 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand"}}
+answer: True"""
+
+
+#COLORED PPF
+#what asking about colored PPF looks like, read with the analyzer's colored PPF question
+def color_ppf_examples() -> str:
+    return r"""Yes: PPF that changes the color of the vehicle. "colored PPF", "color PPF", "colored paint protection film", "color change PPF", "PPF color change", PPF in a named color or a finish over a different paint color ("matte black PPF" on a white truck, "PPF in a midnight purple"), something that both protects the paint and changes the color, a question about colored PPF's price, colors, color book or samples, finishes, brand, thickness, how it looks, how long it lasts, self healing, car washes, coverage (roof, pillars, door jambs, taking parts off), the free window tint with it, warranty, turnaround, prep, taking an old wrap or film off before it, colored PPF on just the front end or one panel, doing some panels in vinyl instead, bringing their own colored PPF kit, coming by the shop to see the colored PPF colors, or a follow up to a colored PPF quote. A message that compares colored PPF with clear PPF, stealth, a vinyl wrap or a factory paint color ("stealth or colored", "colored ppf or just a vinyl wrap?") is Yes, and so is PPF named with a color, with a finish or without one, when nothing says it keeps the paint color, even when the paint color isn't known yet ("full ppf matte white", "ppf wrap matte black"), since that could be colored PPF or a clear finish. A "PPF wrap" or "PPF full wrap" is PPF, never a vinyl wrap. Customers text fast, so a misspelled PPF named with a color is still colored PPF ("pff wrap matte black", "ppg in satin blue"), and small talk or just looking around before it ("whats up bro", "just looking around right now tbh") never changes the answer.
+No: clear PPF on its own (clear bra, clear wrap, "stealth", satin or matte PPF that keeps the paint color, front end, high impact or windshield PPF), a vinyl wrap or color change wrap on its own (a color or finish with no PPF named and no colored PPF being discussed, like "full matte black" or "a matte black wrap", is a vinyl wrap), window tint on its own, ceramic coating on its own, paint or body work, any other service, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?").
+A color change with no colored PPF named ("wanna change the color", "thinking about changing the color", "how much to change the color on my civic") is No here; the color change question covers it.
+Asking what the PPF options are ("what are the options for ppf?", "what kind of ppf do you guys do?") is about clear PPF, so it's No, even though the shop's answer brings up colored PPF as one more option. Colored PPF the shop only brought up in passing that way, with no price, isn't colored PPF being discussed, so a reply about the clear options ("full body sounds good", "how long does the front end take?") is No too.
+Read `current_user_message` in light of `message_history`, never on its own: a short reply ("2024 tahoe", "yes", "Gray", "Satin", "Full, colored") or a follow up question ("how long would it take?", "whats the warranty?", "does that include the roof?") continues the colored PPF already being discussed, and so does going from colored PPF on part of it to the whole vehicle in PPF ("just do the whole thing in ppf"), or answering the shop asking for a pic of the vehicle, even to say they can't send one right now ("no pics on this phone", "it's red though"). A pic or video of their own vehicle sent while colored PPF is being discussed carries on with it too, one pic or several, with no text or only a few words ("here she is", "thats the car"), so it's Yes even with nothing in the text pointing at it. That includes colored PPF they asked to have done together with another service (colored PPF with a coating on top or the windshield tint): a follow up that names no service asks about that whole job, so it's Yes for the colored PPF too. Lead forms arrive as one sentence and never offer colored PPF, so a Meta or website form on its own is No. Colored PPF discussed only in earlier turns does NOT count once the current message moves on to something else ("Actually just the clear on the front end" is No). Media in `current_user_message.user_media` counts when the customer's text asks for that color or look in PPF. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys do colored ppf?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What would colored ppf run on my 2022 bmw x5?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Can I come by and look at the colored ppf colors?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for PPF in a matte gun metal grey or a matte black. Full wrap, my truck is a white 2021 gmc sierra"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Hey man! Looking just for some PPF. debating between stealth or colored"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Whats the difference between colored ppf and just a vinyl wrap?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a matte or satin black for my 2021 raptor. Looking for something that offers protection as well as color change from the factory paint"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full ppf matte white on a 2022 tesla model s"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What’s up bro\nJust looking around right mow tbh\nI was thinking of doing a pff wrap matte black"},"message_history":{"user_message_0":{"user_text":"hello my name is d g, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy D, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Full, colored, and window tint"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Paint Protection Film the vehicle I have is 2024 Tesla Cybertruck"},"system_response_to_user_message_0":"Heyy Kade, this is Hazel at the Lone Wraps team, saw your quote request for paint protection film on the Cybertruck. Are you looking for just the front end or full body on the Cybertruck?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"2024 chevy tahoe"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Do you guys do colored ppf?"},"system_response_to_user_message_0":"Yeah, we do colored PPF. What vehicle is it?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Does that include the roof?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"color ppf in a metallic red on my 2022 f150 raptor"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Raptor would run $7400 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It's self healing too, so lighter scratches and swirls heal on their own. Did you want to hop on the schedule?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much more for color ppf"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf full vehicle on my 2026 tesla model y?"},"system_response_to_user_message_0":"Full body PPF on the Model Y would be $5900 plus tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Did you want to hop on the schedule?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Are you able to do the matte black ppf? If so how much extra?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Wanting to wrap my whole 2022 silverado matte black, its white"},"system_response_to_user_message_0":"Sweet, so matte black on the Silverado would run $3450 plus tax for a full wrap, and that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want, it also comes with a 6 month warranty. Did you want to hop on the schedule?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"I found a colored ppf kit that comes pre-cut for my 2023 tacoma. If I ordered it would you guys install it?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much is PPF on the front end of a 2024 X5?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Satin ppf on my black 2024 bmw m4, want to keep the color"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much pof "},"message_history":{"user_message_0":{"user_text":"hello my name is Gabriel doe, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Gabriel, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a quote to wrap a 2024 ram 1500"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Color change"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Paint Protection Film the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much for tint on a 1996 Buick Roadmaster sedan"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Are you guys open today"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Actually just the clear on the front end, what would that run?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Whats colored ppf run on my 2023 camry?"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Camry would run $6400 plus tax for the full body, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Nah thats fine just do the whole car in ppf. Ill grab some pics"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Want colored ppf and tint on my 2023 porsche 911. Could you do ppf on the front and vinyl on the rest?"},"system_response_to_user_message_0":"Yeah, we can look at that, a mix of colored PPF up front and vinyl on the rest is something the owner would price out from photos. Do you have a photo of the car?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Wanna change the color "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"thinking about changing the color on my truck"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"how much to change the color on my 2020 civic"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"New phone, it’s in Miami. It’s red though No pics on this phone "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sup Hazel Want colored PPF "},"system_response_to_user_message_0":"Yeah, we can do colored PPF on the 570S, it typically runs $6400 plus tax for the full body, it just depends on what color it is right now. That covers all the painted surfaces, we clay bar your car and give it a decontamination wash beforehand, and it comes with free side and rear window tint. Could you send a pic of it?"}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a glossy metallic red McLaren P1 supercar, three quarter front view, parked on a brick paver driveway.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"}},"user_text":"This is her 🫠🫠🫠 Love that car more than my\nWife and kids And I’d kill for them So better not fuck my shit up 😡😡 Jk 😂 My baby "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is mclaren p1."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the P1. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"What’s the warranty? Colored PPF "},"system_response_to_user_message_1":"Colored PPF comes with a lifetime warranty on anything that fails, bubbles or peels due to the install, road damage isn't covered. Could you send a pic of the P1?","user_message_2":{"user_media":{},"user_text":"That makes sense. Yeah let me take one real quick. "},"system_response_to_user_message_2":"Sounds good, send it over whenever you're ready."}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a white Ford Bronco parked on a gravel road, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"},"media_element_1":{"media_description":"brief_description: A photo of a white Ford Bronco from the rear, parked on a gravel road with its spare tire on the tailgate.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"thinking colored ppf on my 2023 bronco"},"system_response_to_user_message_0":"For sure, colored PPF on the Bronco typically runs $7400 + tax for the full body. That covers all the painted surfaces, we clay bar your car and give it a decontamination wash beforehand, and it comes with free side and rear window tint. What color is it right now? Send me a pic if you can"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"what are the options for ppf on my 2023 camry?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"full body sounds good"},"message_history":{"user_message_0":{"user_media":{},"user_text":"what kind of ppf options do you guys have? its for my 2023 camry"},"system_response_to_user_message_0":"There's 3 options for PPF on the Camry: the windshield is $450 + tax, the front end is $1600 + tax and covers the full hood, fenders, bumper, headlights and mirrors, and the full body is $5900 + tax, which covers all the painted surfaces and comes with free side and rear window tint. We also do colored PPF if you ever wanted to change the color too. Which option are you leaning towards?"}}
+answer: False"""
+
+
+
+#**********COLOR JOB**********
+#how to tell the job is a wrap or colored PPF, and which of the two films they're going with
+
+
+#COLOR JOB
+#read when the message names no service, or only other services while a color job is on file, so a job named earlier still waits on the pic
+def color_job_examples() -> str:
+    return r"""Yes: the job the customer wants in this conversation is a vinyl wrap, a color change or colored PPF, the services whose price needs the color the vehicle is now. It was asked about in `current_user_message` or earlier in `message_history` and is still the job, like a short reply that answers the shop ("2024 tahoe", "yes", "no pics on this phone", "sounds good") after they asked about one of them, even when the shop's reply in between didn't answer it. A question about another service on top of it, like tint, a ceramic coating or clear PPF on the front ("how much to tint the windows too?", "also for window tint I can do any shade right?"), keeps it the job even when that message never names the wrap or colored PPF, since only moving off it or turning it down ends it.
+No: the conversation has no wrap, color change or colored PPF in it (only clear PPF, tint, a ceramic coating, the shop's hours or address, or no service named yet, like a website lead form on its own), the wrap in it is a business wrap a person at the shop prices (a logo, lettering or company graphics, a full or half wrap on their work vans or trucks, a fleet), the wrap in it is a custom design the owner prices himself (a graphic wrap, graphics, a printed design, a livery or a fade on their car, "Im looking to do a graphic wrap on my car"), or they moved off it to a different service or turned it down ("Actually just the clear on the front end", "nah not the wrap, just tint"). A plain "wrap", "full wrap" or "color change" with no design named is still a wrap. Colored PPF the shop only brought up in passing as one more option, in a reply about the clear PPF options with no colored PPF price, isn't a job they want.
+`current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"2024 tahoe"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Do you guys do colored ppf?"},"system_response_to_user_message_0":"still in development, contact devlopers"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"2021 camaro"},"message_history":{"user_message_0":{"user_media":{},"user_text":"where are you guys at? looking to get my car wrapped"},"system_response_to_user_message_0":"We're at 105 S 700 E St Unit E, American Fork, UT 84003, the gray building just south of Jack and Jill's."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"New phone, it’s in Miami. It’s red though No pics on this phone "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sup Hazel Want colored PPF "},"system_response_to_user_message_0":"Yeah, we can do colored PPF on the 570S, it typically runs $6400 plus tax for the full body, it just depends on what color it is right now. That covers all the painted surfaces, we clay bar your car and give it a decontamination wash beforehand, and it comes with free side and rear window tint. Could you send a pic of it?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how much to tint the windows too?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2022 tacoma satin black"},"system_response_to_user_message_0":"For sure, a wrap on the Tacoma typically runs $3450 + tax, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a bright blue two door sports coupe parked on gravel beside a road, rear three quarter side view.\ntext_overlays: none\nbright_vehicle: yes"}},"user_text":"Yeah I am thinking this\nalso for window tint I can do any shade right?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"want colored ppf on my 750s"},"system_response_to_user_message_0":"Sweet, so colored PPF on the 750S would run $8320 + tax for the full body. Do you have an exact color in mind? If you do, can you shoot a pic of it over"}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2010 Infiniti G37x sedan."},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"thanks!"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2021 civic"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Civic would run $450 plus tax for our ceramic tint."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"ok sounds good"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Whats colored ppf run on my 2023 camry?"},"system_response_to_user_message_0":"Colored PPF on the Camry typically runs $6400 plus tax for the full body, it just depends on what color it is right now. Could you send a pic of it?","user_message_1":{"user_media":{},"user_text":"Actually just the clear on the front end, what would that run?"},"system_response_to_user_message_1":"Front end PPF on the Camry is $1600 plus tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Sweet thanks. I'm excited your work looks good on Instagram. Hey I was wondering would you guys be down for a discount if I post you on my business page."},"message_history":{"user_message_0":{"user_media":{},"user_text":"Looking to get our company vans wrapped"},"system_response_to_user_message_0":"For sure, are you looking for a full wrap, a half wrap or just decals on them?","user_message_1":{"user_media":{},"user_text":"33 Ford Transits, full wrap"},"system_response_to_user_message_1":"Perfect, just text it here or shoot an email at lonewraps@gmail.com. That's everything I need for the 33 Transits, I'll go over it with our commercial wrap lead and get a price back to you in about 30 minutes."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"how long does it usually take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Need our company logo and phone number on my 2022 f150"},"system_response_to_user_message_0":"For sure, we can do that. Are you looking for a full wrap, a half wrap or just decals on it?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"ok sounds good"},"message_history":{"user_message_0":{"user_media":{},"user_text":"what kind of ppf options do you guys have? its for my 2023 camry"},"system_response_to_user_message_0":"There's 3 options for PPF on the Camry: the windshield is $450 + tax, the front end is $1600 + tax and covers the full hood, fenders, bumper, headlights and mirrors, and the full body is $5900 + tax, which covers all the painted surfaces and comes with free side and rear window tint. We also do colored PPF if you ever wanted to change the color too. Which option are you leaning towards?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a graphic wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
+answer: True"""
+
+
+#WRAP ROUTE
+#read on every message while the job is a wrap or colored PPF, so the route goes on file the moment they pick one
+def wrap_route_criteria() -> str:
+    return """The customer picked or named the vinyl wrap as the film for the color change, in `current_user_message` or earlier in `message_history`, and hasn't moved off it since: "wrap", "vinyl", "vinyl wrap", "full wrap", "wrap it", a wrap named with the color ("satin black wrap", "how much to wrap my ram", "looking for a quote to wrap a 2024 ram 1500"), a Meta lead form naming vinyl wraps, a lead form reply that only names the job with the wrap in it ("Full wrap", "full wrap matte black"), a pic or post of a wrap they point to for the look they want ("can you do this on mine?"), or picking the wrap out of the two routes the shop laid out ("the wrap", "ill go with the vinyl", "think ill just stick with the wrap", "the cheaper one"). A wrap weighed against clear PPF or a ceramic coating is the wrap too: PPF with nothing about a color, named for protection or on its own ("a wrap or ppf?", "whats better for protecting it, a wrap or ppf?", "torn between a wrap and ppf, which would you go with?", "a vinyl wrap or the ceramic coating protective film", "what would a wrap and ppf each run?") is clear PPF, which doesn't change the color, so the wrap is the only route in that pair and there's nothing left to pick between the two routes. Only PPF set against the wrap for a color change ("color change, whats more, vinyl or ppf?") or named as colored is colored PPF. A wrap partial, a roof or a chrome delete is the wrap. A graphic wrap, graphics, a printed or custom design, a livery or a fade on their car ("Im looking to do a graphic wrap on my car") is a custom wrap the owner prices himself, never the wrap route, while a plain "wrap", "full wrap" or "wrap my car" with no design named is. Once picked, it stays the route through every later message that doesn't pick colored PPF instead, like the color they want, a pic of the vehicle, a question about the price, turnaround or warranty, or an objection to something else."""
+
+
+#COLORED PPF ROUTE
+#read next to the wrap route, so picking colored PPF as the film goes on file the moment they say it
+def colored_ppf_route_criteria() -> str:
+    return """The customer picked or named colored PPF as the film for the color change, in `current_user_message` or earlier in `message_history`, and hasn't moved off it since: "colored ppf", "color ppf", "colored paint protection film", "color change ppf", "ppf in a color", PPF named with a color or a finish over a different paint color ("matte black ppf", "pff wrap matte black", "ppf in a midnight purple"), something that both protects the paint and changes the color, or picking colored PPF out of the two routes the shop laid out ("colored ppf", "the ppf one", "colored ppf sounds sick, ill go that route", "the one that protects the paint", "the thicker one"). Colored PPF asked about against clear PPF ("stealth or colored", "how much more for color ppf" after a clear quote) is colored PPF, the only way to change the color in that pair. Once picked, it stays the route through every later message that doesn't pick the wrap instead."""
+
+
+#UNDECIDED ROUTE
+#read next to the wrap and colored PPF routes, for a color change with neither film picked yet
+def undecided_route_criteria() -> str:
+    return """The customer wants the color changed but hasn't picked or named either film, or is weighing the wrap against colored PPF: a color change with no film named ("wanna change the color", "color change", "thinking about changing the color", "want it a different color", "black out my whole truck", "how much to change the color on my civic", "thinking matte black on it", "getting tired of the silver, want something different"), a color they want with no film named ("satin black prob", "thinking a gloss white"), asking about the two routes without picking ("whats the difference between colored ppf and a vinyl wrap?", "which one is better?" after the shop laid out the two routes, "colored ppf or vinyl, depending on the price", "how long does each one take?", "dang why is the ppf so much more", or vinyl against PPF asked about a color change, "Color change, whats more, vinyl or ppf?"), or a follow up that names no film after the shop laid out both routes (a pic of the vehicle, "how much is it", "cant send a pic rn", the color it is now typed). A wrap against clear PPF or a coating, PPF with nothing about a color, isn't the two routes, that's the wrap. A conversation that never had a color change in it at all (only clear PPF, tint, a coating or the shop itself) is undecided too, since there's no film to pick, and so is one with only a custom design in it (a graphic wrap, a printed design, a livery or a fade the owner prices himself)."""
+
+
+#ROUTE EXAMPLES
+#sample conversations with the route each one is on, so a color or a pic never gets read as picking a film
+def color_route_examples() -> str:
+    return r"""The route is the film, never the color: a color they name or a pic of a color never picks a film, and neither does the shop's reply naming one. Only the customer's own words pick it, in `current_user_message` or earlier in `message_history`, and the latest pick wins ("actually lets do the colored ppf instead" after the wrap is colored_ppf). Customers text fast, so a typo is the closest film ("wrao" is a wrap, "pff" or "ppd" is PPF).
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Wanna change the color "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien G, I am interested in your services, the vehicle I have is 2015 McLaren p1."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the P1. What are you looking to get done?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a quote to wrap a 2024 ram 1500"},"message_history":{}}
+route: wrap
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Vinyl Wraps the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"How much for colored ppf on my 2023 tahoe?"},"message_history":{}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{},"user_text":"Sup Hazel Want colored PPF "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien P, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{},"user_text":"how much to change the color on my 2023 f150"},"message_history":{}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"thinking about going matte black on my 2021 tahoe"},"message_history":{}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"Satin black prob. its white rn"},"message_history":{"user_message_0":{"user_text":"hello my name is Damien G, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Wanna change the color "},"system_response_to_user_message_1":"For sure, there's two ways we can go on the 570S. A vinyl wrap is the more affordable one and comes in pretty much any color and finish, and colored PPF is basically our paint protection film with the color in it, so it changes the color and takes the rock chips too, it's about twice as thick as vinyl and lasts about double. Which route are you leaning towards?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"think ill just stick with the wrap"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Want to change the color on my 21 q5"},"system_response_to_user_message_0":"Yeah, we can do that, there's two ways to go on the Q5. A vinyl wrap is the more affordable one in pretty much any color and finish, and colored PPF changes the color and protects the paint from rock chips at the same time. Which route are you leaning towards?"}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"colored ppf sounds sick, ill go that route"},"message_history":{"user_message_0":{"user_media":{},"user_text":"looking at a color change on my 2023 telluride"},"system_response_to_user_message_0":"For sure, a vinyl wrap is the more affordable way to change it and comes in pretty much any color and finish, and colored PPF is a thicker self healing film in a color, so it protects the paint from chips while it changes the color. Which route are you leaning towards?"}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{},"user_text":"How much is the PPF? The colored one And ok let me snap a pic "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is Porche 9111 gt3rs 2025."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 911 GT3 RS. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Wanna change the color "},"system_response_to_user_message_1":"For sure, there's two ways we can go on the 911 GT3 RS. A vinyl wrap is the more affordable route and comes in pretty much any color and finish, and colored PPF is basically our protective film with the color in it, so it changes the color and takes the rock chips too, it's about twice as thick as vinyl and lasts about double. Which route are you leaning towards?"}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{},"user_text":"Whats the difference between colored ppf and just a vinyl wrap?"},"message_history":{}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"Hey what’s up bro\nI was thinking of getting colored PPF\nOr vinyl wrap\nDepending on the price"},"message_history":{"user_message_0":{"user_text":"hello my name is d g, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy D, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"honestly which one is better?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Want to go a different color on my 2024 tesla model 3"},"system_response_to_user_message_0":"For sure, you can go with a vinyl wrap, which is the more affordable way and comes in pretty much any color and finish, or colored PPF, which changes the color and takes the rock chips at the same time and lasts about double a wrap. Which route are you leaning towards?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a glossy bright red McLaren P1 sports car in a showroom, shown in a three quarter front view with its doors open upward, black wheels and dark trim.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"},"media_element_1":{"media_description":"brief_description: A photo of a glossy deep red two door supercar, front three quarter view, with a black roof and a large rear wing, parked on a brick paved drive.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":""},"message_history":{"user_message_0":{"user_text":"hello my name is Damien G, I am interested in your services, the vehicle I have is 2015 McLaren p1."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the P1. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Sup Hazel\nWanna change the color"},"system_response_to_user_message_1":"What's up, there's two ways we can go on the P1. A vinyl wrap is the more affordable one in pretty much any color and finish, and colored PPF is a thicker self healing film in a color, so it protects the paint from rock chips at the same time and lasts about double a wrap. Which route are you leaning towards?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a gray Ford Mustang GT in a parking lot, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2021 mustang gt"},"system_response_to_user_message_0":"For sure, a wrap on the Mustang typically runs $2950 + tax, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color are you wanting to go, and what color is it right now? Send me a pic if you can"}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"How long would you need it for?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Looking for a quote to wrap a 2024 ram 1500"},"system_response_to_user_message_0":"Yeah, we can do that, a wrap on the Ram typically runs $3450 + tax, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color are you wanting to go, and what color is it right now? Send me a pic if you can"}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"New phone, it’s in Miami. It’s red though No pics on this phone "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sup Hazel Want colored PPF "},"system_response_to_user_message_0":"Yeah, we can do colored PPF on the 570S, it typically runs $8320 + tax for the full body. That covers all the painted surfaces, we clay bar your car and give it a decontamination wash beforehand, and it comes with free side and rear window tint. What color is it right now? Send me a pic if you can"}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{},"user_text":"Trying to decide on a wrap or ppf for my kia sorento, what would each one run?"},"message_history":{}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"Well I'm deciding on a vinyl wrap or the ceramic coating protective film"},"message_history":{"user_message_0":{"user_text":"hello my name is tristan walker, I am interested in your services, the vehicle I have is 2026 Tesla model Y."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel at the Lone Wraps team, saw your quote request on the Model Y. What are you looking to get done?"}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"How much more for color ppf"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf full vehicle on my 2026 tesla model y?"},"system_response_to_user_message_0":"Full body PPF on the Model Y would be $5900 plus tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Did you want to hop on the schedule?"}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{},"user_text":"actually lets do the colored ppf instead"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2022 wrangler matte army green"},"system_response_to_user_message_0":"Matte army green on the Wrangler typically runs $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
+route: colored_ppf
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a gloss white Ford Bronco with black wheels, front three quarter view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"Can you do this on my 2023 bronco?"},"message_history":{}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"Sides and rear on my 2021 civic"},"message_history":{}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"Whats better for protecting my 2024 bmw m3, a wrap or ppf?"},"message_history":{}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"Torn between a wrap and ppf on my 2022 4runner, which would you go with?"},"message_history":{}}
+route: wrap
+state: {"current_user_message":{"user_media":{},"user_text":"Color change What’s more, vinyl or of Ppf*** "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien G, I am interested in your services, the vehicle I have is honda crv 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the CR-V. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"I have a 2025 z06 Corvette "},"system_response_to_user_message_1":"Sweet, and what are you looking to get done on the Corvette?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a graphic wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
+route: undecided
+state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
+route: wrap"""
+
+
+#ROUTE QUESTION
+#the question the decisions model answers about which film they're going with for the color change
+def color_route_instructions() -> str:
+    return "The shop changes a vehicle's color two ways, a vinyl wrap or colored PPF, and calls the one the customer is going with the route. Which route is the customer on in this conversation, going by `current_user_message` read in light of `message_history`: the vinyl wrap (they named or picked it, or it's the only one of the two that came up, like a wrap weighed against clear PPF or a coating), colored PPF (they named or picked it), or undecided (they want the color changed with neither named, or they're weighing the wrap against colored PPF)?"
+
+
+
+#**********BOOKING INTENT**********
+#what asking to get on the schedule looks like, so a booking ask with a job question gets answered
+
+
+#BOOKING INTENT
+#read on messages the router sent here, so a booking ask with a job question still ends on the schedule question
+def booking_intent_examples() -> str:
+    return r"""Yes: in `current_user_message` they ask to get on the schedule or the books, to book it or make an appointment, when they can get in or bring it in, whether there's an opening on a day, this week or next week, what the shop's schedule or availability looks like ("Ok what’s your schedule look like"), or how far out the shop is booked, or they say they want to get it done or go ahead with it, even when the same message also asks about a service, its price or anything else ("Window tint, can I get on the books?", "how much for front end ppf? can I get in this week?").
+No: they only ask about a service, its price, how long it takes, the warranty, the shop's hours or where it is, they want to come by to look at colors or samples, they ask how to get the vehicle ready for a day already set, or they say they're still thinking it over or deciding and only ask what's open, or they answer the shop's ask for a pic or something else it needs, saying they'll take, snap, grab or send one, or when they will ("Yes I can later today", "ok ill send it tonight"): "when" there is about the pic, never about bringing the vehicle in. A lead form ("hello my name is <name>, I am looking to get the service of <service> the vehicle I have is <vehicle>" or "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>.") is only a quote request, never a booking ask. A booking ask from an earlier message in `message_history` never counts, only `current_user_message`.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Window tint, can I get on the books? "},"message_history":{"user_message_0":{"user_text":"hello my name is tristan walker, I am interested in your services, the vehicle I have is Honda Accord 2021."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel at the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how much for front end ppf on my 2023 camry? can i get in this week"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Niels Bohr, I am looking to get the service of Vinyl Wrap the vehicle I have is mclaren 570s 2021"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_text":"hello my name is Alan Turing, I am looking to get the service of Window Tint the vehicle I have is 2021 honda accord"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"I'd like to schedule a time to bring my 2026 mazda cx-5 in to tint all windows"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Does the ceramic coating come with any warranty? How far out are you booked?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"What about a ceramic coat on my 2021 wrangler?"},"system_response_to_user_message_0":"Sweet, so a ceramic coating on the Wrangler would run $700 plus tax, that covers all the painted surfaces and the coating lasts for years."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"want to get my civic tinted, when can i bring it in?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how long does it take? id like to get it booked"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2021 civic"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Civic would run $450 plus tax for our ceramic tint."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Window tint"},"message_history":{"user_message_0":{"user_text":"hello my name is tristan walker, I am interested in your services, the vehicle I have is Honda Accord 2021."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel at the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"how long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Window tint, can I get on the books?"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Accord would run $450 plus tax for our ceramic tint. Did you want to hop on the schedule?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"still thinking it over, do you guys have anything open next week?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 accord"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Accord would run $1600 plus tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"can i swing by today to look at the tint shades?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Do I need to wash it before I bring it in?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"whats the warranty on the ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 accord"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Accord would run $1600 plus tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Yes I can mater today"},"message_history":{"user_message_0":{"user_media":{},"user_text":"I’m thinking Ppf but I’m not sure what it costs"},"system_response_to_user_message_0":"Colored PPF on the Ranger typically runs $7400 + tax for the full body. That covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. What color is it right now? Send me a pic if you can","user_message_1":{"user_media":{},"user_text":"It’s black now\nI don’t have a photo"},"system_response_to_user_message_1":"No worries, so the $7400 + tax I gave you is our typical price, but it does depend on the exact color of the Ranger. If it's not too much trouble could you snap a pic of it whenever you get the chance, that way I can see the exact black"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"yep can do, ill send it tonight"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2021 civic"},"system_response_to_user_message_0":"For sure, a wrap on the Civic typically runs $2950 + tax, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
+answer: False"""
+
+
+
+#**********PRICE QUESTION**********
+#what asking about the price looks like, so the shop's first reply only gives one when they asked for it
+
+
+#PRICE QUESTION
+#read on the shop's first reply, the one reply a price only goes out in when they asked for one
+def price_question_examples() -> str:
+    return r"""Yes: in `current_user_message` they ask what something costs or runs, in any words: how much, the price, pricing, the cost, rates, a quote, an estimate, a ballpark or a rough idea ("how much to wrap my 2021 civic?", "what do you charge for tint?", "Looking for a quote to wrap a 2024 ram 1500", "pricing on full body ppf?", "how much would this be?" about a pic), how the prices compare or which one is cheaper ("what's more, vinyl or ppf?", "what would each one run?"), whether something costs extra, a discount or a deal, or a price they saw ("is the $2500 wrap special still going?"), and a budget or a number they want it to come in at ("trying to stay under 4k", "we'd like to keep it around $800"), even when the same message also asks about anything else or names the job.
+No: they only name the job or say they want it done, with nothing asking what it costs ("want to wrap my 2020 mustang", "Front end ppf on my 2023 camry", "Full tint on my 2022 suburban"), ask whether the shop does a service ("do you guys do tint?", "can you put a ceramic coating on my sierra?"), ask anything else about it (colors, finishes, how long it takes, the warranty, the film, the law, a deposit, financing), ask to get on the schedule, ask about the shop's hours or where it is, send a pic of their vehicle or a look they want with no price question, or just say hi. A lead form ("hello my name is <name>, I am looking to get the service of <service> the vehicle I have is <vehicle>" or "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>.") is never asking the price, even though the shop calls it a quote request. Only `current_user_message` counts.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"how much to wrap my 2021 civic?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a quote to wrap a 2024 ram 1500"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"what do yall charge for tint on a 2022 tacoma"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Trying to decide on a wrap or ppf for my kia sorento, what would each one run?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"want a full wrap on our company car, trying to stay under 4k"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description(if applicable)":"brief_description: A digital mockup of a white Ford Transit van with a blue company logo, a phone number and a website on the side.\nservice_ques: Commercial wrap or decals.\ntext_overlays: SUMMIT PLUMBING, (801) 555-0142, summitplumbing.com\nbright_vehicle: no","post_description(if applicable)":""}},"user_text":"This is what we want on our van, how much would it be?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Wanting colored ppf on my 2023 model y, is it a lot more than a wrap?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Hey do you guys do military discounts? Looking to get my 2022 f150 tinted"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Manny A Comparan, I am looking to get the service of Vinyl Wrap the vehicle I have is 2014 jeep SRT"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_text":"hello my name is Alan Turing, I am looking to get the service of Window Tint the vehicle I have is 2021 honda accord"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2010 Infiniti G37x sedan."},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"want to wrap my 2020 mustang"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"do you guys do tint? its for my 2021 rav4"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Window tint on my 2021 accord, can I get on the books?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"how long does a full wrap take? thinking satin black on my 2022 model 3"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description(if applicable)":"brief_description: A photo of a white Toyota Tacoma parked in a driveway, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no","post_description(if applicable)":""}},"user_text":"want my truck matte black"},"message_history":{}}
+answer: False"""
+
+
+
+#**********MORE SERVICES**********
+#what asking about a ceramic coating or the shop's services in general looks like
+
+
+#CERAMIC COATING
+#what asking about a ceramic coating looks like, read with the analyzer's coating question
+def ceramic_coating_examples() -> str:
+    return r"""Yes: a ceramic coating on the paint, a wrap or PPF. "ceramic coating", "ceramic coat", "coating", "ceramic the car", "ceramic over the wrap", "ceramic on top of the PPF", a 2, 3, 4, 5 or 8 year coating, the coating deal or special, a protective coating, sealant or "something to make the wrap last longer or keep it cleaner", a question about the coating's price (on its own or on top of a wrap, PPF or colored PPF), whether it's included or free with a wrap or PPF, its brand or product, how long it lasts, what it does or protects against, rock chips or scratches, whether it hides scratches or blemishes, whether it changes the look or finish of the wrap, what it covers (the headlights, taillights, trim, fender flares, a hardtop, the glass, the wheels), warranty, how long it takes, cure time, washing or aftercare, prep or a paint correction before it, doing the coating themselves, a coating already on their paint before a wrap or PPF, undercoating, or a follow up to a coating quote. "Ceramic" on its own with nothing saying tint ("How much for ceramic on my 2021 camry?") is Yes, the reply asks which one they mean. A coating asked for together with a wrap, PPF, colored PPF or tint ("full wrap and ceramic coat", "front end ppf plus ceramic", "colored ppf + ceramic coating + window tint") is still Yes. A paint correction, buffing or polishing asked about on its own ("do you do paint correction?", "how much to buff out my truck?") is Yes too, it's part of the prep before a coating and the coating details answer it. The coating mixed up with PPF ("the ceramic coating protective film", "ceramic coating film") is Yes too, the reply clears up that they're two different things.
+No: ceramic window tint ("ceramic tint", "nano ceramic", "is that ceramic?" about the tint, a shade or percentage on the windows, "ceramic film"), a wrap, PPF, colored PPF or tint with no coating in `current_user_message` and none asked about with it earlier (a follow up that names no service after they asked about the coating with it is the whole job, see below), PPF or a wrap described as protection with no coating named ("protect the paint", "clear wrap"), a tint that blocks heat or UV, paint or body work, powder coating, bedliners, any other service, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?").
+Read `current_user_message` in light of `message_history`, never on its own: a short reply ("Coating", "2021 camry", "yes", "just the coating", "add it") or a follow up question ("how long does it last?", "whats the warranty?", "does it need to cure?") continues the coating already being discussed. That includes a coating they asked to have done together with another service (a coating on top of the wrap or the PPF they're getting): once the shop priced it, a follow up that names no service ("how long would you need it?", "what brand do you use?", "warranty?") asks about that whole job, so it's Yes for the coating too. Lead forms arrive as one sentence: a Meta form "hello my name is <name>, I am looking to get the service of <service> ... the vehicle I have is <vehicle>" is Yes only when the service it names is a ceramic coating, and a website form "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>." names no service, so No. A coating discussed only in earlier turns does NOT count once the current message clearly moves on to a different service ("Actually forget the coating, what would tint run?" is No). `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Do you do ceramic coating?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys do paint correction?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Whats the cost to buff out my 2020 f150? the paint has a lot of swirls"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What's your quote on a 2025 tesla model 3 for a ceramic coating?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much do you charge for a 3 year ceramic coating?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Can you put a ceramic coating on it too?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey how much would it cost to wrap a 2022 Tesla model y? Its white, thinking satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Model Y would run $2800 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Is that with the ceramic coating?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 plus tax for a full wrap, and that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Mainly interested in the paint protection film and ceramic coat for the whole vehicle, its a 2023 tahoe"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Well I'm deciding on a vinyl wrap or the ceramic coating protective film"},"message_history":{"user_message_0":{"user_text":"hello my name is tristan walker, I am interested in your services, the vehicle I have is 2026 Tesla model Y."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel at the Lone Wraps team, saw your quote request on the Model Y. What are you looking to get done?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much is full vehicle colored ppf + ceramic coating + window tint for tesla y 26"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What is a ceramic coating?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 kia k5, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the K5 would run $2950 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Does that ceramic coating help protect the wrap against rock chips or scratches?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 kia k5, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the K5 would run $2950 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How long does the ceramic coating last"},"message_history":{"user_message_0":{"user_media":{},"user_text":"What's your quote on a 2025 tesla model 3 for a ceramic coating?"},"system_response_to_user_message_0":"Sweet, so a ceramic coating on the Model 3 would run $700 plus tax, that covers all the painted surfaces and the coating lasts for years."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"how long would you guys need it for?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 mustang gt, its grey, want a satin black wrap"},"system_response_to_user_message_0":"Sweet, so satin black on the Mustang would run $2950 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty.","user_message_1":{"user_media":{},"user_text":"what would a ceramic coating on top of that run?"},"system_response_to_user_message_1":"A ceramic coating on top of the wrap is $350 + tax, that's the 50% off we do on a coating over a vinyl wrap, and the coating lasts for years and gets the wrap closer to 7 years instead of 5 or 6. Did you want that added on?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Coating"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ceramic on my 2021 camry?"},"system_response_to_user_message_0":"Do you mean a ceramic coating on the paint, or ceramic window tint?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much for ceramic on my 2021 camry?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What ceramic coating brand do you guys use?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"When you say let it cure for 24-48 hrs, is that okay in my unheated garage or would it need to stay with you?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"What about a ceramic coat on my 2021 wrangler?"},"system_response_to_user_message_0":"Sweet, so a ceramic coating on the Wrangler would run $700 plus tax, that covers all the painted surfaces and the coating lasts for years."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Will the ceramic coating change the appearance of the wrap at all?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Can you add the coating on the satin black wrap?"},"system_response_to_user_message_0":"Yeah, we offer a 50% off ceramic coating on top of a vinyl wrap, the coating lasts for years."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Do you do undercoating?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"I had ceramic coating applied about a year ago and not sure if it needs to be treated before applying a wrap. Is that something you do as part of the process?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 model y, its white, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Model Y would run $2800 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Sweet! Is there a way to make sure it's good to go through a car wash? Can we add a protective coating?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 plus tax for a full wrap, and that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Is that ceramic? And do you warranty it?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2021 civic"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Civic would run $450 plus tax for our ceramic tint."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Full 5% ceramic tint all around and 20% ceramic on windshield, 2017 audi a4"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Is the the nano ceramic?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2021 civic"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Civic would run $450 plus tax for our ceramic tint."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Either a clear wrap or ppf, just looking to protect the paint on my 2024 model 3"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a full wrap and window tinting"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Actually forget the coating, what would tint on the sides and rear run?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"What's your quote on a 2025 tesla model 3 for a ceramic coating?"},"system_response_to_user_message_0":"Sweet, so a ceramic coating on the Model 3 would run $700 plus tax, that covers all the painted surfaces and the coating lasts for years."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"I want to get a wrap on my car, do you guys do powder coating too?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Are you guys open today"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
+answer: False"""
+
+
+#GENERAL SERVICES
+#what asking about the shop's services in general looks like, read with the analyzer's general services question
+def general_services_examples() -> str:
+    return r"""Yes: the shop's services in general, not one service in particular. What services the shop offers or what it does ("what services yall offer", "what do you guys do", "what kind of work do you do", "what all do you offer"), whether it does anything besides a service ("do you only do wraps?", "what else do you do?"), the services as a whole with no service named (prices, specials, warranty or turnaround, "what are your prices like?"), or wanting a quote or some work done with no service named ("Could I get a quote on my car?", "how much would you guys charge for my 2022 silverado?", "I'm interested in your services"). A message that asks about the services in general along with one service ("what else do you do besides tint? and how much is tint on my civic") is still Yes.
+No: one or more services named with nothing asked about the services in general (a wrap, PPF, colored PPF, window tint or a ceramic coating, "do you guys do tint", "looking for a full wrap and window tinting"), a follow up to a service already being discussed, a job the services don't list ("do you do powder coating?"), or business questions like hours, address or phone number.
+Wanting the color changed ("wanna change the color", "want it a different color") names a service, the color change, so it is No, even when it answers the shop asking which service they want.
+Read `current_user_message` in light of `message_history`, never on its own: a short reply ("2019 civic", "yes") or a follow up question ("how long would it take?", "whats the warranty?") continues the service already being discussed, so it is No, and it is Yes only when no service has been named yet. Lead forms arrive as one sentence: a website form "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>." names no service, so Yes, and a Meta form "hello my name is <name>, I am looking to get the service of <service> ... the vehicle I have is <vehicle>" names one, so No. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"What services yall offer"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What are all the services you offer?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"what kind of work do you guys do"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys only do wraps or other stuff too?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What else do you guys do?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 plus tax for a full wrap, and that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"What do you offer besides tint? And how much is tint on my 2019 civic"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"How much would you guys charge for my 2022 silverado?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2010 Infiniti G37x sedan."},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Any specials going on right now?"},"message_history":{}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"Do you guys do tint"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Looking for a full wrap and window tinting"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much is PPF on the front end of a 2024 X5?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Window Tint the vehicle I have is 2010 Infiniti G37x sedan"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Window tint"},"message_history":{"user_message_0":{"user_text":"hello my name is Faith, I am interested in your services, the vehicle I have is 2010 Honda Accord."},"system_response_to_user_message_0":"Heyy Faith, this is Hazel at the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How much pof "},"message_history":{"user_message_0":{"user_text":"hello my name is Gabriel doe, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Gabriel, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"How long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Sides and rear on my 2021 f150"},"system_response_to_user_message_0":"Sweet, so sides and rear on the F150 would run $450 plus tax for our ceramic tint. Did you want to hop on the schedule?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Do you do powder coating?"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Are you guys open today"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"Wanna change the color "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is mclaren 570s 2021."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the 570S. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"thinking about changing the color on my truck"},"message_history":{}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"want it a different color"},"message_history":{"user_message_0":{"user_text":"hello my name is Faith, I am interested in your services, the vehicle I have is 2010 Honda Accord."},"system_response_to_user_message_0":"Heyy Faith, this is Hazel at the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?"}}
+answer: False
+state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a glossy metallic red McLaren P1 supercar, three quarter front view, parked on a brick paver driveway.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"}},"user_text":"This is her 🫠🫠🫠 Love that car more than my\nWife and kids And I’d kill for them So better not fuck my shit up 😡😡 Jk 😂 My baby "},"message_history":{"user_message_0":{"user_text":"hello my name is Damien Walker, I am interested in your services, the vehicle I have is mclaren p1."},"system_response_to_user_message_0":"Heyy Damien, this is Hazel at the Lone Wraps team, saw your quote request on the P1. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"What’s the warranty? Colored PPF "},"system_response_to_user_message_1":"Colored PPF comes with a lifetime warranty on anything that fails, bubbles or peels due to the install, road damage isn't covered. Could you send a pic of the P1?","user_message_2":{"user_media":{},"user_text":"That makes sense. Yeah let me take one real quick. "},"system_response_to_user_message_2":"Sounds good, send it over whenever you're ready."}}
+answer: False"""

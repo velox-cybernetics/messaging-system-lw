@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: messaging-system-lw
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    #one worker only, the message batching lives in process memory
+    #uvicorn only prints its warnings and errors, so the logs are just the held blocks
+    startCommand: uvicorn app:APP --host 0.0.0.0 --port $PORT --workers 1 --log-level warning
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      #uploaded as a render secret file named google_calendar_key.json
+      - key: GOOGLE_SERVICE_ACCOUNT_FILE
+        value: /etc/secrets/google_calendar_key.json
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: BLOOIO_API_KEY
+        sync: false
+      - key: BLOOIO_WEBHOOK_SECRET
+        sync: false
+      - key: TEXTBELT_API_KEY
+        sync: false
+      - key: HIL_RECIPENT
+        sync: false
+      - key: DEV_NUMBER
+        sync: false
+      - key: IG_ACCESS_TOKEN
+        sync: false
+      - key: IG_VERIFY_TOKEN
+        sync: false
+      - key: IG_APP_SECRET
+        sync: false
+      - key: MESSENGER_ACCESS_TOKEN
+        sync: false
+      - key: MESSENGER_VERIFY_TOKEN
+        sync: false
+      - key: MESSENGER_APP_SECRET
+        sync: false
+      - key: GOOGLE_CALENDAR_ID
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: DASH_REDIS_URL
+        sync: false
+      - key: DASH_REDIS_TOKEN
+        sync: false
+      - key: GHL_API_KEY
+        sync: false
+      - key: GHL_LOCATION_ID
+        sync: false
