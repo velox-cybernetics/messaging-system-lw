@@ -13,7 +13,7 @@ from src.prompts import shared
 def examples() -> str:
     return r"""
     Ex 1:
-    STATE: {"current_date_time":"Wednesday, October 07, 2026 at 10:00 AM","current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. Did you want to hop on the schedule?"},"followup_number":1}
+    STATE: {"current_date_time":"Wednesday, October 07, 2026 at 10:00 AM","current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. Did you want to hop on the schedule?"},"followup_number":1}
     Response: "Heyy just checking in! Still thinking about the matte black wrap on the Tacoma? 👀"
     REASON: The first follow up can open with Hazel's Heyy and a light check in, then picks the job back up by the vehicle and the color, with the playful 👀 on the check in. The schedule question the shop asked last comes back lightly as whether they're still thinking about it, one question and no price said again.
 

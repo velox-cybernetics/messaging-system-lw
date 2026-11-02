@@ -44,7 +44,7 @@ def examples() -> str:
     REASON: They're correcting the vehicle from the form, and the vehicle can change at any point, so the regular reply just goes on with the Tundra and asks which service they want on it (false case 14).
 
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Oh wait wrong car, its for my 2021 accord not the civic"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2019 civic, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Civic would run $2950 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Oh wait wrong car, its for my 2021 accord not the civic"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2019 civic, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Civic would run $2950 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     answer: False
     REASON: Switching to another vehicle is still the wrap they asked about, so the regular reply adjusts to the Accord and goes on from there (false case 14).
 
@@ -64,7 +64,7 @@ def examples() -> str:
     REASON: wrap_price has it, the regular reply just asks for the year and colors first (false case 4).
 
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"How thick is the vinyl you guys use?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2019 audi a4, its grey, want gloss white"},"system_response_to_user_message_0":"Sweet, so gloss white on the A4 would run $2950 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"How thick is the vinyl you guys use?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2019 audi a4, its grey, want gloss white"},"system_response_to_user_message_0":"Sweet, so gloss white on the A4 would run $2950 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     answer: False
     REASON: film_thickness has it.
 
@@ -96,7 +96,7 @@ def examples() -> str:
 
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Ceramic Coating", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Does it come with a warranty? Also do you guys do ceramic coating by itself?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2018 4runner, its silver, want gloss black"},"system_response_to_user_message_0":"Sweet, so gloss black on the 4Runner would run $3450 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Does it come with a warranty? Also do you guys do ceramic coating by itself?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2018 4runner, its silver, want gloss black"},"system_response_to_user_message_0":"Sweet, so gloss black on the 4Runner would run $3450 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     answer: False
     REASON: The wrap's warranty has it, and the coating on its own is in ceramic_price (false case 4).
 
@@ -136,7 +136,7 @@ def examples() -> str:
     REASON: The short reply answers the shop's question about something it said it would look into, so it is still not covered (true case 3).
 
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Sounds good, how do I get on the schedule?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 kia k5, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the K5 would run $2950 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Sounds good, how do I get on the schedule?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 kia k5, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the K5 would run $2950 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     answer: False
     REASON: Wanting to book, the regular reply handles that (false case 8).
 
@@ -388,7 +388,7 @@ def examples() -> str:
     REASON: #BUSINESS DETAILS says the shop isn't mobile, the vehicle gets brought in, so it's answered (false case 11).
 
     SERVICE_DETAILS: {"service": "Ceramic Coating", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Ok. I’ll have to pass for now on the ceramic coating.  I’m trying to figure out a ride for the drop off.  I’m excited!"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey how much would it cost to wrap a 2022 Tesla model y? Its white, thinking satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Model Y would run $2800 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty.","user_message_1":{"user_media":{},"user_text":"Can you put a ceramic coating on it too?"},"system_response_to_user_message_1":"Yeah, we offer a 50% off ceramic coating on top of a vinyl wrap, the coating lasts for years and it gets the wrap closer to 7 years instead of 5 or 6. Did you want that added on?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Ok. I’ll have to pass for now on the ceramic coating.  I’m trying to figure out a ride for the drop off.  I’m excited!"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey how much would it cost to wrap a 2022 Tesla model y? Its white, thinking satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Model Y would run $2800 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty.","user_message_1":{"user_media":{},"user_text":"Can you put a ceramic coating on it too?"},"system_response_to_user_message_1":"Yeah, we offer a 50% off ceramic coating on top of a vinyl wrap, the coating lasts for years and it gets the wrap closer to 7 years instead of 5 or 6. Did you want that added on?"}}
     answer: False
     REASON: Passing on the add on is an objection that asks for nothing new (false case 15), and the drop off is in #BOOKING DETAILS (false case 11).
 
@@ -403,7 +403,7 @@ def examples() -> str:
     REASON: The wrap's paint_correction answers it, minor things get a little extra prep before the wrap goes on (false case 4).
 
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"ok and what is that with tax?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 kia k5, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the K5 would run $2950 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"ok and what is that with tax?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 kia k5, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the K5 would run $2950 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     answer: False
     REASON: The tax is in SERVICE_DETAILS, 7.45% Utah sales tax on top of the price, so the regular reply works out the exact total with tax (false case 13).
 
@@ -419,7 +419,7 @@ def examples() -> str:
     REASON: Calling off a job the details don't price is still an objection, nothing is being asked, so the regular reply takes it in stride (false case 15).
 
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Wednesday, October 28, 2026 at 03:05 PM","current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a dark red Honda Civic Si sedan in gloss paint, side view, parked in a driveway. The hood and both doors have hazy, faded patches where the clear coat is failing.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"It is red. What do you guys do about clear coat failure?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2017 civic si"},"system_response_to_user_message_0":"For sure, a wrap on the Civic Si typically runs $2950 + tax, it just depends on what color it is right now, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
+    STATE: {"current_date_time":"Wednesday, October 28, 2026 at 03:05 PM","current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a dark red Honda Civic Si sedan in gloss paint, side view, parked in a driveway. The hood and both doors have hazy, faded patches where the clear coat is failing.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"It is red. What do you guys do about clear coat failure?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2017 civic si"},"system_response_to_user_message_0":"For sure, a wrap on the Civic Si typically runs $2950 + tax, it just depends on what color it is right now. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
     answer: False
     REASON: The pic is the one the shop asked for, and existing_paint with the sanding peeling paint add on answers the clear coat failure, worked out with logic for what a wrap does over it (false case 4).
 

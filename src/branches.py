@@ -158,15 +158,23 @@ OTHER_PICK: str = "other"
 
 
 #**********COLOR NOW**********
-#how many asks for a pic of their vehicle it takes before a color they type stands in for one
+#when a color they type stands in for a pic of their vehicle: right away when it's neutral, any other after enough asks for one
 
 
 #PIC ASKS
-#after this many replies asked for a pic of their vehicle with none coming, the color it is now they type goes on file in its place
+#after this many replies asked for a pic of their vehicle with none coming, any color it is now they type goes on file in its place
 COLOR_PIC_ASK_LIMIT: int = 2
 
 #a color it is now on file from their text is marked with this, since no pic's bright_vehicle says whether it's a bright color
 TYPED_COLOR_SOURCE: str = "text"
+
+
+#TYPED COLOR FIELDS
+#what the typed color extractor reads: the color it is now they typed, whether it's a bright color and whether it's a neutral one
+TYPED_COLOR_FIELD_NAMES: list[str] = ["color", "bright", "neutral"]
+
+#next to the color on file, a color they typed says so, with whether it's bright since no pic's bright_vehicle says it
+TYPED_COLOR_INFO_NAMES: list[str] = ["color_from", "color_bright"]
 
 
 
@@ -764,6 +772,81 @@ def note_color_pic_ask(id: str, reply: str) -> None:
     print(f"COLOR PIC ASKS: {asks}")
 
 
+#TYPED COLOR READ
+#the color it is now they typed anywhere in the conversation, whether it's bright and whether it's neutral, the color empty when they never typed it
+def typed_color_read(user_message: dict, message_history: dict) -> tuple[str, bool, bool]:
+    #the whole conversation, since they may have typed the color before the shop asked for it
+    conversation: dict = {"current_user_message": user_message, "message_history": message_history}
+
+    typed_output: str = models.extract_typed_color(state_form.state_to_text(conversation))
+
+    typed_values: list[str] = models.extractor_values(typed_output, TYPED_COLOR_FIELD_NAMES)
+
+    neutral: bool = typed_values[TYPED_COLOR_FIELD_NAMES.index("neutral")].lower() == "yes"
+
+    #a neutral color is never a bright one, whatever the bright read says
+    bright: bool = typed_values[TYPED_COLOR_FIELD_NAMES.index("bright")].lower() == "yes" and not neutral
+
+    return (typed_values[TYPED_COLOR_FIELD_NAMES.index("color")], bright, neutral)
+
+
+#TYPED COLOR CHECK
+#a neutral color they typed goes on file as the color it is now right away, since it's never a bright one, any other once the asks for a pic ran out, "" when nothing went on file
+def typed_color_check(user_message: dict, message_history: dict, id: str) -> str:
+    typed_read: tuple[str, bool, bool] = typed_color_read(user_message, message_history)
+
+    typed_color: str = typed_read[0]
+
+    #they never typed it, so it stays missing till a pic or the color comes
+    if(typed_color == ""):
+        return ""
+
+    neutral: bool = typed_read[2]
+
+    #before the asks ran out only a neutral color goes by what they typed, any other still waits on the pic
+    if(not neutral and color_pic_asks(id) < COLOR_PIC_ASK_LIMIT):
+        print(f"TYPED COLOR: {typed_color} isn't neutral, so the pic of it still gets asked for")
+
+        return ""
+
+    bright: str = "yes" if typed_read[1] else "no"
+
+    log.write_info(f"criticalInfo_{id}", [typed_color, TYPED_COLOR_SOURCE, bright], ["color", *TYPED_COLOR_INFO_NAMES])
+
+    print(f"TYPED COLOR: {typed_color} (bright: {bright}, neutral: {'yes' if neutral else 'no'}) goes on file in place of a pic of it")
+
+    return typed_color
+
+
+#COLOR NOW STATE
+#a color they typed in place of a pic goes in the state with whether it's bright, so every reply prices it like a pic of it
+def add_color_now(state: dict, critical_info: dict[str, str]) -> dict:
+    if(critical_info.get("color_from") != TYPED_COLOR_SOURCE):
+        return state
+
+    state["color_now"] = {"color": critical_info.get("color", ""), "bright_vehicle": critical_info.get("color_bright", "no")}
+
+    return state
+
+
+#FIRST COLOR FILL
+#the state build only reads a color they typed once the job is on file, so a neutral one typed with the job when it first comes up goes on file here
+#a read that fails only leaves the pic to be asked for, so it never stops the reply
+def first_color_fill(state: dict, id: str) -> None:
+    if(not color_now_missing(id)):
+        return
+
+    try:
+        typed_color_check(state["current_user_message"], state["message_history"], id)
+
+    except Exception as error:
+        print(f"TYPED COLOR ERROR: {error}")
+
+        return
+
+    add_color_now(state, log.read_info(f"criticalInfo_{id}"))
+
+
 #MARK JOB
 #a booking held for the color goes back to the pricing branch on the job on file, both codes when none is named yet
 def turn_color_job_on(id: str) -> None:
@@ -1170,6 +1253,9 @@ def booking_intent(state: dict) -> bool:
 #PRICING REPLY
 #the reply and whether the service details had no answer for their message, the lack info reply goes out then
 def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
+    #the state build only read a color they typed when the wrap or colored PPF job was already on
+    job_was_on: bool = len(color_job_on_file(id)) > 0
+
     services: tuple[list[str], list[str]] = pricing_services(state, id)
 
     service_details: dict[str, dict] = models.analyzed_details(services[0], PRICING_DETAILS, PRICING_GENERAL_CODE)
@@ -1189,6 +1275,10 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
     #the film they picked goes on file before the prompt gets picked, so the route gets asked before any color question
     if(color_job_on):
         color_route(state, services[0], id)
+
+        #the job just came up, so a neutral color they typed with it goes on file before the prompt gets picked
+        if(not job_was_on):
+            first_color_fill(state, id)
 
         critical_info = log.read_info(f"criticalInfo_{id}")
 

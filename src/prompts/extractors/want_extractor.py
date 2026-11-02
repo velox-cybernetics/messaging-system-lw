@@ -21,7 +21,7 @@ def examples() -> str:
     REASON: A link sent right after the shop asked for the exact color, with "this one" pointing to it, is the color they want. The link's words name it, and the link itself never goes in the field.
 
     Ex 3:
-    SHOP_LAST_REPLY: Yeah, we can do that, a wrap on the Camaro typically runs $2950 plus tax, it just depends on what color it is right now, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty. What color are you wanting to go, and could you send a pic of it?
+    SHOP_LAST_REPLY: Yeah, we can do that, a wrap on the Camaro typically runs $2950 plus tax, it just depends on what color it is right now. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color are you wanting to go, and could you send a pic of it?
     USER_MESSAGE: here she is
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A photo of a red Chevrolet Camaro in a driveway, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"}}
     Response: WANT:

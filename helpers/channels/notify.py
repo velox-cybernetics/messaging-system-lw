@@ -56,7 +56,7 @@ def vehicle_text(id: str) -> str:
     if(critical_info.get("color")):
         vehicle = f"{vehicle}, {critical_info['color']} now"
 
-    #they typed it after the shop asked twice for a pic, so no pic ever showed it
+    #they typed it, a neutral color right away or any other after the shop asked twice for a pic, so no pic ever showed it
     if(critical_info.get("color_from") == branches.TYPED_COLOR_SOURCE):
         vehicle = f"{vehicle} (typed, no pic)"
 

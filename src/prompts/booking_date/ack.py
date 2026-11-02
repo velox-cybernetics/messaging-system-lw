@@ -15,7 +15,7 @@ def examples() -> str:
     Ex 1:
     OPEN_DATES: []
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Sounds good lets book it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 suburban, its silver, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Suburban would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Sounds good lets book it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 suburban, its silver, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Suburban would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Sounds good, let me look at the schedule and get back to you with the next opening for drop off."
     REASON: No day could be offered, so their go ahead gets a Sounds good, then no day, nothing about how booked the shop is and no question, someone from the shop follows up with the next opening.
 

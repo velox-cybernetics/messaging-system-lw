@@ -15,19 +15,11 @@ from src import branches
 
 
 #**********GLOBALS**********
-#the vehicle details every price needs, and how a color they typed in place of a pic goes on file
+#the vehicle details every price needs
 
 
 #CRITICAL FIELDS
 CRITICAL_FIELD_NAMES: list[str] = ["make", "model", "color"]
-
-
-#TYPED COLOR FIELDS
-#what the typed color extractor reads, the color it is now and whether it's a bright color
-TYPED_COLOR_FIELD_NAMES: list[str] = ["color", "bright"]
-
-#next to the color on file, a color they typed says so, with whether it's bright since no pic's bright_vehicle says it
-TYPED_COLOR_INFO_NAMES: list[str] = ["color_from", "color_bright"]
 
 
 
@@ -81,7 +73,7 @@ def message_history_read(id: str) -> dict:
 
 
 #**********VEHICLE READS**********
-#reads their make, model, color now and the exact color they want out of the message and saves them, the color now they typed once the pic asks run out
+#reads their make, model, color now and the exact color they want out of the message and saves them, and the color now they typed, right away when it's neutral or once the pic asks run out
 
 
 #VEHICLE CHECK
@@ -105,7 +97,7 @@ def critical_info_check(user_message: dict, message_history: dict, id: str) -> s
 
     #a pic of their vehicle shows the color it is now over one they typed
     if(color_now != ""):
-        log.clear_info(f"criticalInfo_{id}", TYPED_COLOR_INFO_NAMES)
+        log.clear_info(f"criticalInfo_{id}", branches.TYPED_COLOR_INFO_NAMES)
 
     return color_now
 
@@ -173,41 +165,13 @@ def color_only_message(user_message: dict, id: str) -> dict:
     return color_message
 
 
-#TYPED COLOR CHECK
-#the shop asked twice for a pic of their vehicle with none coming, so the color it is now they typed goes on file in its place
-def typed_color_check(user_message: dict, message_history: dict, id: str) -> str:
-    #the whole conversation, since they may have typed the color before the asks
-    conversation: dict = {"current_user_message": user_message, "message_history": message_history}
-
-    typed_output: str = models.extract_typed_color(state_form.state_to_text(conversation))
-
-    typed_values: list[str] = models.extractor_values(typed_output, TYPED_COLOR_FIELD_NAMES)
-
-    typed_color: str = typed_values[TYPED_COLOR_FIELD_NAMES.index("color")]
-
-    #they never typed it, so it stays missing till a pic or the color comes
-    if(typed_color == ""):
-        return ""
-
-    bright: str = "yes" if typed_values[TYPED_COLOR_FIELD_NAMES.index("bright")].lower() == "yes" else "no"
-
-    log.write_info(f"criticalInfo_{id}", [typed_color, branches.TYPED_COLOR_SOURCE, bright], ["color", *TYPED_COLOR_INFO_NAMES])
-
-    print(f"TYPED COLOR: {typed_color} (bright: {bright}) goes on file in place of a pic of it")
-
-    return typed_color
-
-
 #TYPED COLOR FILL
-#only once the shop asked enough times and the color it is now is still missing after this message's vehicle check
+#a neutral color they typed goes on file right away and any other once the shop's asks for a pic ran out, while the color it is now is still missing after this message's vehicle check
 def typed_color_fill(user_message: dict, message_history: dict, id: str) -> None:
     if(not branches.color_now_missing(id)):
         return
 
-    if(branches.color_pic_asks(id) < branches.COLOR_PIC_ASK_LIMIT):
-        return
-
-    retry.with_retries("TYPED COLOR ERROR", typed_color_check, [user_message, message_history, id])
+    retry.with_retries("TYPED COLOR ERROR", branches.typed_color_check, [user_message, message_history, id])
 
 
 
@@ -242,17 +206,6 @@ def add_just_booked(state: dict, id: str) -> dict:
     return state
 
 
-#COLOR NOW
-#a color they typed in place of a pic goes in the state with whether it's bright, so every reply prices it like a pic of it
-def add_color_now(state: dict, critical_info: dict[str, str]) -> dict:
-    if(critical_info.get("color_from") != branches.TYPED_COLOR_SOURCE):
-        return state
-
-    state["color_now"] = {"color": critical_info.get("color", ""), "bright_vehicle": critical_info.get("color_bright", "no")}
-
-    return state
-
-
 #BRANCH STATE
 #the vehicle check runs first, then the state gets built with anything they just booked
 def branch_state(user_message: dict, message_history: dict, id: str, current_message_batch: list) -> tuple[dict, dict[str, str]]:
@@ -267,7 +220,7 @@ def branch_state(user_message: dict, message_history: dict, id: str, current_mes
     if(color_pic and len(branches.color_job_on_file(id)) > 0):
         user_message = color_only_message(user_message, id)
 
-    #two asks for a pic of their vehicle with none coming, so a color they typed stands in for it from here on
+    #a neutral color they typed stands in for a pic of their vehicle right away, any other once two asks for one went unanswered
     typed_color_fill(user_message, message_history, id)
 
     critical_info: dict[str, str] = log.read_info(f"criticalInfo_{id}")
@@ -276,7 +229,7 @@ def branch_state(user_message: dict, message_history: dict, id: str, current_mes
 
     state = add_just_booked(state, id)
 
-    state = add_color_now(state, critical_info)
+    state = branches.add_color_now(state, critical_info)
 
     print(state)
 

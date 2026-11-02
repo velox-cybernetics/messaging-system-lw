@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, senders and reply chains, the kept pics, and the instagram and messenger servers
+#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, ghl that logs every text a customer sends, senders and reply chains, the kept pics, and the instagram and messenger servers
 import asyncio
 import hashlib
 import hmac
@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse, Response
 from helpers.state.log import REDIS_CLIENT
 from helpers.state import owner
 from helpers.state import dashboard
+from helpers.state import ghl
 from helpers.state import journal
 from helpers.state.state_form import message_history_form, media_urls
 from helpers.response import spacing
@@ -583,6 +584,9 @@ async def blooio_hook(request: Request) -> dict | JSONResponse:
         if(await new_message(message_id)):
             #the owner's number only ever answers color checks, so nothing from it goes in the batch, every customer's text does
             if(not await owner_checked(id, text, attachments)):
+                #ghl never sees blooio, so every text a customer sends goes in their conversation there, switched on in the dashboard or not
+                ghl.log_received(id, text, attachments)
+
                 #every message shows in the dashboard, and only one from a customer switched on there gets batched
                 if(await asyncio.to_thread(dashboard.take_in, id, "blooio", [text, attachments])):
                     #on file before it waits in the batch, so a restart while it waits never loses it

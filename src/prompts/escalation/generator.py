@@ -48,7 +48,7 @@ def examples() -> str:
     REASON: No saying it was or wasn't charged twice, and nothing about money going back.
 
     Ex 8:
-    STATE: {"current_date_time":"Thursday, October 22, 2026 at 01:50 PM","current_user_message":{"user_media":{},"user_text":"The invoice says $3800 but you guys told me $3450. Whats going on"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 f150, its blue, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the F150 would run $3450 plus tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Thursday, October 22, 2026 at 01:50 PM","current_user_message":{"user_media":{},"user_text":"The invoice says $3800 but you guys told me $3450. Whats going on"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 f150, its blue, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the F150 would run $3450 plus tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Let me look into the invoice for you, sorry about that."
     REASON: Never saying which price is right or why they're different, and no amount said back.
 

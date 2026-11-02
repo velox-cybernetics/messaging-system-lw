@@ -16,7 +16,7 @@ def examples() -> str:
     SERVICES_PRICING: {"Full Wrap in matte black on the Suburban": "$3450 plus tax"}
     TOTAL: $3450 plus tax
     DEPOSIT: $690
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Sounds good lets book it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 suburban, its silver, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Suburban would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Sounds good lets book it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 suburban, its silver, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Suburban would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Sounds good, let me check the schedule real quick."
     REASON: A plain go ahead, so it gets a few words taking it in, then the check, with no day, no price and no question.
 
@@ -31,7 +31,7 @@ def examples() -> str:
     SERVICES_PRICING: {"Full Wrap in satin grey on the Camaro": "$3200 plus tax"}
     TOTAL: $3200 plus tax
     DEPOSIT: $640
-    STATE: {"current_date_time":"Thursday, October 15, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"yeah lets do it\nhow long would you need it?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2020 camaro, its white, want satin grey"},"system_response_to_user_message_0":"Sweet, so satin grey on the Camaro would run $3200 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Thursday, October 15, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"yeah lets do it\nhow long would you need it?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2020 camaro, its white, want satin grey"},"system_response_to_user_message_0":"Sweet, so satin grey on the Camaro would run $3200 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "A wrap takes about 3 to 5 days. Let me check the schedule real quick."
     REASON: Every text they sent gets taken in. The question gets answered first from #GENERAL SERVICE DETAILS, which also takes in their go ahead, so there's no Sounds good, then the check.
 
@@ -54,7 +54,7 @@ def examples() -> str:
     SERVICES_PRICING: {"Full Wrap in satin black on the Tacoma": "$3450 plus tax"}
     TOTAL: $3450 plus tax
     DEPOSIT: $690
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"can I drop it off monday?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Tacoma would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"can I drop it off monday?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Tacoma would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Let me check the schedule for Monday real quick."
     REASON: Never a yes or a no on the day they asked about. It goes in the check the way they said it, so they know what's being checked.
 
@@ -101,7 +101,7 @@ def examples() -> str:
     SERVICES_PRICING: {"Full Wrap in satin black on the Silverado": "$3450 plus tax"}
     TOTAL: $3450 plus tax
     DEPOSIT: $690
-    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 09:50 AM","current_user_message":{"user_media":{},"user_text":"ya lets do it. do i need to wash it before i bring it in?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 silverado, its red, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Silverado would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 09:50 AM","current_user_message":{"user_media":{},"user_text":"ya lets do it. do i need to wash it before i bring it in?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 silverado, its red, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Silverado would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Nope, we do all the prep here. Let me check the schedule real quick."
 
     Ex 13:

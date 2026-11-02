@@ -84,7 +84,7 @@ def examples() -> str:
     TOTAL: $3450 plus tax
     DEPOSIT: $690
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Lets do it, can I drop it off Friday?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Tacoma would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Lets do it, can I drop it off Friday?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Tacoma would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Perfect, so for the satin black wrap on your Tacoma, Friday doesn't work for drop off, but we've got Monday the 12th, Tuesday the 13th or Wednesday the 14th open, which day works best for you?"
     REASON: The day they asked for isn't open, so that gets said in a few words before the open days (WHAT THE REPLY DOES rule 5).
 
@@ -325,7 +325,7 @@ def examples() -> str:
     TOTAL: $3300 plus tax
     DEPOSIT: $660
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Wednesday, October 21, 2026 at 08:50 PM","current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a white Ford Bronco parked on a gravel road, side view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"ok lets book it, with the roof!! my buddy got his done there last year and it still looks brand new, so stoked"},"message_history":{"user_message_0":{"user_media":{},"user_text":"matte black on my 2023 bronco, how much with the roof?"},"system_response_to_user_message_0":"Sweet, so matte black on the Bronco would run $3300 + tax for a full wrap with the roof, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Wednesday, October 21, 2026 at 08:50 PM","current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A photo of a white Ford Bronco parked on a gravel road, side view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"ok lets book it, with the roof!! my buddy got his done there last year and it still looks brand new, so stoked"},"message_history":{"user_message_0":{"user_media":{},"user_text":"matte black on my 2023 bronco, how much with the roof?"},"system_response_to_user_message_0":"Sweet, so matte black on the Bronco would run $3300 + tax for a full wrap with the roof. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Perfect, so what day works for the matte black wrap with the roof on your Bronco? We've got Monday the 26th, Tuesday the 27th or Wednesday the 28th open for drop off."
     REASON: The story and the photo need nothing back here, so it's the same question and days as any other go ahead.
 
@@ -347,7 +347,7 @@ def examples() -> str:
     TOTAL: $3450 plus tax
     DEPOSIT: $690
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 09:50 AM","current_user_message":{"user_media":{},"user_text":"ya lets do it. do i need to wash it before i bring it in?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 silverado, its red, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Silverado would run $3450 + tax for a full wrap, and we take it apart for full coverage of the vehicle, it does also come with a free 6 month warranty."}}
+    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 09:50 AM","current_user_message":{"user_media":{},"user_text":"ya lets do it. do i need to wash it before i bring it in?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2022 silverado, its red, want satin black"},"system_response_to_user_message_0":"Sweet, so satin black on the Silverado would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty."}}
     Response: "Nope, we do all the prep here. So what day works for the satin black wrap on your Silverado? We've got Monday the 26th, Tuesday the 27th or Wednesday the 28th open for drop off."
     REASON: REPLY_BEFORE is empty, so the wash question gets answered first from #GENERAL SERVICE DETAILS, which also acknowledges them, so no opener and the question starts with So (WHAT THE REPLY DOES rule 1).
 

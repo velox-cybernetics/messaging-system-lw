@@ -1,6 +1,7 @@
 #**********IMPORTS**********
-#the env keys, the one background worker, the clock each text is stamped with, the shape a sent text is logged in, and web requests that log each text in the shop's ghl
+#the env keys, the one background worker, the clock each text is stamped with, the shape a text is logged in, and web requests that log each text in the shop's ghl
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import TypeAlias
@@ -11,7 +12,7 @@ from dotenv import load_dotenv
 
 
 #**********GLOBALS**********
-#the shop's ghl sub-account every text the bot sends gets logged in, and the worker that logs them
+#the shop's ghl sub-account every text the bot sends or a customer sends in gets logged in, and the worker that logs them
 
 
 #LOAD ENV
@@ -45,12 +46,19 @@ REQUEST_TIMEOUT: int = 10
 
 
 #SENT
-#one text that went out: what it said, the pics it carried, and when it went out in seconds
+#one text that went out or came in: what it said, the pics it carried, and when it went out or came in, in seconds
 SENT: TypeAlias = tuple[str, list[str], float]
 
 
+#DIRECTIONS
+#a text the shop sent them, and one they sent the shop
+OUTBOUND: str = "outbound"
+
+INBOUND: str = "inbound"
+
+
 #WORKER
-#one worker logs everything in the order it went out, so a slow call never puts their texts out of order
+#one worker logs everything in the order it went out or came in, so a slow call never puts their conversation out of order
 WORKER: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ghl")
 
 
@@ -103,7 +111,7 @@ def make_contact(id: str) -> str:
 
 
 #CONTACT
-#their contact in ghl, made the first time the bot texts someone ghl doesn't have yet
+#their contact in ghl, made the first time someone ghl doesn't have yet texts in or gets a text from the bot
 def contact_id(id: str) -> str:
     found: str | None = find_contact(id)
 
@@ -115,16 +123,16 @@ def contact_id(id: str) -> str:
 
 
 #**********LOGGING**********
-#every text the bot sends a customer over blooio goes in their conversation in ghl, since ghl never sees blooio
+#every text the bot sends a customer over blooio, and every text they send it there, goes in their conversation in ghl, since ghl never sees blooio
 
 
 #LOG TEXT
-#one text goes in their conversation as one the shop sent, with its pics and the moment it went out
+#one text goes in their conversation, as one the shop sent or one they sent, with its pics and the moment it went out or came in
 #the inbound route only adds it to the conversation, sending it through ghl would text them a second time
-def log_text(contact: str, sent_text: SENT) -> None:
-    text, pics, sent_at = sent_text
+def log_text(contact: str, text_entry: SENT, direction: str) -> None:
+    text, pics, logged_at = text_entry
 
-    message: dict = {"type": "SMS", "contactId": contact, "message": text, "direction": "outbound", "date": datetime.fromtimestamp(sent_at, timezone.utc).isoformat()}
+    message: dict = {"type": "SMS", "contactId": contact, "message": text, "direction": direction, "date": datetime.fromtimestamp(logged_at, timezone.utc).isoformat()}
 
     if(len(pics) > 0):
         message["attachments"] = pics
@@ -132,24 +140,24 @@ def log_text(contact: str, sent_text: SENT) -> None:
     ghl_request("post", "/conversations/messages/inbound", CONVERSATIONS_VERSION, json=message)
 
 
-#WRITE SENT
+#WRITE TEXTS
 #their contact is found once, then each text goes in on its own, so one ghl refuses never keeps the rest out
-#a failure is only printed, the customer already got the texts
-def write_sent(id: str, sent: list[SENT]) -> None:
+#a failure is only printed, the texts already went out or came in
+def write_texts(id: str, texts: list[SENT], direction: str) -> None:
     try:
         contact: str = contact_id(id)
 
     except Exception as error:
-        print(f"[GHL] contact for {id} failed, so {len(sent)} sent texts never got logged: {error}")
+        print(f"[GHL] contact for {id} failed, so {len(texts)} {direction} texts never got logged: {error}")
 
         return
 
-    for sent_text in sent:
+    for text_entry in texts:
         try:
-            log_text(contact, sent_text)
+            log_text(contact, text_entry, direction)
 
         except Exception as error:
-            print(f"[GHL] logging a sent text to {id} failed: {error}")
+            print(f"[GHL] logging an {direction} text for {id} failed: {error}")
 
 
 #LOG SENT
@@ -158,4 +166,31 @@ def log_sent(id: str, sent: list[SENT]) -> None:
     if(len(sent) == 0):
         return
 
-    WORKER.submit(write_sent, id, sent)
+    WORKER.submit(write_texts, id, sent, OUTBOUND)
+
+
+#ATTACHMENT URLS
+#where each pic or video they sent lives, blooio puts the url on each attachment
+def attachment_urls(attachments: list | None) -> list[str]:
+    urls: list[str] = []
+
+    for attachment in attachments or []:
+        if(isinstance(attachment, str)):
+            urls.append(attachment)
+
+        elif(isinstance(attachment, dict) and attachment.get("url")):
+            urls.append(attachment["url"])
+
+    return urls
+
+
+#LOG RECEIVED
+#a text a customer sends in goes to ghl off the webhook, on the same worker as the replies, so their conversation there reads in order
+def log_received(id: str, text: str | None, attachments: list | None) -> None:
+    pics: list[str] = attachment_urls(attachments)
+
+    #nothing to show, like a delivery with no text and no pic
+    if((text or "").strip() == "" and len(pics) == 0):
+        return
+
+    WORKER.submit(write_texts, id, [(text or "", pics, time.time())], INBOUND)
