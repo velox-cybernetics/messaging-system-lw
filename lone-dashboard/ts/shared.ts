@@ -391,14 +391,18 @@ export function day_label(date: string): string {
 
 
 //HOUR TEXT
-//"10 AM", "10 PM"
-export function hour_text(hour: number): string {
+//"10 AM", "10 PM", and "9:50 AM" when it's past the hour
+export function hour_text(hour: number, minute: number = 0): string {
     const twelve_hour: number = hour % 12 || 12;
 
     let half: string = "PM";
 
     if(hour < 12) {
         half = "AM";
+    }
+
+    if(minute > 0) {
+        return `${twelve_hour}:${String(minute).padStart(2, "0")} ${half}`;
     }
 
     return `${twelve_hour} ${half}`;

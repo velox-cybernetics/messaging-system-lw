@@ -12,10 +12,12 @@ import * as shop from "./_helpers/shop.js";
 
 
 //HOURS
-//keep in step with PREP_HOUR and FOLLOWUP_HOUR in src/followup.py, picked at night and sent next morning, shop time
+//keep in step with PREP_HOUR, FOLLOWUP_HOUR and RECHECK_MINUTES in src/followup.py, picked at night, checked again that many minutes before the morning's send, shop time
 const PICK_HOUR: number = 22;
 
 const SEND_HOUR: number = 10;
+
+const RECHECK_MINUTES: number = 10;
 
 
 //FOLLOW UP
@@ -186,7 +188,7 @@ async function read_follow_ups(request: Request): Promise<Response> {
 
     list.sort(by_next);
 
-    return http.json({"pick_hour": PICK_HOUR, "send_hour": SEND_HOUR, "customers": list});
+    return http.json({"pick_hour": PICK_HOUR, "send_hour": SEND_HOUR, "recheck_minutes": RECHECK_MINUTES, "customers": list});
 }
 
 

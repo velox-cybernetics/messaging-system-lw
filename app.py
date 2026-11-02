@@ -64,14 +64,14 @@ async def heartbeat() -> None:
 
 
 #**********FOLLOW UPS**********
-#every night the quiet conversations get picked, and the next morning each one picked gets its follow up
+#every night the quiet conversations get picked, right before the morning's send anyone the night missed gets checked, then each one picked gets its follow up
 
 
 #DAILY
-#runs the job every day at the hour in the shop's time, in a worker thread so the webhooks never wait on it
-async def daily(hour: int, job: Callable[[], None]) -> None:
+#runs the job every day at the hour and minute in the shop's time, in a worker thread so the webhooks never wait on it
+async def daily(hour: int, minute: int, job: Callable[[], None]) -> None:
     while(True):
-        await asyncio.sleep(followup.seconds_until(hour))
+        await asyncio.sleep(followup.seconds_until(hour, minute))
 
         #a run that breaks is only printed, the next day's run still goes
         try:
@@ -94,15 +94,21 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     beating: asyncio.Task = asyncio.create_task(heartbeat())
 
-    picking: asyncio.Task = asyncio.create_task(daily(followup.PREP_HOUR, followup.prep_followups))
+    picking: asyncio.Task = asyncio.create_task(daily(followup.PREP_HOUR, 0, followup.prep_followups))
 
-    following_up: asyncio.Task = asyncio.create_task(daily(followup.FOLLOWUP_HOUR, followup.send_followups))
+    recheck_time: tuple[int, int] = followup.recheck_time()
+
+    rechecking: asyncio.Task = asyncio.create_task(daily(recheck_time[0], recheck_time[1], followup.recheck_followups))
+
+    following_up: asyncio.Task = asyncio.create_task(daily(followup.FOLLOWUP_HOUR, 0, followup.send_followups))
 
     yield
 
     beating.cancel()
 
     picking.cancel()
+
+    rechecking.cancel()
 
     following_up.cancel()
 

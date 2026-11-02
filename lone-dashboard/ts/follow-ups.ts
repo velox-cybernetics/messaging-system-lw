@@ -18,7 +18,8 @@ type CUSTOMER = {id: string; name: string; channel: string; tab: string | null; 
 
 
 //FOLLOW UPS
-type FOLLOW_UPS = {pick_hour: number; send_hour: number; customers: CUSTOMER[]};
+//recheck_minutes is how long before the send the morning's check reads anyone the night's pick missed
+type FOLLOW_UPS = {pick_hour: number; send_hour: number; recheck_minutes: number; customers: CUSTOMER[]};
 
 
 //DAY
@@ -61,7 +62,11 @@ const SUFFIXES: Record<string, string> = {"one": "st", "two": "nd", "few": "rd",
 //"Thu, Oct 29, 10:02 AM"
 const MOMENT_FORMAT: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": shared.SHOP_TIME_ZONE, "weekday": "short", "month": "short", "day": "numeric", "hour": "numeric", "minute": "2-digit"});
 
-const SHOP_HOUR: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": shared.SHOP_TIME_ZONE, "hour": "numeric", "hourCycle": "h23"});
+const SHOP_CLOCK: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": shared.SHOP_TIME_ZONE, "hour": "numeric", "minute": "numeric", "hourCycle": "h23"});
+
+
+//DAY MINUTES
+const DAY_MINUTES: number = 24 * 60;
 
 
 //PAGE STATE
@@ -143,6 +148,43 @@ function when_words(at: number): string {
 }
 
 
+//SHOP MINUTE
+//minutes since midnight on the shop's clock
+function shop_minute(at: number): number {
+    let hour: number = 0;
+
+    let minute: number = 0;
+
+    for(const part of SHOP_CLOCK.formatToParts(at)) {
+        if(part.type === "hour") {
+            hour = Number(part.value);
+        }
+
+        else if(part.type === "minute") {
+            minute = Number(part.value);
+        }
+    }
+
+    return hour * 60 + minute;
+}
+
+
+//MINUTES SINCE
+//how long ago the shop's clock last showed that minute of the day, 0 right at it
+function minutes_since(now: number, minute_of_day: number): number {
+    return (now - minute_of_day + DAY_MINUTES) % DAY_MINUTES;
+}
+
+
+//RECHECK TEXT
+//"9:50 AM", the morning's check recheck_minutes before the send
+function recheck_text(data: FOLLOW_UPS): string {
+    const minutes: number = data.send_hour * 60 - data.recheck_minutes;
+
+    return shared.hour_text(Math.floor(minutes / 60), minutes % 60);
+}
+
+
 //LINEUP TEXT
 //who gets the next ones and when, or that nobody's lined up
 function lineup_text(data: FOLLOW_UPS): string {
@@ -175,17 +217,27 @@ function lineup_text(data: FOLLOW_UPS): string {
         return `${due.length} follow ups due ${when} haven't gone out yet.`;
     }
 
-    //a pick newer than the last send already chose who's next
-    const hour: number = Number(SHOP_HOUR.format(Date.now()));
+    //where the shop's clock is since the last send, the night's pick and the morning's check
+    const now: number = shop_minute(Date.now());
 
-    if((hour - data.pick_hour + 24) % 24 < (hour - data.send_hour + 24) % 24) {
+    const since_send: number = minutes_since(now, data.send_hour * 60);
+
+    const send_text: string = shared.hour_text(data.send_hour);
+
+    //the morning's check ran after the last send and lined nobody up either
+    if(minutes_since(now, data.send_hour * 60 - data.recheck_minutes) < since_send) {
+        return `Nobody gets a follow up today at ${send_text}.`;
+    }
+
+    //the night's pick lined nobody up, and the morning's check can still add anyone who texts overnight
+    if(minutes_since(now, data.pick_hour * 60) < since_send) {
         let which_day: string = "tomorrow";
 
-        if(hour < data.send_hour) {
+        if(now < data.send_hour * 60) {
             which_day = "today";
         }
 
-        return `Nobody gets a follow up ${which_day} at ${shared.hour_text(data.send_hour)}.`;
+        return `Nobody is lined up for ${which_day} at ${send_text} yet, the ${recheck_text(data)} check can still add anyone who texts overnight.`;
     }
 
     return "Nobody is lined up for a follow up yet.";
@@ -354,7 +406,7 @@ function render(): void {
 
     LINEUP.textContent = lineup_text(LATEST);
 
-    SCHEDULE.textContent = `Picked every night at ${shared.hour_text(LATEST.pick_hour)}, sent the next morning at ${shared.hour_text(LATEST.send_hour)}.`;
+    SCHEDULE.textContent = `Picked every night at ${shared.hour_text(LATEST.pick_hour)}, checked again at ${recheck_text(LATEST)} for anyone who texted overnight, sent at ${shared.hour_text(LATEST.send_hour)}.`;
 
     const today: string = shared.shop_parts(Date.now()).date;
 

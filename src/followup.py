@@ -33,6 +33,22 @@ PREP_HOUR: int = 22
 #and the next morning at this hour the ones picked get their follow up, with the shop open to answer them
 FOLLOWUP_HOUR: int = 10
 
+#this many minutes before the morning's send, everyone the night's check never read as they are now gets checked, so a text in the night never costs anyone their follow up
+RECHECK_MINUTES: int = 10
+
+
+#QUIET TIME
+#a follow up only goes to a conversation that's been quiet this long when it goes out, so the morning's check takes in a text from the night, up till 6AM, and never one from someone still texting that morning
+QUIET_SECONDS: int = 4 * 3600
+
+
+#NIGHT PICK
+#when the night's check last started, so the morning's check skips everyone it already read as they are now, never named followup_ so it's never taken for a conversation
+NIGHT_PICK_KEY: str = "followups_night_pick"
+
+#a night's check older than this didn't run last night, like the server being down for it, so the morning's check reads everyone it didn't pick
+NIGHT_PICK_SECONDS: int = 24 * 3600
+
 
 #FOLLOW UPS PER CHANNEL
 #how many follow ups in a row a channel gets with no answer, instagram only ever gets one, a channel not here gets one every day till they answer
@@ -59,7 +75,7 @@ FOLLOWUP_EFFORT: str = "high"
 #what each conversation keeps on file for its follow ups: the channel it goes out on, when they last wrote in, and how many went out since
 FOLLOWUP_FIELDS: list[str] = ["channel", "last_message", "count"]
 
-#when the night picked them, only on file till the morning's follow up takes it off
+#when the night or the morning's check picked them, only on file till the morning's follow up takes it off
 PICKED_FIELD: str = "prepped"
 
 
@@ -131,7 +147,7 @@ def window_open(channel: str, last_message: float, send_time: float) -> bool:
 
 
 #FOLLOW UP ALLOWED
-#True when nothing on file rules a follow up out: they never went to booking, nobody has them, their channel's count isn't used up, and meta's window is still open when it goes out
+#True when nothing on file rules a follow up out: they never went to booking, nobody has them, their channel's count isn't used up, they've been quiet long enough and meta's window is still open when it goes out
 def followup_allowed(record: dict[str, str], booked: bool, restricted: bool, send_time: float) -> bool:
     channel: str = record.get("channel", "")
 
@@ -143,7 +159,13 @@ def followup_allowed(record: dict[str, str], booked: bool, restricted: bool, sen
     if(channel_limit is not None and int(record.get("count", "0")) >= channel_limit):
         return False
 
-    return window_open(channel, float(record.get("last_message", "0")), send_time)
+    last_message: float = float(record.get("last_message", "0"))
+
+    #still texting the morning it would go out, so theirs waits for the next one
+    if(send_time - last_message < QUIET_SECONDS):
+        return False
+
+    return window_open(channel, last_message, send_time)
 
 
 #QUIET STATE
@@ -172,9 +194,9 @@ def not_interested(state: dict) -> bool:
 
 
 #NEXT RUN
-#the next time the hour comes around in the shop's time, later today or else tomorrow
-def next_run(hour: int, now: datetime) -> datetime:
-    run_time: datetime = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+#the next time the hour and minute come around in the shop's time, later today or else tomorrow
+def next_run(hour: int, minute: int, now: datetime) -> datetime:
+    run_time: datetime = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
 
     if(run_time <= now):
         run_time = run_time + timedelta(days=1)
@@ -183,15 +205,23 @@ def next_run(hour: int, now: datetime) -> datetime:
 
 
 #SECONDS UNTIL
-#how long till the hour comes around in the shop's time, from timestamps so a daylight savings switch overnight still counts right
-def seconds_until(hour: int) -> float:
+#how long till the hour and minute come around in the shop's time, from timestamps so a daylight savings switch overnight still counts right
+def seconds_until(hour: int, minute: int) -> float:
     now: datetime = datetime.now(open_dates.SHOP_TIMEZONE)
 
-    return next_run(hour, now).timestamp() - now.timestamp()
+    return next_run(hour, minute, now).timestamp() - now.timestamp()
+
+
+#RECHECK TIME
+#the hour and minute the morning's check runs, RECHECK_MINUTES before the send, 9:50 for a 10AM send
+def recheck_time() -> tuple[int, int]:
+    minutes: int = FOLLOWUP_HOUR * 60 - RECHECK_MINUTES
+
+    return (minutes // 60, minutes % 60)
 
 
 #PICK ONE
-#every night's pick starts over, so they're only picked while they still get one, and the decisions model only reads the ones nothing on file rules out
+#every pick starts over, so they're only picked while they still get one, and the decisions model only reads the ones nothing on file rules out
 def prep_followup(id: str, send_time: float) -> None:
     log.clear_info(followup_key(id), [PICKED_FIELD])
 
@@ -216,7 +246,10 @@ def prep_followup(id: str, send_time: float) -> None:
 #PREP FOLLOW UPS
 #runs every night, and one conversation that breaks never stops the rest from getting picked
 def prep_followups() -> None:
-    send_time: float = next_run(FOLLOWUP_HOUR, datetime.now(open_dates.SHOP_TIMEZONE)).timestamp()
+    #on file before anyone gets read, so a text that lands while it runs still gets read again by the morning's check
+    log.write_state(NIGHT_PICK_KEY, {"at": time.time()})
+
+    send_time: float = next_run(FOLLOWUP_HOUR, 0, datetime.now(open_dates.SHOP_TIMEZONE)).timestamp()
 
     #every night's pick starts over on the dashboard too, so a morning the server missed leaves nobody listed as still getting one
     dashboard.clear_past_followups()
@@ -233,6 +266,54 @@ def prep_followups() -> None:
 
             except Exception as error:
                 print(f"FOLLOW UP PICK ERROR: {id}, {error}")
+
+
+
+#**********MORNING CHECK**********
+#right before the morning's send, everyone the night's check never read as they are now gets checked, like someone who texted in the night after it ran
+
+
+#NIGHT PICK TIME
+#when the night's check last started, 0 when it didn't run in the last day, so the morning's check reads everyone it didn't pick
+def night_pick_time() -> float:
+    night_pick: dict | str = log.read_state(NIGHT_PICK_KEY)
+
+    if(not isinstance(night_pick, dict)):
+        return 0.0
+
+    picked_at: float = float(night_pick.get("at", 0))
+
+    if(time.time() - picked_at > NIGHT_PICK_SECONDS):
+        return 0.0
+
+    return picked_at
+
+
+#RECHECK FOLLOW UPS
+#runs every morning RECHECK_MINUTES before the send, and one conversation that breaks never stops the rest from getting checked
+def recheck_followups() -> None:
+    send_time: float = next_run(FOLLOWUP_HOUR, 0, datetime.now(open_dates.SHOP_TIMEZONE)).timestamp()
+
+    picked_at: float = night_pick_time()
+
+    ids: list[str] = followup_ids()
+
+    print(f"FOLLOW UP RECHECK: checking {len(ids)} conversation(s) for anyone the night's pick missed before the morning's follow ups")
+
+    for id in ids:
+        #each conversation's check prints as its own block, so a live batch's block never lands in the middle of it
+        with prints.held():
+            try:
+                record: dict[str, str] = log.read_info(followup_key(id))
+
+                #the night picked them, or read them as they are now and ruled them out, since nothing of theirs came in after it
+                if(PICKED_FIELD in record or float(record.get("last_message", "0")) < picked_at):
+                    continue
+
+                prep_followup(id, send_time)
+
+            except Exception as error:
+                print(f"FOLLOW UP RECHECK ERROR: {id}, {error}")
 
 
 
