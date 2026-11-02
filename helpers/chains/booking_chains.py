@@ -29,7 +29,7 @@ def answer_only(answer: str) -> str:
 
 
 #BRANCH ANSWER
-#a pricing or business question answered by its branch, a flagged answer hands them to the owner
+#a pricing or business question answered by its branch, a flagged answer or something bigger she said she'd ask the owner about hands them to him
 def branch_answer(state: dict, id: str, branch: str) -> str:
     branch_return: tuple = ()
 
@@ -41,11 +41,10 @@ def branch_answer(state: dict, id: str, branch: str) -> str:
     else:
         branch_return = branches.business_reply(state)
 
-    #the checker flagged the answer, so a person takes it from here
-    if(branch_return[1]):
-        owner.restrict(id, owner.REASONS[branch])
+    #something small goes to the developer on the side, a flag or anything bigger goes to the owner
+    answer: str = branches.hand_off(branch_return, state, id, branch)
 
-    return answer_only(branch_return[0])
+    return answer_only(answer)
 
 
 #JOIN REPLY

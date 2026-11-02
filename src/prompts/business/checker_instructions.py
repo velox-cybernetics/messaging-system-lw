@@ -39,9 +39,9 @@ def examples() -> str:
     REASON: Business License has no license number (true case 2).
 
     BUSINESS_DETAILS: every business detail, one per line
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"For like $200"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Do you guys do gift cards?"},"system_response_to_user_message_0":"Not sure on gift cards, let me look into that for you."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"For like $200"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Do you guys do gift cards?"},"system_response_to_user_message_0":"tbh I'm not sure on gift cards 😅 I'm still learning the ropes here since I'm new, but I'll ask the owner."}}
     answer: True
-    REASON: The short reply clears up something the shop said it would look into, so it is still not covered (true case 3).
+    REASON: The short reply clears up something the shop said it would ask the owner about, so it is still not covered (true case 3).
 
     BUSINESS_DETAILS: {"Hours Of Operations": {"Mon, Tue, Wed, Thu, Fri": "9AM - 5PM", "Sat, Sun": "CLOSED"}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"yall open on saturday?"},"message_history":{}}
@@ -130,7 +130,7 @@ def instructions() -> str:
     #True Cases (only when nothing else in the message is covered)
     1. They ask about something BUSINESS_DETAILS doesn't cover at all, like parking, wifi, hiring, gift cards, loaner cars or rides.
     2. They ask about a detail BUSINESS_DETAILS has, but it says nothing on the part they want to know, like holiday hours, a license number, or a location that isn't listed.
-    3. Their short reply answers a question the shop asked while clearing up something it said it would look into.
+    3. Their short reply answers a question the shop asked while clearing up something it said it would ask the owner about or look into.
 
     #False Cases
     4. BUSINESS_DETAILS has the answer. For being open today, tomorrow or right now, Hours Of Operations with current_date_time answers it.

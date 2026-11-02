@@ -77,6 +77,7 @@ from src.prompts.color_materials.picked import enforcer as color_picked_enforcer
 from src.prompts.color_materials.picked import regenerator as color_picked_regenerator
 from src.prompts.restricted import analyzer_examples as restricted_examples
 from src.prompts.restricted import hold as restricted_hold
+from src.prompts.side_ask import analyzer_examples as side_ask_examples
 
 
 
@@ -206,6 +207,23 @@ COLOR_NOW_ASKS: list[str] = ["What color is the {vehicle} right now? Send me a p
 
 
 
+#**********SIDE ASKS**********
+#the new girl's line says she isn't sure and will ask the owner, and the branches whose checker flag is that line
+
+
+#NEW GIRL LINE
+#the 😅 only ever goes out on her line, and the line always says she'll ask the owner
+NEW_GIRL_EMOJI: str = "😅"
+
+OWNER_ASK_WORDS: str = "ask the owner"
+
+
+#LACK INFO BRANCHES
+#their checker flag means the reply is the lack info one with her line, any other branch's flag always hands them to the owner
+LACK_INFO_BRANCHES: list[str] = ["service_pricing", "business_operations"]
+
+
+
 #**********THRESHOLDS**********
 #how sure each decision has to be before the bot goes with it
 
@@ -254,6 +272,14 @@ ASKED_DATE_THRESHOLD: float = 0.5
 #MATERIAL ASKS
 #a yes over this means they asked more with their pick, over half since a miss only waits for their next text
 MATERIAL_ASKS_THRESHOLD: float = 0.6
+
+
+#SIDE ASKS
+#a yes over this means everything the reply said she'd ask the owner about is small, like the wifi or parking, so the developer gets it on the side and the bot keeps the chat
+SMALL_ASK_THRESHOLD: float = 0.6
+
+#a yes over this means they asked about that small thing again, so the owner takes it from here
+SIDE_ASK_PERSIST_THRESHOLD: float = 0.6
 
 
 
@@ -701,6 +727,75 @@ def enforced_reply(state: dict, text: str, response: str, rules: str, regen_labe
 #their message came with a pic or video, the only time a reply can bring up something else in one
 def has_pic(state: dict) -> bool:
     return state["current_user_message"].get("user_media", {}) != {}
+
+
+
+#**********HAND OFFS**********
+#who hears about a reply: nobody, the developer on the side for something small the new girl said she'd ask the owner about, or the owner, who takes the chat
+
+
+#OWNER ASK
+#the reply has the new girl's line, where she isn't sure on something and says she'll ask the owner
+def owner_ask(reply: str) -> bool:
+    return NEW_GIRL_EMOJI in reply or OWNER_ASK_WORDS in reply.lower()
+
+
+#SMALL ASK
+#True when everything the reply said she'd ask the owner about is small, like the wifi, the waiting area or parking
+def small_ask(state: dict, reply: str) -> bool:
+    small_question: dict = {"type": "noul", "instructions": f"Is everything SYSTEM_RESPONSE says she isn't sure on and will ask the owner about something small about coming to the shop, like the wifi, the waiting area or parking?\n{side_ask_examples.small_ask_examples()}"}
+
+    state_as_text: str = state_form.state_to_text(state)
+
+    #the reply goes in with the conversation, since what she said she'd ask the owner about is what gets judged
+    small_state: str = f"STATE: {state_as_text}\nSYSTEM_RESPONSE: {reply}"
+
+    probability_yes: float = models.decision_answer("small_ask", small_question, small_state)["noul"]
+
+    print(f"SMALL ASK: {probability_yes:.2f}")
+
+    return probability_yes > SMALL_ASK_THRESHOLD
+
+
+#SIDE ASK PERSISTS
+#True when they ask again about the small thing the new girl said she'd ask the owner about
+def side_ask_persists(state: dict) -> bool:
+    persist_question: dict = {"type": "noul", "instructions": f"Is the customer asking again about, following up on or pushing for an answer on something small a system_response in `message_history` said she wasn't sure on and would ask the owner about, in `current_user_message`?\n{side_ask_examples.persist_examples()}"}
+
+    probability_yes: float = models.decision_answer("side_ask_persists", persist_question, state)["noul"]
+
+    print(f"SIDE ASK PERSISTS: {probability_yes:.2f}")
+
+    return probability_yes > SIDE_ASK_PERSIST_THRESHOLD
+
+
+#HAND OFF
+#the reply that goes out, with something small she said she'd ask the owner about sent to the developer on the side, and the owner taking the chat for a flagged reply or anything bigger
+def hand_off(branch_return: tuple[str, bool], state: dict, id: str, branch: str) -> str:
+    reply: str = branch_return[0]
+
+    flagged: bool = branch_return[1]
+
+    #her line in a reply that wasn't flagged, or in the lack info reply a pricing or business flag writes
+    asked_owner: bool = owner_ask(reply) and (not flagged or branch in LACK_INFO_BRANCHES)
+
+    #something small like the wifi or parking goes to the developer on the side, and the bot keeps the chat
+    if(asked_owner and small_ask(state, reply)):
+        print("SIDE ASK: the reply told them she'd ask the owner about something small, so the developer gets it on the side and nobody takes the chat")
+
+        owner.side_ask(id, reply)
+
+        return reply
+
+    #the checker flagged the reply, so a person takes it from here and the owner gets texted why
+    if(flagged):
+        owner.restrict(id, owner.REASONS[branch])
+
+    #the reply told them she'd ask the owner about something bigger, so he takes it from here
+    elif(asked_owner):
+        owner.restrict(id, owner.REASONS["owner_ask"])
+
+    return reply
 
 
 

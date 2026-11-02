@@ -139,21 +139,6 @@ def held_booking_question(system_response: str, id: str) -> str:
 
 
 
-#**********HAND OFFS**********
-#hands them to a person when a branch's checker flagged its reply
-
-
-#BRANCH REPLY
-#the reply a branch wrote, and a person takes them when its checker flagged it
-def branch_reply(branch_return: tuple[str, bool], id: str, branch: str) -> str:
-    #the checker flagged the reply, so a person takes it from here and the owner gets texted why
-    if(branch_return[1]):
-        owner.restrict(id, owner.REASONS[branch])
-
-    return branch_return[0]
-
-
-
 #**********MADE UP DAYS**********
 #only the booking chain reads the calendar, so drop off days any other branch writes never go out
 
@@ -302,6 +287,18 @@ def main_route(state: dict, id: str) -> str:
 
         log.clear_state(f"convo_ended_{id}")
 
+    #they asked about the small thing again after she said she'd ask the owner, so her line goes out once more and the owner takes it from here
+    if(owner.side_ask_open(id) and branches.side_ask_persists(state)):
+        print("SIDE ASK PERSISTED: they asked about the small thing again, so the owner takes it from here")
+
+        system_response = branches.business_lack_info(state)
+
+        owner.close_side_ask(id)
+
+        owner.restrict(id, owner.REASONS["side_ask"])
+
+        return system_response
+
     routed: tuple[str, float] = branches.pick_route(state)
 
     route_result: str = routed[0]
@@ -334,18 +331,18 @@ def main_route(state: dict, id: str) -> str:
 
         service_return: tuple = branches.pricing_reply(state, critical_info, id)
 
-        system_response = branch_reply(service_return, id, route_result)
+        system_response = branches.hand_off(service_return, state, id, route_result)
 
     elif(route_result == "business_operations"):
         business_return: tuple = branches.business_reply(state)
 
-        system_response = branch_reply(business_return, id, route_result)
+        system_response = branches.hand_off(business_return, state, id, route_result)
 
     #once everything the price needs is on file, the ack goes out and a person takes it from here
     elif(route_result == "services_req_humans"):
         custom_return: tuple = branches.custom_reply(state, id)
 
-        system_response = branch_reply(custom_return, id, route_result)
+        system_response = branches.hand_off(custom_return, state, id, route_result)
 
     #TEMP BOOKING: the ack lets them know the schedule is getting checked and a person fits them a day
     #booking_chains.offer_days(state, id, "") goes back here once the temp booking flow comes out
@@ -356,7 +353,7 @@ def main_route(state: dict, id: str) -> str:
     elif(route_result == "escalation"):
         escalation_return: tuple = branches.escalation_reply(state)
 
-        system_response = branch_reply(escalation_return, id, route_result)
+        system_response = branches.hand_off(escalation_return, state, id, route_result)
 
     #small talk gets answered and brought back to what they need
     elif(route_result == "general_text"):
@@ -366,7 +363,7 @@ def main_route(state: dict, id: str) -> str:
     elif(route_result == "phone_call"):
         phone_return: tuple = branches.phone_call_reply(state)
 
-        system_response = branch_reply(phone_return, id, route_result)
+        system_response = branches.hand_off(phone_return, state, id, route_result)
 
     #they're wrapping up for now, so the reply takes it in and leaves the door open, and nothing after it gets a reply until they ask about something again
     elif(route_result == "end_conversation"):
@@ -421,12 +418,12 @@ def restricted_route(state: dict, id: str, color_swapped: bool, held: bool) -> s
 
         service_return: tuple = branches.pricing_reply(state, critical_info, id)
 
-        system_response = branch_reply(service_return, id, route_result)
+        system_response = branches.hand_off(service_return, state, id, route_result)
 
     elif(route_result == "business_operations"):
         business_return: tuple = branches.business_reply(state)
 
-        system_response = branch_reply(business_return, id, route_result)
+        system_response = branches.hand_off(business_return, state, id, route_result)
 
     #they're at the shop, so they always hear to come on in, and the owner gets texted they're there
     elif(route_result == "at_shop"):

@@ -119,7 +119,7 @@ def saved_lines(text: str) -> list[str]:
 
 
 #**********OWNER TEXTS**********
-#texts the owner when a person has to step in, a color needs checking, an estimate is ready or they want on the schedule
+#texts the owner when a person has to step in, a color needs checking, an estimate is ready or they want on the schedule, and the developer when something small went out on the side
 
 
 #OWNER TEXT
@@ -242,8 +242,21 @@ def notify_schedule_request(id: str, channel: str, user_message: dict) -> None:
     dashboard.log_hand_off(id, dashboard.BOOKED, "Schedule request sent to the owner")
 
 
+#SIDE ASK
+#something small the details have no answer for went out with the new girl's line, so the developer gets it on the side and nobody takes the chat
+def notify_side_ask(id: str, channel: str, user_message: dict) -> None:
+    reply: str = owner.take_side_ask_alert(id)
+
+    if(reply == ""):
+        return
+
+    user_name: str = username.username(id, channel)
+
+    senders.notify_side_ask(user_name, channel, notify_details(user_message), reply)
+
+
 #HAND OFF
-#after the reply goes out, the owner hears about a hand off, a color check, a ready estimate and a schedule request
+#after the reply goes out, the owner hears about a hand off, a color check, a ready estimate and a schedule request, and the developer about a side ask
 def notify_hand_off(id: str, channel: str, user_message: dict) -> None:
     reason: str = owner.take_notify_reason(id)
 
@@ -254,6 +267,8 @@ def notify_hand_off(id: str, channel: str, user_message: dict) -> None:
         senders.notify_owner(user_name, channel, notify_details(user_message), reason)
 
         dashboard.log_hand_off(id, dashboard.HIL, reason)
+
+    notify_side_ask(id, channel, user_message)
 
     notify_color_check(id, channel)
 

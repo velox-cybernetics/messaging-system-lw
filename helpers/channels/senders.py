@@ -492,6 +492,14 @@ def notify_dev(user: str, channel: str, details: str, error: str) -> bool:
     return send_alert("DEV NOTIFY", DEV_NUMBER, text)
 
 
+#SIDE ASK NOTIFY
+#something small the details have no answer for, like the wifi or parking, got the new girl's line, so the developer gets who asked, what they said and what went out, and the bot keeps the chat
+def notify_side_ask(user: str, channel: str, details: str, reply: str) -> bool:
+    text: str = f"SIDE QUESTION\nUser: {user}\nChannel: {channel}\nDetails: {details}\nReply: {reply}"
+
+    return send_alert("SIDE ASK NOTIFY", DEV_NUMBER, text)
+
+
 #ESTIMATE NOTIFY
 #they gave their contact info for the invoice, so the owner gets the job, the day and how to reach them
 def notify_estimate(user: str, channel: str, services: str, vehicle: str, drop_off_date: str, name: str, number: str, email: str) -> bool:

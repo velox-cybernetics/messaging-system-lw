@@ -1,7 +1,8 @@
 #**********IMPORTS**********
-#python's json and pattern matching, plus the saved state where hand offs and color checks are kept
+#python's json, clock and pattern matching, plus the saved state where hand offs, side asks and color checks are kept
 import json
 import re
+from datetime import datetime, timedelta, timezone
 
 from helpers.state import log
 
@@ -15,9 +16,9 @@ from helpers.state import log
 #what the owner's text says for each way a conversation gets handed to a person
 REASONS: dict[str, str] = {}
 
-REASONS["service_pricing"] = "The service details have no answer for what they asked, the reply told them we'd look into it"
+REASONS["service_pricing"] = "The service details have no answer for what they asked, the reply told them Hazel would ask you"
 
-REASONS["business_operations"] = "The business details have no answer for what they asked, the reply told them we'd look into it"
+REASONS["business_operations"] = "The business details have no answer for what they asked, the reply told them Hazel would ask you"
 
 REASONS["services_req_humans"] = "A custom job has everything its price needs, it's ready for you to price"
 
@@ -42,6 +43,15 @@ REASONS["at_shop"] = "They're at the shop right now while restricted, the reply 
 REASONS["color_check_missed"] = "The reply told them we'd check the color books, but nothing came with their message for you to check, so it waits on you"
 
 REASONS["price_hold"] = "Every reply written for their first message gave a price they never asked for, so it waits on you"
+
+REASONS["owner_ask"] = "Part of what they asked has no answer in the details and isn't something small, the reply answered the rest and told them Hazel would ask you"
+
+REASONS["side_ask"] = "They asked again about something small the details have no answer for, after the reply told them Hazel would ask you"
+
+
+#SIDE ASK DAYS
+#a small thing the new girl said she'd ask the owner about stays open this long, so asking about it again hands them to him
+SIDE_ASK_DAYS: int = 7
 
 
 #ESTIMATE FIELDS
@@ -175,6 +185,45 @@ def take_schedule_request(id: str) -> dict[str, str]:
     log.clear_info(f"schedule_request_notify_{id}", SCHEDULE_REQUEST_FIELDS)
 
     return schedule_request
+
+
+
+#**********SIDE ASKS**********
+#something small the details have no answer for, like the wifi or parking, goes to the developer on the side and nobody takes the chat
+
+
+#SIDE ASK
+#the reply that told them she'd ask the owner is kept until the developer's text goes out, and the ask stays open in case they ask about it again
+def side_ask(id: str, reply: str) -> None:
+    #kept until the developer's text goes out, so a chain that runs again after a timeout never texts him twice
+    log.write_info(f"side_ask_notify_{id}", [reply], ["reply"])
+
+    log.write_state(f"side_ask_open_{id}", reply)
+
+    #an ask they never bring up again comes off file on its own
+    log.expire_at(f"side_ask_open_{id}", datetime.now(timezone.utc) + timedelta(days=SIDE_ASK_DAYS))
+
+
+#SIDE ASK OPEN
+#True while a small thing the new girl said she'd ask the owner about is still open for them
+def side_ask_open(id: str) -> bool:
+    return log.read_state(f"side_ask_open_{id}") != {}
+
+
+#CLOSE SIDE ASK
+#they asked about it again and the owner has it now, so it's never open twice
+def close_side_ask(id: str) -> None:
+    log.clear_state(f"side_ask_open_{id}")
+
+
+#SIDE ASK ALERT
+#the reply the developer still has to be texted about, empty when there's none, taken off once it's read
+def take_side_ask_alert(id: str) -> str:
+    reply: str = log.read_info(f"side_ask_notify_{id}").get("reply", "")
+
+    log.clear_info(f"side_ask_notify_{id}", ["reply"])
+
+    return reply
 
 
 

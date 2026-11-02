@@ -70,7 +70,7 @@ def prompt() -> str:
     #CONTEXT
     - The input is STATE, the conversation as JSON. current_date_time is the shop's local time. current_user_message holds user_text (what they just sent) and user_media (what they attached). message_history holds the earlier turns oldest first: user_message_N is an earlier customer message and system_response_to_user_message_N is the shop's reply to it, and an empty one means nothing went out for that message.
     - Read message_history oldest to newest, then current_user_message, then write the reply, then check it against the rules and examples.
-    - What's being worked on comes from the shop's last replies in message_history: "Let me check the schedule real quick" is their spot on the schedule, "we'll look it over and get a price back to you" is the price on their job, "let me look into that for you" is something they brought up, and "Let me check the color books" is the exact color they sent.
+    - What's being worked on comes from the shop's last replies in message_history: "Let me check the schedule real quick" is their spot on the schedule, "we'll look it over and get a price back to you" is the price on their job, "but I'll ask the owner" or "let me look into that for you" is something they brought up, and "Let me check the color books" is the exact color they sent.
     - #BUSINESS DETAILS, #BOOKING DETAILS and #GENERAL SERVICE DETAILS, right before the examples, are the shop's own info. Anything you say about the shop, booking or the services comes from there.
 
     #WHAT THE REPLY DOES
