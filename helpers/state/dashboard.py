@@ -693,7 +693,7 @@ def has_price(texts: list[str]) -> bool:
 
 #WRITE OUTGOING
 #each text is its own part with its pics right after it, the way the customer got them
-def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]], at: int, sent: bool) -> None:
+def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]], at: int, sent: bool, is_followup: bool) -> None:
     parts: list[dict] = []
 
     for position, text in enumerate(texts):
@@ -714,9 +714,11 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
 
     #a reply to a message that wasn't the system's to answer doesn't count either
     if(sent and summary.get("counted", True)):
-        commands.extend(count_commands("out", 1, at))
+        #a follow up is the system reaching out on its own, so it never counts as them getting a reply
+        if(not is_followup):
+            commands.extend(count_commands("out", 1, at))
 
-        commands.extend(people_commands("out", id, at))
+            commands.extend(people_commands("out", id, at))
 
         #the customer got a price, the step before booking, counted once per customer
         if(has_price(texts)):
@@ -730,9 +732,9 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
 
 
 #LOG OUTGOING
-#sent is False when the channel refused any of the texts
-def log_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None, sent: bool) -> None:
-    in_background(write_outgoing, id, channel, list(texts), dict(attachments or {}), now_ms(), sent)
+#sent is False when the channel refused any of the texts, is_followup is True for a follow up rather than a reply
+def log_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None, sent: bool, is_followup: bool) -> None:
+    in_background(write_outgoing, id, channel, list(texts), dict(attachments or {}), now_ms(), sent, is_followup)
 
 
 

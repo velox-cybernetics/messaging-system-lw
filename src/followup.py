@@ -380,7 +380,7 @@ def send_followup(id: str) -> None:
     if(followup == "" or log.read_info(followup_key(id)).get("last_message") != record.get("last_message")):
         return
 
-    if(not senders.send_texts(id, channel, spacing.split_texts(followup))):
+    if(not senders.send_texts(id, channel, spacing.split_texts(followup), is_followup=True)):
         print(f"FOLLOW UP NOT SENT: {channel} refused it for {id}, so nothing of it goes on file")
 
         return

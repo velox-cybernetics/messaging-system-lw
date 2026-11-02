@@ -340,7 +340,8 @@ def send_on_channel(recipient: str, channel: str, texts: list[str], attachments:
 
 #SEND TEXTS
 #nothing reaches a customer switched off in the dashboard, or anyone on a channel switched off there, not even a reply already written, and everything that does go out shows there
-def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> bool:
+#is_followup is True for the system's own follow up, which shows in their thread but never counts as a reply
+def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None = None, is_followup: bool = False) -> bool:
     if(not dashboard.switched_on(recipient, channel)):
         print(f"SWITCHED OFF: {recipient} or their channel is off in the dashboard, so nothing was sent")
 
@@ -348,7 +349,7 @@ def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict
 
     all_sent: bool = send_on_channel(recipient, channel, texts, attachments)
 
-    dashboard.log_outgoing(recipient, channel, texts, attachments, all_sent)
+    dashboard.log_outgoing(recipient, channel, texts, attachments, all_sent, is_followup)
 
     return all_sent
 
