@@ -49,10 +49,10 @@ def examples() -> str:
 
     Ex 6:
     CUSTOM_SERVICE_DETAILS: {"service": "PPF Removal", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"I already have ppf on the front of my 2024 m4, does that have to come off before you wrap it?"},"message_history":{}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"the old ppf on the front of my 2024 m4 is cracked and yellow, can you take it off before you wrap it?"},"message_history":{}}
     INFO_NEEDED: How long it's been on and a photo of it as it is now, for the PPF Removal.
-    Response: "Usually not, we wrap over PPF all the time and it stays on as extra protection, the edges can just show a little through the vinyl. How long has it been on, and do you have a photo of it?"
-    REASON: under_a_wrap answers it, and whether this film is fine to wrap over comes from seeing it, so both still get asked.
+    Response: "Yeah, we can take the old film off before the wrap goes on. How long has it been on, and do you have a photo of it?"
+    REASON: They want the old film taken off, so it's a job the shop does and gets a yes, and the wrap gets priced with it, so no number. PPF that's only going under the wrap never comes here, it's treated just like the paint.
 
     Ex 7:
     CUSTOM_SERVICE_DETAILS: {"service": "Wrap Removal", "service_details": {...}}

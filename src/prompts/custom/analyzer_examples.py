@@ -150,8 +150,8 @@ answer: False"""
 #PPF REMOVAL
 #yes and no examples for the custom analyzer's old ppf coming off question ("c3")
 def ppf_removal_examples() -> str:
-    return rf"""Yes: PPF or clear bra the customer says is on the vehicle now. Old, yellowed, peeling, bubbling, torn or chipped PPF getting taken off, redone or replaced, what taking it off costs or whether that's included, whether it has to come off before a wrap or new film goes on, or a follow up to a quote for taking it off.
-No: new PPF going on with nothing saying there's PPF on the vehicle now, whether the front end, the full body or just one piece like the headlights, the hood or a bumper (new PPF on one piece is a job the services don't list), even when it comes up as a follow up to another job, an old wrap, chrome delete or tint coming off, whether PPF or a wrap can come off someday down the road, or any other job.
+    return rf"""Yes: PPF or clear bra the customer says is on the vehicle now that they want taken off, redone or replaced. Old, yellowed, peeling, bubbling, torn or chipped PPF getting taken off, redone or replaced, on its own or before a wrap or new film goes on, what taking it off costs or whether that's included, whether it has to come off before new film goes on, or a follow up to a quote for taking it off.
+No: new PPF going on with nothing saying there's PPF on the vehicle now, whether the front end, the full body or just one piece like the headlights, the hood or a bumper (new PPF on one piece is a job the services don't list), even when it comes up as a follow up to another job, an old wrap, chrome delete or tint coming off, whether PPF or a wrap can come off someday down the road, PPF on the vehicle now that a wrap only goes over, which is treated just like the paint with no extra cost and no extra work (saying it's on there, whether the shop can wrap over it, whether it has to come off first or whether that costs more), or any other job.
 {context_note()}
 Examples:
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"I'm looking to remove old PPF on the front of my Ineos and Tint my front two windows including the two small safari windows"}},"message_history":{{}}}}
@@ -161,9 +161,9 @@ answer: True
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Ok cool. Does that include removing old clear bra?"}},"message_history":{{"user_message_0":{{"user_media":{{}},"user_text":"Looking for a quote on a 2018 Tesla model s for a front end clear bra install. \nBumper\nRight and left fender\nHood\nHeadlights and back of mirrors."}},"system_response_to_user_message_0":"Hey! Full front Ppf on this vehicle is $1600+tax. We can get it done this upcoming week"}}}}
 answer: True
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Sorry I had my notifications off,  think the front doors might have ppf on it, does it cost to have that removed or do I need to do it before?\nI work in salt lake so I would just need to plan ahead of time to be able to have a different car, hopefully in the month of October though"}},"message_history":{{"user_message_0":{{"user_media":{{}},"user_text":"I am looking to get my Tesla y wrapped a nardo gray type color. What would the cost be on that and how long would you need the car?"}},"system_response_to_user_message_0":"That would be $2800, we would need the car for three days\nHow soon are you looking to get this done?"}}}}
-answer: True
+answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Yeah I love it, I already have a PPF for the front so that would most likely have to come off when wrapping this correct?"}},"message_history":{{"user_message_0":{{"user_media":{{}},"user_text":"2024 M4 Competition\nWhite"}},"system_response_to_user_message_0":"You’d be about $3300\nThat thing would be insane wrapped lol"}}}}
-answer: True
+answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"The clear bra on my hood is yellowing and peeling pretty bad, can you guys take it off and put a new front end on?"}},"message_history":{{}}}}
 answer: True
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Just looking to have my headlights ppfd"}},"message_history":{{}}}}

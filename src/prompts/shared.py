@@ -53,7 +53,7 @@ def general_service_details() -> str:
     return """
     #GENERAL SERVICE DETAILS
     - What the shop does, in short. Use it only for what the customer asks about the services, and never give a price from it.
-    - Vinyl wraps: change the color and look of the vehicle, full wraps or partials like the roof, mirrors or a chrome delete.
+    - Vinyl wraps: change the color and look of the vehicle, full wraps or partials like the roof, mirrors or a chrome delete. PPF or clear bra that's already on the vehicle is treated just like regular paint, so the wrap goes right over it with no extra cost and no extra work, and it never has to come off first.
     - Paint protection film (PPF, clear bra): a clear film over the paint that takes the rock chips and road debris, done on the front end, the full body or the windshield. The film is self healing, so lighter scratches heal on their own, and it also comes in colors (colored PPF), essentially the best of both worlds.
     - Colored PPF: the same protective film in a color, so it changes the color like a wrap while protecting the paint. It's priced on the full body and comes with free side and rear window tint.
     - Window tint: nano ceramic tint (Ghost Films) that blocks 99% of the UV and most of the heat, in 5, 20, 35, 50 or 70%, on the side windows, the rear glass, the windshield, a visor strip or a sunroof. The front two door windows go no darker than 20% and the windshield no darker than 50% (it's 50 or 70% only), while the rear can go down to 5% and the visor strip can be any shade. With tint, the front said as one piece ("the front", "front window") is the windshield, and the fronts or the front two are the two front door windows. Vehicles only, no home tint.

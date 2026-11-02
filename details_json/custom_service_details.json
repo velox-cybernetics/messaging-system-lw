@@ -54,10 +54,9 @@
         "warranty" : "A free 6 month warranty, the same as a wrap: any peeling or bubbling from the install gets fixed. Vinyl on textured plastic doesn't hold up and isn't covered"
     }},
     "c3" : {"service" : "PPF Removal", "service_details" : {
-        "description" : "PPF or clear bra that's on the vehicle now, old, yellowed, peeling, bubbling, torn or chipped, getting taken off, redone or replaced, or coming off before a wrap or new film goes on",
+        "description" : "PPF or clear bra that's on the vehicle now, old, yellowed, peeling, bubbling, torn or chipped, that they want taken off, redone or replaced, on its own or before a wrap or new film goes on",
 
-        "under_a_wrap" : "Old PPF usually doesn't have to come off before a vinyl wrap. The shop wraps over PPF all the time and it stays on as extra protection under the wrap, though the film's edges and seams can show a little through the vinyl",
-        "emblem_cutouts" : "Where the old film was cut around an emblem, a small dip can show through the wrap, so the film on that one panel may come off while the rest stays",
+        "under_a_wrap" : "PPF that's on the vehicle now never has to come off before a vinyl wrap: it's treated just like regular paint, the wrap goes right over it with no extra cost and no extra work. It only comes off before a wrap when they want it taken off",
         "under_new_ppf" : "Before new PPF goes on, taking the old film off is recommended so the new install can be guaranteed and warrantied, since old film under it can cause problems in the install. The new film can still go over it if they'd rather",
         "its_own_job" : "Taking old film off is its own job on top of the wrap or the new film, never part of the new film's price",
         "info_needed" : "The vehicle, how long the film has been on, a photo of the film on it now, which panels have film and which need redoing, and whether they want it just taken off or new film put on too",

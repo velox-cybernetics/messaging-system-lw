@@ -318,6 +318,15 @@ SERVICE_PRICING_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"We had the wrap taken off my husbands Audi S5 after a door ding, now hes wanting clear bra on the hood and fenders before it gets chipped"},"message_history":{}}
     category: service_pricing
 
+    state: {"current_user_message":{"user_media":{},"user_text":"Sorry I had my notifications off,  think the front doors might have ppf on it, does it cost to have that removed or do I need to do it before?\nI work in salt lake so I would just need to plan ahead of time to be able to have a different car, hopefully in the month of October though"},"message_history":{"user_message_0":{"user_media":{},"user_text":"I am looking to get my Tesla y wrapped a nardo gray type color. What would the cost be on that and how long would you need the car?"},"system_response_to_user_message_0":"That would be $2800, we would need the car for three days\nHow soon are you looking to get this done?"}}
+    category: service_pricing
+
+    state: {"current_user_message":{"user_media":{},"user_text":"Yeah I love it, I already have a PPF for the front so that would most likely have to come off when wrapping this correct?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2024 M4 Competition\nWhite"},"system_response_to_user_message_0":"You’d be about $3300\nThat thing would be insane wrapped lol"}}
+    category: service_pricing
+
+    state: {"current_user_message":{"user_media":{},"user_text":"What does the warranty entail?\nI don’t have a picture of it, but it is black right now with satin PPF on it. Can you wrap over that?"},"message_history":{"user_message_0":{"user_text":"hello my name is Makenzie Walker, I am interested in your services, the vehicle I have is 2024 Kia sorento."},"system_response_to_user_message_0":"Heyy Makenzie, this is Hazel at the Lone Wraps team, saw your quote request on the Sorento. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"A full wrap"},"system_response_to_user_message_1":"Sweet, we can get your Sorento wrapped, a full wrap on it typically runs $3450 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
+    category: service_pricing
+
     state: {"current_user_message":{"user_media":{},"user_text":"hey are you guys available this friday? got a new audi i want wrapped"},"message_history":{}}
     category: service_pricing
 
@@ -474,13 +483,7 @@ SERVICES_REQ_HUMANS_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"Ok cool. Does that include removing old clear bra?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Looking for a quote on a 2018 Tesla model s for a front end clear bra install. \nBumper\nRight and left fender\nHood\nHeadlights and back of mirrors."},"system_response_to_user_message_0":"Hey! Full front Ppf on this vehicle is $1600+tax. We can get it done this upcoming week"}}
     category: services_req_humans
 
-    state: {"current_user_message":{"user_media":{},"user_text":"Sorry I had my notifications off,  think the front doors might have ppf on it, does it cost to have that removed or do I need to do it before?\nI work in salt lake so I would just need to plan ahead of time to be able to have a different car, hopefully in the month of October though"},"message_history":{"user_message_0":{"user_media":{},"user_text":"I am looking to get my Tesla y wrapped a nardo gray type color. What would the cost be on that and how long would you need the car?"},"system_response_to_user_message_0":"That would be $2800, we would need the car for three days\nHow soon are you looking to get this done?"}}
-    category: services_req_humans
-
     state: {"current_user_message":{"user_media":{},"user_text":"Hi Tristan, I'm looking to get a section of my front bumper re-wrapped in clear PPF as well as getting a quote for tinting my windows, all side windows and rear window."},"message_history":{}}
-    category: services_req_humans
-
-    state: {"current_user_message":{"user_media":{},"user_text":"Yeah I love it, I already have a PPF for the front so that would most likely have to come off when wrapping this correct?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2024 M4 Competition\nWhite"},"system_response_to_user_message_0":"You’d be about $3300\nThat thing would be insane wrapped lol"}}
     category: services_req_humans
 
     state: {"current_user_message":{"user_media":{},"user_text":"Can you guys take the old wrap off my 2019 camaro? its peeling pretty bad"},"message_history":{}}
