@@ -18,11 +18,11 @@ type CHART_KIND = "messaging" | "booking";
 
 //BAR
 //one slot on the chart, see api/overview.ts
-type BAR = {key: string; future: boolean; in: number; out: number; din: number; dout: number; dquoted: number; hil: number; booked: number};
+type BAR = {key: string; future: boolean; din: number; dout: number; dquoted: number; hil: number; booked: number};
 
 
 //TOTALS
-type TOTALS = {in: number; out: number; din: number; dout: number; dquoted: number; hil: number; booked: number; dhil: number; dbooked: number};
+type TOTALS = {din: number; dout: number; dquoted: number; hil: number; booked: number; dhil: number; dbooked: number};
 
 
 //CHECK IN
@@ -410,14 +410,7 @@ function show_tip(bar: BAR, series: SERIES[], slot_left: number, slot_width: num
         rows.push(shared.make_element("p", {"class": `tip-row ${each.class_name}-key`}, shared.make_element("strong", {}, String(bar[each.field])), shared.make_element("span", {}, name)));
     }
 
-    //booking chart has no replies line, false gets left out
-    let replies: HTMLParagraphElement | false = false;
-
-    if(KIND === "messaging") {
-        replies = shared.make_element("p", {"class": "tip-title"}, `${bar.in} messages, ${bar.out} replies`);
-    }
-
-    const tip: HTMLDivElement = shared.make_element("div", {"class": "tip"}, shared.make_element("p", {"class": "tip-title"}, bar_title(bar)), ...rows, replies);
+    const tip: HTMLDivElement = shared.make_element("div", {"class": "tip"}, shared.make_element("p", {"class": "tip-title"}, bar_title(bar)), ...rows);
 
     remove_tip();
 

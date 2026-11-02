@@ -35,13 +35,13 @@ const MONTHS_IN_YEAR: number = 12;
 const PEOPLE: string[] = ["in", "out", "quoted", "hil", "booked"];
 
 //what each chart bar carries
-const BAR_FIELDS: string[] = ["in", "out", "din", "dout", "dquoted", "hil", "booked"];
+const BAR_FIELDS: string[] = ["din", "dout", "dquoted", "hil", "booked"];
 
 //the strip needs these totals too
 const TOTAL_FIELDS: string[] = [...BAR_FIELDS, "dhil", "dbooked"];
 
 //plain counts add up across a week's days, the once per customer ones don't
-const SUMMED_FIELDS: string[] = ["in", "out", "hil", "booked"];
+const SUMMED_FIELDS: string[] = ["hil", "booked"];
 
 
 //PLAN TYPES
