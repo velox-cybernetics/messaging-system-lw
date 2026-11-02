@@ -535,7 +535,7 @@ def torn_route(category: str, probabilities: dict[str, float]) -> str:
     if(category in ["service_pricing", "business_operations", "services_req_humans", "escalation", "general_text", "phone_call", "end_conversation"]):
         return category
 
-    #a booking only kicks off its confirm chain on a clear pick, so when torn its chance counts toward the service
+    #a booking only kicks off its confirm chain on a clear pick, so when torn its chance counts toward the service, and main_route still books it once they asked to get on the schedule
     service_probability: float = probabilities["service_pricing"] + probabilities["booking_service_acknowledge"]
 
     if(service_probability >= ROUTE_THRESHOLD):
@@ -549,8 +549,8 @@ def torn_route(category: str, probabilities: dict[str, float]) -> str:
 
 
 #ROUTE
-#the branch that answers it, with the model's chance for that branch
-def pick_route(state: dict) -> tuple[str, float]:
+#the branch that answers it, with the model's chance for that branch and its own pick, which is a different branch only when it was torn
+def pick_route(state: dict) -> tuple[str, float, str]:
     route_criteria: dict[str, str] = {}
 
     route_criteria["service_pricing"] = router_instructions.criteria("service_pricing")
@@ -590,13 +590,15 @@ def pick_route(state: dict) -> tuple[str, float]:
         if(category == "booking_service_acknowledge" and spacing.yes_to_booking_question(user_text, state["message_history"])):
             print(f"ROUTE: a yes to the schedule question, torn at {confidence:.2f}, so it books")
 
-            return (category, probabilities[category])
+            return (category, probabilities[category], category)
 
         torn: str = torn_route(category, probabilities)
 
-        return (torn, probabilities[torn])
+        print(f"ROUTE TORN: {category}({confidence:.2f}) goes to {torn}")
 
-    return (category, probabilities[category])
+        return (torn, probabilities[torn], category)
+
+    return (category, probabilities[category], category)
 
 
 

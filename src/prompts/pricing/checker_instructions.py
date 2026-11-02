@@ -150,6 +150,11 @@ def examples() -> str:
     answer: False
     REASON: Wanting to book, the regular reply handles that (false case 8).
 
+    SERVICE_DETAILS: every service the shop offers, one per line
+    STATE: {"current_date_time":"Monday, November 02, 2026 at 12:06 PM","current_user_message":{"user_media":{},"user_text":"Maybe. What is your schedule like right now?"},"message_history":{"user_message_0":{"user_text":"hello my name is Scott Hunt, I am interested in your services, the vehicle I have is 2026 Ram 2500."},"system_response_to_user_message_0":"Heyy Scott, this is Hazel at the Lone Wraps team, saw your quote request on the 2500. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Full Clear bra on hood and front fenders of 2026 Ram 2500."},"system_response_to_user_message_1":"Sweet, so front end PPF on the 2500 would run $1800 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and it comes with a lifetime warranty. Did you want to hop on the schedule?"}}
+    answer: False
+    REASON: Asking what the schedule looks like right after the shop's schedule question is asking what's open to get on it, and the owner's line in #BOOKING DETAILS answers that, so it's covered, never a question nobody can answer (false cases 8 and 11).
+
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Do you guys do PPF?"},"message_history":{}}
     answer: False

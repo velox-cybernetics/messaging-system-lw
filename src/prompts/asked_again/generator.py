@@ -32,15 +32,15 @@ def examples() -> str:
     REASON: The color it is now and a pic of it still aren't in, so the same two pieces get asked for again in new words that name the Camry (rules 1 and 2). It comes right after the answer on how long, so it reads on from it with nothing in front (rule 3).
 
     Ex 3:
-    STATE: {"current_date_time":"Thursday, October 22, 2026 at 02:30 PM","current_user_message":{"user_media":{},"user_text":"how long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my 2022 civic, all the windows"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Civic is $450 + tax, and if you wanted to add the windshield that would be an extra $200. Do you know how dark you're wanting to go?","user_message_1":{"user_media":{},"user_text":"20 all around"},"system_response_to_user_message_1":"Sweet, 20% all around would look clean on the Civic. Did you want to hop on the schedule?","user_message_2":{"user_media":{},"user_text":"does it come with a warranty"},"system_response_to_user_message_2":"Yeah, it comes with a lifetime warranty on any bubbling or peeling. Any other questions on the tint in the meantime?"}}
+    STATE: {"current_date_time":"Thursday, October 22, 2026 at 02:30 PM","current_user_message":{"user_media":{},"user_text":"how long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my 2022 civic, all the windows"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Civic is $450 + tax, and if you wanted to add the windshield that would be an extra $200. Do you know how dark you're wanting to go?","user_message_1":{"user_media":{},"user_text":"20 all around"},"system_response_to_user_message_1":"Sweet, 20% all around would look clean on the Civic. Did you want to hop on the schedule?","user_message_2":{"user_media":{},"user_text":"does it come with a warranty"},"system_response_to_user_message_2":"Yeah, it comes with a lifetime warranty on any bubbling or peeling. You wanting to get the Civic on the schedule?"}}
     REPLY: "Tint is usually same day. Did you want to hop on the schedule?"
     ASK: Did you want to hop on the schedule?
     ASKED_BEFORE:
     Do you know how dark you're wanting to go?
     Did you want to hop on the schedule?
-    Any other questions on the tint in the meantime?
+    You wanting to get the Civic on the schedule?
     Response: "Want me to get you on the schedule for it?"
-    REASON: It asks whether they want to get on the schedule, so the new wording does too, with schedule in it, in words the earlier schedule question didn't use (rules 1 and 2).
+    REASON: It asks whether they want to get on the schedule, so the new wording does too, with schedule in it, in words neither earlier schedule question used (rules 1 and 2).
 
     Ex 4:
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"is it ceramic tint?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint"},"system_response_to_user_message_0":"For sure, we can do that. What vehicle is it?"}}

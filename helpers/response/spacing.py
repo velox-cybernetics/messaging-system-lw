@@ -7,7 +7,7 @@ from helpers.response import cleaners
 
 
 #**********GLOBALS**********
-#the booking and pic words, the booking question, the drop off days only the booking chain offers, and the openers a reply gets spaced out with
+#the booking and pic words, the booking question, the asks that are never the shop's, the drop off days only the booking chain offers, and the openers a reply gets spaced out with
 
 
 #BOOKING WORDS
@@ -90,6 +90,14 @@ BOOKING_QUESTION: str = "Did you want to hop on the schedule?"
 #BOOKING YES
 #a customer's text that opens with a yes, the way they text one ("yessir", "yeah!", "yesss", "bet", "for sure")
 BOOKING_YES_PATTERN: re.Pattern = re.compile(r"^\W*(y+e+s+(\s*sir)?|y+e+a+h*|y+a+h*|y+e+p+|y+u+p+|bet|sure|for sure|sounds good|i'?m down|absolutely|definitely)\b", re.IGNORECASE)
+
+
+#OFF LIST ASKS
+#asking what else they want to know is never one of the shop's questions ("Any other questions on the front end?", "Anything else you wanted to know about the full body?", "Does that help?")
+OFF_LIST_ASK_PATTERN: re.Pattern = re.compile(r"\b(?:any|other|more)\s+(?:other\s+|more\s+)?questions?\b|\b(?:anything|something|what)\s+else\b.*\b(?:know|ask|help|need|curious|wonder\w*)\b|\b(?:anything|something)\s+else\s*\?|\bdoes\s+that\s+(?:help|make\s+sense)\b", re.IGNORECASE)
+
+#a sign off that hands it back to them asks the same thing with no question mark ("Let me know if you have any other questions")
+LET_ME_KNOW_PATTERN: re.Pattern = re.compile(r"^(?:let me know|lmk|feel free)\b", re.IGNORECASE)
 
 
 #DAY OFFERS
@@ -745,5 +753,26 @@ def color_want_asks(reply: str) -> list[str]:
             asks.append(text)
 
         sentence_before = text
+
+    return asks
+
+
+
+#**********OFF LIST ASKS**********
+#spots an ask for what else they want to know, so it never goes out in place of one of the shop's questions
+
+
+#OFF LIST ASKS
+#the sentences of the reply asking what else they want to know, as a question or a let me know, never "Were you looking to get anything else done on your vehicle?"
+def off_list_asks(reply: str) -> list[str]:
+    asks: list[str] = []
+
+    for sentence in split_sentences(reply):
+        text: str = sentence.replace("’", "'").strip()
+
+        asks_them: bool = text.endswith("?") or LET_ME_KNOW_PATTERN.match(text) is not None
+
+        if(asks_them and OFF_LIST_ASK_PATTERN.search(text) is not None):
+            asks.append(sentence.strip())
 
     return asks

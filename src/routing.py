@@ -107,6 +107,18 @@ def color_check_waiting(id: str) -> bool:
     return branches.color_check_due(color_job_on, critical_info, color_check)
 
 
+#PRICE NEEDS MORE
+#the vehicle, the route, a pic of it or the exact color still missing, read off file after the branch ran since the route it just took in isn't in what core read before it
+def price_needs_more(id: str) -> bool:
+    color_job_on: bool = len(branches.color_job_on_file(id)) > 0
+
+    critical_info: dict[str, str] = log.read_info(f"criticalInfo_{id}")
+
+    color_check: str = owner.color_check_status(id)
+
+    return branches.pricing_interrogator(color_job_on, critical_info, color_check) is not None
+
+
 #HELD BOOKING
 #a held booking ends on the schedule question once a price that needs nothing else goes out
 def held_booking_question(system_response: str, id: str) -> str:
@@ -116,20 +128,8 @@ def held_booking_question(system_response: str, id: str) -> str:
 
         return system_response
 
-    color_job_on: bool = len(branches.color_job_on_file(id)) > 0
-
-    #read off file after the branch ran, since the route it just took in isn't in what core read before it
-    critical_info: dict[str, str] = log.read_info(f"criticalInfo_{id}")
-
-    color_check: str = owner.color_check_status(id)
-
-    #the vehicle, the route, a pic of it or the exact color still missing means the price needs more
-    interrogator: tuple[str, str] | None = branches.pricing_interrogator(color_job_on, critical_info, color_check)
-
-    price_needs_more: bool = interrogator is not None
-
     #the hold stays on until a price goes out that needs nothing else
-    if("$" not in system_response or price_needs_more):
+    if("$" not in system_response or price_needs_more(id)):
         return system_response
 
     log.clear_info(f"booking_held_{id}", ["status"])
@@ -166,6 +166,58 @@ def cut_made_up_days(system_response: str, id: str) -> str:
         return spacing.BOOKING_QUESTION
 
     return kept_reply
+
+
+
+#**********OFF LIST ASKS**********
+#a reply only ends on one of the shop's own questions, so asking what else they want to know never goes out, and the schedule question takes its place once it's due
+
+
+#SCHEDULE DUE
+#the job has its price and nothing it or the booking needs is missing, so the schedule question is what the reply ends on, unless a person has them
+def schedule_due(system_response: str, id: str) -> bool:
+    if(log.read_state(f"restricted_{id}")):
+        return False
+
+    #a price in this reply, or one that already went out to them
+    price_out: bool = "$" in system_response or len(log.read_info(f"price_sent_{id}")) > 0
+
+    return price_out and not price_needs_more(id)
+
+
+#OFF LIST CUT
+#an ask for what else they want to know comes off ("Any other questions on the front end?"), with the schedule question in its place when it's due
+def cut_off_list_asks(system_response: str, id: str) -> str:
+    off_list: list[str] = spacing.off_list_asks(system_response)
+
+    if(len(off_list) == 0):
+        return system_response
+
+    kept_reply: str = repeats.drop_questions(system_response, off_list)
+
+    #one of the shop's own asks is still in it, so it ends on that one, and with none the schedule question goes on once it's due
+    keeps_own_ask: bool = len(repeats.question_sentences(kept_reply)) > 0 or spacing.asks_for_pic(kept_reply)
+
+    due: bool = not keeps_own_ask and schedule_due(system_response, id)
+
+    #nothing else went out with it and nothing can take its place, so it stays rather than the reply going out empty
+    if(kept_reply == "" and not due):
+        print(f"OFF LIST ASK KEPT, NOTHING ELSE IN THE REPLY: {system_response}")
+
+        return system_response
+
+    for sentence in off_list:
+        print(f"OFF LIST ASK CUT: {sentence}")
+
+    if(not due):
+        return kept_reply
+
+    print(f"SCHEDULE QUESTION IN ITS PLACE: {spacing.BOOKING_QUESTION}")
+
+    if(kept_reply == ""):
+        return spacing.BOOKING_QUESTION
+
+    return f"{spacing.end_sentence(kept_reply)} {spacing.BOOKING_QUESTION}"
 
 
 
@@ -299,22 +351,34 @@ def main_route(state: dict, id: str) -> str:
 
         return system_response
 
-    routed: tuple[str, float] = branches.pick_route(state)
+    routed: tuple[str, float, str] = branches.pick_route(state)
 
     route_result: str = routed[0]
 
     route_probability: float = routed[1]
 
+    #a booking the router leaned towards but was torn on comes back as another branch
+    torn_booking: bool = routed[2] == "booking_service_acknowledge" and route_result != routed[2]
+
     print("*" * 25)
 
     print(f"ROUTE RESULT: {route_result}({route_probability:.2f})")
+
+    #the pricing branch and a torn booking both go by whether their message asks to get on the books, asked once for both
+    booking_asked: bool = (route_result == "service_pricing" or torn_booking) and branches.booking_intent(state)
+
+    #the router leaned booking and only missed the cutoff, so asking to get on the schedule books them the same as a clear pick ("Maybe. What is your schedule like right now?")
+    if(torn_booking and booking_asked):
+        print("TORN BOOKING: the router leaned booking and they asked to get on the schedule, so the booking guard takes it")
+
+        route_result = "booking_service_acknowledge"
 
     #wanting to book before a price went out or before the job is clear goes to the pricing branch first
     if(route_result == "booking_service_acknowledge"):
         route_result = booking_guard(state, id)
 
     #a booking ask that came with a question about the job, so the reply with its price ends on the schedule question
-    elif(route_result == "service_pricing" and branches.booking_intent(state)):
+    elif(route_result == "service_pricing" and booking_asked):
         print("BOOKING HELD: they asked to get on the books along with the job, so the reply with its price ends on the schedule question")
 
         log.write_info(f"booking_held_{id}", ["held"], ["status"])
@@ -371,6 +435,10 @@ def main_route(state: dict, id: str) -> str:
 
         #on file once the reply is written, so a chain that runs again after a timeout still writes it
         log.write_state(f"convo_ended_{id}", "ended")
+
+    #only the shop's own questions end a pricing or small talk reply, so asking what else they want to know comes off, with the schedule question in its place once it's due
+    if(route_result in ["service_pricing", "general_text"]):
+        system_response = cut_off_list_asks(system_response, id)
 
     #the color they want only gets asked once the exact price has what it needs, whichever branch wrote the reply
     system_response = cut_early_color_ask(state, id, system_response)
@@ -442,6 +510,10 @@ def restricted_route(state: dict, id: str, color_swapped: bool, held: bool) -> s
             system_response = branches.hold_reply(state)
 
             owner.hold(id)
+
+    #only the shop's own questions end a pricing reply, the same as on the main route, and nothing puts the schedule question on while a person has them
+    if(route_result == "service_pricing"):
+        system_response = cut_off_list_asks(system_response, id)
 
     #the pricing branch answers here too, so the color they want waits on what the exact price needs the same way
     system_response = cut_early_color_ask(state, id, system_response)
