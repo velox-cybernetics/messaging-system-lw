@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#the sentence splitter, to pull the questions out of a reply
+#the sentence splitter and what finishes an ask, to pull the questions and the asks out of a reply
 from helpers.response import spacing
 
 
@@ -81,6 +81,10 @@ def asked_words(question: str) -> set[str]:
 #SAME QUESTION
 #whether two questions ask for the same thing, the same words or most of them
 def same_question(question: str, asked: str) -> bool:
+    #the very same words always ask the same thing, even a question that's all filler like "What are you looking to get done?"
+    if(plain_words(question) == plain_words(asked)):
+        return True
+
     words: set[str] = asked_words(question)
 
     asked_before: set[str] = asked_words(asked)
@@ -155,3 +159,73 @@ def asked_in(question: str, reply: str) -> bool:
     reply_text: str = " ".join(plain_words(reply))
 
     return f" {question_text} " in f" {reply_text} "
+
+
+
+#**********ASKS**********
+#a question with the pic or the "If you do" that finishes it goes out as one ask, so it gets said again in new words as one
+
+
+#STARTS PART
+#a sentence with a line break in front of it starts another part of the reply
+def starts_part(sentence: str) -> bool:
+    lead: str = sentence[:len(sentence) - len(sentence.lstrip())]
+
+    return "\n" in lead
+
+
+#ASK END
+#where the ask a question opens ends in the reply's sentences, past the ones right after it that finish it in the same part
+def ask_end(sentences: list[str], question_position: int) -> int:
+    end: int = question_position + 1
+
+    while(end < len(sentences) and not starts_part(sentences[end]) and spacing.finishes_ask(sentences[end].strip())):
+        end += 1
+
+    return end
+
+
+#ASKS
+#every ask in a reply, each question with the sentences that finish it, like "Do you have an exact green in mind? If you do, can you shoot a pic of it over"
+def asks(reply: str) -> list[str]:
+    sentences: list[str] = spacing.split_sentences(reply)
+
+    reply_asks: list[str] = []
+
+    for position, sentence in enumerate(sentences):
+        if(sentence.strip().endswith("?")):
+            reply_asks.append("".join(sentences[position:ask_end(sentences, position)]).strip())
+
+    return reply_asks
+
+
+#ASK SPOT
+#where the ask that opens on this question sits in the reply's sentences, its first sentence and the one after its last, None when the reply doesn't ask it
+def ask_spot(sentences: list[str], question: str) -> tuple[int, int] | None:
+    for position, sentence in enumerate(sentences):
+        if(sentence.strip() == question):
+            return (position, ask_end(sentences, position))
+
+    return None
+
+
+#SWAP ASK
+#the reply with the ask at that spot said in new words, everything around it as it was, or with the ask taken out when there are no new words
+def swap_ask(sentences: list[str], spot: tuple[int, int], wording: str) -> str:
+    before: str = "".join(sentences[:spot[0]])
+
+    after: str = "".join(sentences[spot[1]:])
+
+    if(wording == ""):
+        return f"{before}{after}".strip()
+
+    #the new words keep the space or line break the ask had in front of it, so the reply keeps its parts
+    first_sentence: str = sentences[spot[0]]
+
+    lead: str = first_sentence[:len(first_sentence) - len(first_sentence.lstrip())]
+
+    #new words that stop with no period never run into a sentence that follows them in the same part
+    if(after.strip() != "" and not starts_part(after)):
+        wording = spacing.end_sentence(wording)
+
+    return f"{before}{lead}{wording}{after}".strip()

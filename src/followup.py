@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's clock, the shop's timezone, the reply writer and its final check, the senders, the conversation on file, the dashboard's switch and follow ups page, the held prints, the early color ask cut, and the follow up prompts
+#python's clock, the shop's timezone, the reply writer and its final check, the senders, the conversation on file, the dashboard's switch and follow ups page, the held prints, the early color ask cut, the asked again check, and the follow up prompts
 import time
 from datetime import datetime, timedelta
 
@@ -16,6 +16,7 @@ from helpers.state import state_build
 from helpers.state import state_form
 from helpers.terminal import prints
 from src import routing
+from src import branches
 from src.prompts.followup import analyzer_examples as followup_examples
 from src.prompts.followup import generator as followup_generator
 
@@ -248,7 +249,10 @@ def followup_chain(state: dict, id: str) -> str:
 
     system_prompt: str = followup_generator.prompt()
 
-    return models.generator("FOLLOW UP GENERATOR", system_prompt, followup_text, FOLLOWUP_MAX_TOKENS, FOLLOWUP_EFFORT, line_breaks=False)
+    followup: str = models.generator("FOLLOW UP GENERATOR", system_prompt, followup_text, FOLLOWUP_MAX_TOKENS, FOLLOWUP_EFFORT, line_breaks=False)
+
+    #a follow up asks again what the shop's last message asked, so it never goes out in the words that ask already went out in
+    return branches.asked_again_reply(state, followup)
 
 
 #WRITTEN FOLLOW UP

@@ -78,6 +78,7 @@ from src.prompts.color_materials.picked import regenerator as color_picked_regen
 from src.prompts.restricted import analyzer_examples as restricted_examples
 from src.prompts.restricted import hold as restricted_hold
 from src.prompts.side_ask import analyzer_examples as side_ask_examples
+from src.prompts.asked_again import generator as asked_again_generator
 
 
 
@@ -207,6 +208,16 @@ COLOR_NOW_ASKS: list[str] = ["What color is the {vehicle} right now? Send me a p
 
 
 
+#**********ASKED AGAIN**********
+#a question the shop already asked goes out again in new words, other than the one the owner asks again in his same words
+
+
+#SAME WORDS ASKS
+#after they ask about the tint law, the owner asks how dark they want to go again in his same words, even right after a reply that asked it (TINT rule 4)
+SAME_WORDS_ASKS: list[str] = ["Do you know how dark you're wanting to go?"]
+
+
+
 #**********SIDE ASKS**********
 #the new girl's line says she isn't sure and will ask the owner, and the branches whose checker flag is that line
 
@@ -290,6 +301,15 @@ SIDE_ASK_PERSIST_THRESHOLD: float = 0.6
 #REGEN ATTEMPTS
 #a flagged reply gets fixed at most this many times, each fix checked like the first reply before it can go out
 REGEN_MAX_ATTEMPTS: int = 2
+
+
+#ASKED AGAIN LIMITS
+#flashx says an ask the shop already sent again in new words at high, and a wording that still repeats one or stops asking what it did gets written again, up to this many tries in all
+ASKED_AGAIN_MAX_TOKENS: int = 10*100
+
+ASKED_AGAIN_EFFORT: str = "high"
+
+ASKED_AGAIN_MAX_ATTEMPTS: int = 3
 
 
 #PRICING LIMITS
@@ -1660,6 +1680,115 @@ def custom_ack_reply(state: dict, user_text: str, custom_service_info: dict[str,
     system_prompt: str = custom_ack.prompt()
 
     return models.generator("ACK GENERATOR", system_prompt, ack_text, CUSTOM_MAX_TOKENS, CUSTOM_EFFORT, line_breaks=False)
+
+
+
+#**********ASKED AGAIN**********
+#every reply's question the shop already asked goes out again in new words, whichever branch wrote it, since the enforcer can miss one asked the same way twice
+
+
+#SAME WORDS ASK
+#the how dark question after they ask about the tint law is the one ask that goes out again in the owner's same words
+def same_words_ask(question: str) -> bool:
+    for ask in SAME_WORDS_ASKS:
+        if(repeats.asked_words(question) == repeats.asked_words(ask)):
+            return True
+
+    return False
+
+
+#KEEPS ASK
+#new words still ask what the ask did and nothing else: a question, a pic only when it asked for one and the schedule only when it asked about it, since the pic wait and the yes to the schedule question read the reply that went out, and no price it didn't have
+def keeps_ask(ask: str, wording: str) -> bool:
+    if(wording == "" or "\n" in wording or len(repeats.question_sentences(wording)) == 0):
+        return False
+
+    if("$" in wording and "$" not in ask):
+        return False
+
+    if(spacing.asks_for_pic(wording) != spacing.asks_for_pic(ask)):
+        return False
+
+    return spacing.asks_booking_question(wording) == spacing.asks_booking_question(ask)
+
+
+#ASKED AGAIN TEXT
+#what the new words get written from: the conversation, the reply with the ask in it, and every wording they can't go out in
+def asked_again_text(state: dict, reply: str, ask: str, used_wordings: list[str]) -> str:
+    state_as_text: str = state_form.state_to_text(state)
+
+    used_text: str = "\n".join(used_wordings)
+
+    return f"STATE: {state_as_text}\n REPLY: {reply}\n ASK: {ask}\n ASKED_BEFORE:\n{used_text}"
+
+
+#NEW WORDING
+#the ask in words no ask the shop already sent used, still asking what it did, "" when every try repeated one or stopped asking it
+def new_wording(state: dict, reply: str, ask: str, earlier_replies: list[str]) -> str:
+    #every ask the shop already sent, then each try that couldn't go out, so the next try steers clear of it too
+    used_wordings: list[str] = []
+
+    for earlier_reply in earlier_replies:
+        used_wordings.extend(repeats.asks(earlier_reply))
+
+    system_prompt: str = asked_again_generator.prompt()
+
+    for attempt in range(1, ASKED_AGAIN_MAX_ATTEMPTS + 1):
+        asked_text: str = asked_again_text(state, reply, ask, used_wordings)
+
+        wording: str = models.generator("ASKED AGAIN", system_prompt, asked_text, ASKED_AGAIN_MAX_TOKENS, ASKED_AGAIN_EFFORT, line_breaks=False).strip()
+
+        if(keeps_ask(ask, wording) and len(repeats.repeated_questions(wording, earlier_replies)) == 0):
+            return wording
+
+        print(f"ASKED AGAIN TRY {attempt} CAN'T GO OUT: {wording}")
+
+        if(wording != ""):
+            used_wordings.append(wording)
+
+    return ""
+
+
+#ASKED AGAIN REPLY
+#the reply with every question the shop already asked in the same words, or close to them, asked again in new words
+#one that never got new words comes off rather than go out again, unless it's all the reply says, so something still goes out
+def asked_again_reply(state: dict, reply: str) -> str:
+    earlier_replies: list[str] = spacing.sent_replies(state["message_history"])
+
+    for question in repeats.repeated_questions(reply, earlier_replies):
+        if(same_words_ask(question)):
+            continue
+
+        sentences: list[str] = spacing.split_sentences(reply)
+
+        spot: tuple[int, int] | None = repeats.ask_spot(sentences, question)
+
+        #the same question twice in the reply, and new words already went in for it
+        if(spot is None):
+            continue
+
+        ask: str = "".join(sentences[spot[0]:spot[1]]).strip()
+
+        print(f"ASKED AGAIN IN THE SAME WORDS: {ask}")
+
+        wording: str = new_wording(state, reply, ask, earlier_replies)
+
+        kept_reply: str = repeats.swap_ask(sentences, spot, wording)
+
+        if(kept_reply == ""):
+            print(f"ASKED AGAIN KEPT, NOTHING ELSE IN THE REPLY: {ask}")
+
+            continue
+
+        if(wording == ""):
+            print(f"ASKED AGAIN CUT: {ask}")
+
+        else:
+            print(f"ASKED AGAIN IN NEW WORDS: {wording}")
+
+        reply = kept_reply
+
+    return reply
 
 
 

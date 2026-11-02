@@ -380,7 +380,8 @@ def main_route(state: dict, id: str) -> str:
     if(route_result not in ["booking_service_acknowledge", "end_conversation"]):
         system_response = cut_made_up_days(system_response, id)
 
-    return system_response
+    #a question the shop already asked never goes out again in those words, whichever branch wrote the reply
+    return branches.asked_again_reply(state, system_response)
 
 
 #RESTRICTED ROUTE
@@ -445,7 +446,10 @@ def restricted_route(state: dict, id: str, color_swapped: bool, held: bool) -> s
     #the pricing branch answers here too, so the color they want waits on what the exact price needs the same way
     system_response = cut_early_color_ask(state, id, system_response)
 
-    return cut_made_up_days(system_response, id)
+    system_response = cut_made_up_days(system_response, id)
+
+    #a question the shop already asked never goes out again in those words, the same as on the main route
+    return branches.asked_again_reply(state, system_response)
 
 
 #MATERIAL PICK

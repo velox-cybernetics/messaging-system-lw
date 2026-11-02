@@ -715,6 +715,12 @@ def asks_color_wanted(sentence: str, sentence_before: str) -> bool:
     return False
 
 
+#FINISHES ASK
+#"Send me a pic if you can" or "If you do, can you shoot a pic of it over" finishes the question right before it as the same ask, never a question of its own
+def finishes_ask(text: str) -> bool:
+    return not text.endswith("?") and (text.lower().startswith(IF_YOU_DO) or asks_for_pic(text))
+
+
 #COLOR WANT ASKS
 #the sentences of the reply asking for the color they want, with the pic or the "If you do" that finishes each one
 def color_want_asks(reply: str) -> list[str]:
@@ -731,9 +737,9 @@ def color_want_asks(reply: str) -> list[str]:
             continue
 
         #"Send me a pic if you can" or "If you do, can you shoot a pic of it over" right after it is part of the same ask
-        finishes_ask: bool = ask_before and not text.endswith("?") and (text.lower().startswith(IF_YOU_DO) or asks_for_pic(text))
+        finishing: bool = ask_before and finishes_ask(text)
 
-        ask_before = finishes_ask or asks_color_wanted(text, sentence_before)
+        ask_before = finishing or asks_color_wanted(text, sentence_before)
 
         if(ask_before):
             asks.append(text)
