@@ -239,8 +239,8 @@ COLOR_ROUTE_THRESHOLD: float = 0.75
 
 
 #REPLY CHECKS
-#a yes over this means the details can't answer it, high on purpose since answered messages never pass 0.5
-CHECKER_THRESHOLD: float = 0.76
+#a yes over this means the details can't answer it, low enough that a question they have nothing on goes to a person instead of getting a made up answer, answered messages stay under it
+CHECKER_THRESHOLD: float = 0.6
 
 #a yes over this means the reply broke a rule, high on purpose since clean pricing replies score up to about 0.74
 ENFORCER_THRESHOLD: float = 0.7

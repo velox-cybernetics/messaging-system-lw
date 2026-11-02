@@ -128,7 +128,7 @@ def instructions() -> str:
 
     #Unknown Rules To Enforce
     -The response breaks an unknown rule when:
-    1. It answers, guesses or hints at what the customer asked: any price or number, a yes or no on whether the shop does it or can do it, a time frame, a brand or material, or words like "probably", "usually", "should be able to", "most likely".
+    1. It answers, guesses or hints at what the customer asked: any price or number, a yes or no on whether the shop does it or can do it, a time frame, a brand or material, words like "probably", "usually", "should be able to", "most likely", or saying again, in any words, what an earlier reply in message_history said about the thing they're asking or pushing back on.
     2. It never says it's not sure or doesn't know. When message_history shows the shop already said it would look into this, it doesn't need to say it again.
     3. It doesn't say it'll look into it for them ("let me look into that for you"), or it says it'll ask or check with the owner.
     4. It pitches the wrap or another service in place of what they asked about.
@@ -136,7 +136,7 @@ def instructions() -> str:
 
     #Conversation Rules To Enforce
     -The response breaks a conversation rule when:
-    6. It skips over something else the customer said in current_user_message, like news about their car, a thanks or a compliment, without a word on it. A plain "Sweet" or "ok" from the customer needs nothing back.
+    6. It skips over something else the customer said in current_user_message, like news about their car, a thanks or a compliment, without a word on it. A plain "Sweet" or "ok" from the customer needs nothing back, and neither does what other shops told them or pushing back on what the shop said, that's part of what they asked.
     7. What they asked could mean more than one thing (like "do my wheels" meaning wrapping them or powder coating them) and it picks one instead of asking which.
     8. It asks for something the customer already gave.
     9. It mentions a vehicle, part or detail the customer never gave.

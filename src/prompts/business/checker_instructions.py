@@ -135,7 +135,7 @@ def instructions() -> str:
     #False Cases
     4. BUSINESS_DETAILS has the answer. For being open today, tomorrow or right now, Hours Of Operations with current_date_time answers it.
     5. The message mixes a part that falls under the true cases with a part BUSINESS_DETAILS covers, like the hours plus parking. The regular reply answers the covered part and says it'll look into the rest.
-    6. They ask who they are talking to, or whether this is a bot or a real person.
+    6. They ask who they are talking to, what Hazel means or stands for, or whether this is a bot or a real person.
     7. They want to come in at a certain day or time or get on the schedule. The regular reply handles that.
     8. The message asks for nothing new: a thanks, an ok, or saying they'll come by.
     9. They ask about the services or booking and #GENERAL SERVICE DETAILS or #BOOKING DETAILS answers it, like coming by to look through the wrap or colored PPF color books, what the shop does, turnaround or warranty.
