@@ -414,7 +414,7 @@ def service_of(channel: str) -> str:
 
 #SEND TEXTS
 #nothing reaches a customer switched off in the dashboard, or anyone on a channel switched off there, not even a reply already written, and everything that does go out shows there
-#is_followup is True for the system's own follow up, which shows in their thread but never counts as a reply
+#is_followup is True for the system's own follow up, which shows in their thread but never counts as a reply, and only the part of it that reached them shows
 def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None = None, is_followup: bool = False) -> DELIVERY:
     if(not dashboard.switched_on(recipient, channel)):
         print(f"SWITCHED OFF: {recipient} or their channel is off in the dashboard, so nothing was sent")
@@ -422,6 +422,13 @@ def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict
         return ([], False, False)
 
     texts_sent, all_sent, capped = send_on_channel(recipient, channel, texts, attachments)
+
+    #a follow up is the shop reaching out on its own, so one that never reached them never shows in their thread, and of one that half went out only that half does
+    if(is_followup):
+        if(len(texts_sent) > 0):
+            dashboard.log_outgoing(recipient, channel, texts_sent, None, True, True)
+
+        return (texts_sent, all_sent, capped)
 
     dashboard.log_outgoing(recipient, channel, texts, attachments, all_sent, is_followup)
 
@@ -453,7 +460,7 @@ def send_ghl_text(recipient: str, text: str, attachments: list[str]) -> bool:
 
 
 #SMS TEXT
-#nothing reaches a customer switched off in the dashboard, and it shows there in green so the sms ones stand out, False when ghl turned it down
+#nothing reaches a customer switched off in the dashboard, and one that went out shows there in green so the sms ones stand out, False when ghl turned it down
 def send_sms_text(recipient: str, channel: str, contact: str, text: str) -> bool:
     if(not dashboard.switched_on(recipient, channel)):
         print(f"SWITCHED OFF: {recipient} or their channel is off in the dashboard, so nothing was sent")
@@ -470,7 +477,9 @@ def send_sms_text(recipient: str, channel: str, contact: str, text: str) -> bool
 
         sent = False
 
-    dashboard.log_outgoing(recipient, channel, [text], None, sent, True, sms=True)
+    #a follow up ghl turned down never reached them, so it never shows in their thread
+    if(sent):
+        dashboard.log_outgoing(recipient, channel, [text], None, True, True, sms=True)
 
     return sent
 
