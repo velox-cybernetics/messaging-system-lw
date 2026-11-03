@@ -94,6 +94,11 @@ TOKEN_MARGIN_SECONDS: int = 300
 TOKEN_LOCK: threading.Lock = threading.Lock()
 
 
+#STOP STATUSES
+#ghl's do not disturb on texts reads one of these once they texted STOP
+STOP_STATUSES: list[str] = ["active", "permanent"]
+
+
 
 #**********REQUESTS**********
 #every call to ghl goes out the same way
@@ -307,3 +312,33 @@ def log_received(id: str, text: str | None, attachments: list | None) -> None:
         return
 
     WORKER.submit(write_texts, id, [(text or "", pics, time.time())], INBOUND)
+
+
+
+#**********SMS**********
+#the follow ups that go out from the shop's own number in ghl once blooio is done with them, and what ghl knows about who gets them
+
+
+#SEND SMS
+#one text from the shop's default number in ghl, which keeps it in their conversation there on its own, a refused one raises with what ghl said
+def send_sms(contact: str, text: str) -> None:
+    ghl_request("post", "/conversations/messages", CONVERSATIONS_VERSION, json={"type": "SMS", "contactId": contact, "message": text})
+
+
+#CONTACT DETAILS
+#everything ghl has on the contact, like their first name and whether they texted STOP
+def contact_details(contact: str) -> dict:
+    answer: dict = ghl_request("get", f"/contacts/{contact}", CONTACTS_VERSION)
+
+    return answer.get("contact") or {}
+
+
+#SMS STOPPED
+#they texted STOP, so ghl has them on do not disturb for texts or for everything, and an sms to them never goes out
+def sms_stopped(details: dict) -> bool:
+    if(details.get("dnd") is True):
+        return True
+
+    sms_setting: dict = (details.get("dndSettings") or {}).get("SMS") or {}
+
+    return sms_setting.get("status") in STOP_STATUSES

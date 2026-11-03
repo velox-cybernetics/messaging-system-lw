@@ -21,13 +21,13 @@ const RECHECK_MINUTES: number = 10;
 
 
 //FOLLOW UP
-//number is which follow up in a row it is, counted since they last wrote
-type FOLLOW_UP = {at: number; number: number};
+//number is which follow up in a row it is, counted since they last wrote, sms is one that went out from the shop's ghl number
+type FOLLOW_UP = {at: number; number: number; sms: boolean};
 
 
 //CUSTOMER
-//tab is where their conversation sits on Messages, null once it was deleted there
-type CUSTOMER = {id: string; name: string; channel: string; tab: shop.TAB | null; due: FOLLOW_UP | null; sent: FOLLOW_UP[]};
+//tab is where their conversation sits on Messages, null once it was deleted there, held is when blooio started holding their texts till they text back or react
+type CUSTOMER = {id: string; name: string; channel: string; tab: shop.TAB | null; due: FOLLOW_UP | null; sent: FOLLOW_UP[]; held: number | null};
 
 
 
@@ -52,7 +52,7 @@ function follow_up_of(fields: Record<string, unknown>): FOLLOW_UP | null {
         count = number;
     }
 
-    return {"at": at, "number": count};
+    return {"at": at, "number": count, "sms": fields.sms === true};
 }
 
 
@@ -61,7 +61,7 @@ function customer_in(customers: Map<string, CUSTOMER>, id: string, channel: stri
     let customer: CUSTOMER | undefined = customers.get(id);
 
     if(customer === undefined) {
-        customer = {"id": id, "name": "", "channel": channel, "tab": null, "due": null, "sent": []};
+        customer = {"id": id, "name": "", "channel": channel, "tab": null, "due": null, "sent": [], "held": null};
 
         customers.set(id, customer);
     }
@@ -75,23 +75,26 @@ function customer_in(customers: Map<string, CUSTOMER>, id: string, channel: stri
 }
 
 
-//NEWEST SENT
-function newest_sent(customer: CUSTOMER): number {
+//NEWEST
+//their newest follow up that went out, or when blooio started holding them when that's later
+function newest(customer: CUSTOMER): number {
     const last: FOLLOW_UP | undefined = customer.sent[customer.sent.length - 1];
 
-    if(last === undefined) {
-        return 0;
+    let at: number = customer.held ?? 0;
+
+    if(last !== undefined && last.at > at) {
+        at = last.at;
     }
 
-    return last.at;
+    return at;
 }
 
 
 //BY NEXT
-//the ones getting a follow up first, soonest first, then everyone else by their newest one
+//the ones getting a follow up first, soonest first, then everyone else by their newest send or hold
 function by_next(a: CUSTOMER, b: CUSTOMER): number {
     if(a.due !== null && b.due !== null) {
-        return a.due.at - b.due.at || newest_sent(b) - newest_sent(a);
+        return a.due.at - b.due.at || newest(b) - newest(a);
     }
 
     if(a.due !== null) {
@@ -102,17 +105,17 @@ function by_next(a: CUSTOMER, b: CUSTOMER): number {
         return 1;
     }
 
-    return newest_sent(b) - newest_sent(a);
+    return newest(b) - newest(a);
 }
 
 
 
 //**********FOLLOW UPS**********
-//who gets one at the next morning's send, and every one that went out in the last two weeks
+//who gets one at the next morning's send, every one that went out in the last two weeks, and who blooio holds till they answer
 
 
 //READ FOLLOW UPS
-//someone switched off, or on a channel switched off, gets nothing in the morning, so they don't show as getting one
+//someone switched off, or on a channel switched off, gets nothing in the morning, so they don't show as getting one or as held
 async function read_follow_ups(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -120,7 +123,7 @@ async function read_follow_ups(request: Request): Promise<Response> {
         return refused;
     }
 
-    const results: unknown[] = await redis.pipeline([["HGETALL", "followups:due"], ["ZRANGE", "followups:sent", 0, -1], ["SMEMBERS", "off"], ["SMEMBERS", "off_tabs"]]);
+    const results: unknown[] = await redis.pipeline([["HGETALL", "followups:due"], ["ZRANGE", "followups:sent", 0, -1], ["SMEMBERS", "off"], ["SMEMBERS", "off_tabs"], ["HGETALL", "followups:held"]]);
 
     const off: Set<string> = new Set(redis.as_strings(results[2]));
 
@@ -151,6 +154,22 @@ async function read_follow_ups(request: Request): Promise<Response> {
 
         if(due !== null && !off.has(id) && !off_tabs.has(shop.tab_of(channel))) {
             customer_in(customers, id, channel).due = due;
+        }
+    }
+
+    const held_entries: [string, string][] = Object.entries(redis.as_object(results[4]));
+
+    for(const entry of held_entries) {
+        const id: string = entry[0];
+
+        const fields: Record<string, unknown> = shop.fields_of(shop.parse_json(entry[1]));
+
+        const held: number = Number(fields.at);
+
+        const channel: string = String(fields.channel ?? "");
+
+        if(Number.isFinite(held) && held > 0 && !off.has(id) && !off_tabs.has(shop.tab_of(channel))) {
+            customer_in(customers, id, channel).held = held;
         }
     }
 

@@ -1,8 +1,9 @@
 #**********IMPORTS**********
-#the env keys, the clock for waits, link patterns, url safe text, web requests that send the texts, the dashboard that shows them, and ghl that logs the ones customers get over blooio
+#the env keys, the clock for waits, link patterns, url safe text, the shape a send comes back as, web requests that send the texts, the dashboard that shows them, and ghl that logs the ones customers get over blooio
 import os
 import re
 import time
+from typing import TypeAlias
 from urllib.parse import quote
 
 import requests
@@ -66,6 +67,16 @@ TYPING_DELAY_SECONDS: int = 3
 META_CHANNELS: list[str] = ["ig", "messenger"]
 
 
+#CAP CODES
+#blooio turns a text down with one of these once a chat used up the texts it takes in a row with no answer, only their text or tapback lifts it, so a retry only gets turned down again
+CAP_CODES: list[str] = ["conversation_awaiting_reply", "conversation_streak_limit", "conversation_inactive_paused"]
+
+
+#DELIVERY
+#what a send comes back as: each text that went out in order, whether every text and pic went out, and whether blooio held the rest back for the chat's cap
+DELIVERY: TypeAlias = tuple[list[str], bool, bool]
+
+
 #TEXTBELT LIMIT
 #textbelt turns down a text longer than this, counting an emoji as two characters
 TEXTBELT_MAX_LENGTH: int = 1024
@@ -81,25 +92,51 @@ LINK_PATTERN: re.Pattern = re.compile(r"(?:https?://|www\.)?(?:[a-z0-9-]+\.)+[a-
 #the one request every text, pic and alert goes out with on blooio, instagram and messenger
 
 
-#SEND MESSAGE
-#every channel takes the text as json behind a bearer token, a failed send is logged and comes back False
-def send_message(label: str, recipient: str, send_url: str, access_token: str, payload: dict) -> bool:
+#POST MESSAGE
+#every channel takes the text as json behind a bearer token, a failed send is logged and still comes back so blooio's reason can be read, None when it never got an answer
+def post_message(label: str, recipient: str, send_url: str, access_token: str, payload: dict) -> requests.Response | None:
     headers: dict[str, str] = {"Authorization": f"Bearer {access_token}", "Content-Type": "application/json"}
 
     try:
         response: requests.Response = requests.post(send_url, headers=headers, json=payload, timeout=20)
 
-        if(response.status_code >= 400):
-            print(f"[{label}] send to {recipient} failed {response.status_code}: {response.text[:300]}")
-
-            return False
-
-        return True
-
     except Exception as error:
         print(f"[{label}] send to {recipient} errored: {error}")
 
+        return None
+
+    if(response.status_code >= 400):
+        print(f"[{label}] send to {recipient} failed {response.status_code}: {response.text[:300]}")
+
+    return response
+
+
+#WENT OUT
+#the channel answered and took the text
+def went_out(response: requests.Response | None) -> bool:
+    return response is not None and response.status_code < 400
+
+
+#SEND MESSAGE
+#one text, pic or alert, False when it failed
+def send_message(label: str, recipient: str, send_url: str, access_token: str, payload: dict) -> bool:
+    return went_out(post_message(label, recipient, send_url, access_token, payload))
+
+
+#CHAT CAPPED
+#blooio turned the text down because the chat used up the texts it takes with no answer, not because anything broke
+def chat_capped(response: requests.Response | None) -> bool:
+    if(response is None or response.status_code < 400):
         return False
+
+    try:
+        body: object = response.json()
+
+    #a refusal that isn't json never names a cap
+    except ValueError:
+        return False
+
+    return isinstance(body, dict) and body.get("code") in CAP_CODES
 
 
 
@@ -124,8 +161,10 @@ def send_instagram_pic(recipient_id: str, url: str) -> bool:
 
 
 #INSTAGRAM TEXTS
-#texts go out in order a gap apart so they never land all at once, pics go right after the text at their position, False if any failed
-def send_instagram_texts(recipient: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> bool:
+#texts go out in order a gap apart so they never land all at once, pics go right after the text at their position, and every text that went out comes back
+def send_instagram_texts(recipient: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> DELIVERY:
+    texts_sent: list[str] = []
+
     all_sent: bool = True
 
     for position, text in enumerate(texts):
@@ -134,7 +173,10 @@ def send_instagram_texts(recipient: str, texts: list[str], attachments: dict[int
             time.sleep(TEXT_GAP_SECONDS)
 
         #a text that failed is logged and the rest still go out, so they get as much of the reply as can be sent
-        if(not send_instagram_message(recipient, text)):
+        if(send_instagram_message(recipient, text)):
+            texts_sent.append(text)
+
+        else:
             all_sent = False
 
         #pics go right after their text, so they show up right under it
@@ -143,7 +185,8 @@ def send_instagram_texts(recipient: str, texts: list[str], attachments: dict[int
                 if(not send_instagram_pic(recipient, url)):
                     all_sent = False
 
-    return all_sent
+    #instagram has no cap like blooio's, so nothing is ever held back
+    return (texts_sent, all_sent, False)
 
 
 
@@ -168,8 +211,10 @@ def send_messenger_pic(recipient_id: str, url: str) -> bool:
 
 
 #MESSENGER TEXTS
-#texts go out in order a gap apart so they never land all at once, pics go right after the text at their position, False if any failed
-def send_messenger_texts(recipient: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> bool:
+#texts go out in order a gap apart so they never land all at once, pics go right after the text at their position, and every text that went out comes back
+def send_messenger_texts(recipient: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> DELIVERY:
+    texts_sent: list[str] = []
+
     all_sent: bool = True
 
     for position, text in enumerate(texts):
@@ -178,7 +223,10 @@ def send_messenger_texts(recipient: str, texts: list[str], attachments: dict[int
             time.sleep(TEXT_GAP_SECONDS)
 
         #a text that failed is logged and the rest still go out, so they get as much of the reply as can be sent
-        if(not send_messenger_message(recipient, text)):
+        if(send_messenger_message(recipient, text)):
+            texts_sent.append(text)
+
+        else:
             all_sent = False
 
         #pics go right after their text, so they show up right under it
@@ -187,7 +235,8 @@ def send_messenger_texts(recipient: str, texts: list[str], attachments: dict[int
                 if(not send_messenger_pic(recipient, url)):
                     all_sent = False
 
-    return all_sent
+    #messenger has no cap like blooio's, so nothing is ever held back
+    return (texts_sent, all_sent, False)
 
 
 
@@ -284,11 +333,15 @@ def stop_typing(recipient: str, channel: str) -> bool:
 
 
 #BLOOIO SENDER
-#texts go out in order behind a typing bubble, pics ride along with the text at their position, False if any failed
-def send_blooio_texts(recipient: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> bool:
+#texts go out in order behind a typing bubble, pics ride along with the text at their position, and every text that went out comes back
+def send_blooio_texts(recipient: str, texts: list[str], attachments: dict[int, list[str]] | None = None) -> DELIVERY:
     send_url: str = f"{BLOOIO_BASE_URL}/chats/{quote(recipient, safe='')}/messages"
 
+    texts_sent: list[str] = []
+
     all_sent: bool = True
+
+    capped: bool = False
 
     #only what actually went out gets logged in ghl
     sent: list[ghl.SENT] = []
@@ -308,17 +361,29 @@ def send_blooio_texts(recipient: str, texts: list[str], attachments: dict[int, l
         if(attachments and position in attachments):
             payload["attachments"] = attachments[position]
 
-        #a text that failed is logged and the rest still go out, so they get as much of the reply as can be sent
-        if(not send_message("BLOOIO", recipient, send_url, BLOOIO_API_KEY, payload)):
+        response: requests.Response | None = post_message("BLOOIO", recipient, send_url, BLOOIO_API_KEY, payload)
+
+        #blooio turns down every text to a chat that hit its cap till they text back or react, so the rest never get tried
+        if(chat_capped(response)):
+            all_sent = False
+
+            capped = True
+
+            break
+
+        #a text that failed for any other reason is logged and the rest still go out, so they get as much of the reply as can be sent
+        if(not went_out(response)):
             all_sent = False
 
         else:
+            texts_sent.append(text)
+
             sent.append((text, payload.get("attachments", []), time.time()))
 
     #ghl never sees blooio, so every text they got goes in their conversation there too
     ghl.log_sent(recipient, sent)
 
-    return all_sent
+    return (texts_sent, all_sent, capped)
 
 
 
@@ -328,7 +393,7 @@ def send_blooio_texts(recipient: str, texts: list[str], attachments: dict[int, l
 
 #SEND ON CHANNEL
 #the reply goes out where they wrote in, instagram and messenger through their own apis, a text or a form lead over blooio
-def send_on_channel(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None) -> bool:
+def send_on_channel(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None) -> DELIVERY:
     if(channel == "ig"):
         return send_instagram_texts(recipient, texts, attachments)
 
@@ -338,20 +403,29 @@ def send_on_channel(recipient: str, channel: str, texts: list[str], attachments:
     return send_blooio_texts(recipient, texts, attachments)
 
 
+#SERVICE
+#who carries a text on the channel, instagram and messenger themselves and blooio for a text or a form lead, so a print names who turned one down
+def service_of(channel: str) -> str:
+    if(channel in META_CHANNELS):
+        return channel
+
+    return "blooio"
+
+
 #SEND TEXTS
 #nothing reaches a customer switched off in the dashboard, or anyone on a channel switched off there, not even a reply already written, and everything that does go out shows there
 #is_followup is True for the system's own follow up, which shows in their thread but never counts as a reply
-def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None = None, is_followup: bool = False) -> bool:
+def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None = None, is_followup: bool = False) -> DELIVERY:
     if(not dashboard.switched_on(recipient, channel)):
         print(f"SWITCHED OFF: {recipient} or their channel is off in the dashboard, so nothing was sent")
 
-        return False
+        return ([], False, False)
 
-    all_sent: bool = send_on_channel(recipient, channel, texts, attachments)
+    texts_sent, all_sent, capped = send_on_channel(recipient, channel, texts, attachments)
 
     dashboard.log_outgoing(recipient, channel, texts, attachments, all_sent, is_followup)
 
-    return all_sent
+    return (texts_sent, all_sent, capped)
 
 
 #GHL TEXT
@@ -369,6 +443,34 @@ def send_ghl_text(recipient: str, text: str, attachments: list[str]) -> bool:
     sent: bool = send_message("GHL TEXT", recipient, send_url, BLOOIO_API_KEY, payload)
 
     dashboard.log_outgoing(recipient, "blooio", [text], {0: attachments}, sent, False, from_ghl=True)
+
+    return sent
+
+
+
+#**********SMS SENDS**********
+#a follow up from the shop's own number in ghl once blooio is done with them, ghl keeps it in their conversation there on its own
+
+
+#SMS TEXT
+#nothing reaches a customer switched off in the dashboard, and it shows there in green so the sms ones stand out, False when ghl turned it down
+def send_sms_text(recipient: str, channel: str, contact: str, text: str) -> bool:
+    if(not dashboard.switched_on(recipient, channel)):
+        print(f"SWITCHED OFF: {recipient} or their channel is off in the dashboard, so nothing was sent")
+
+        return False
+
+    sent: bool = True
+
+    try:
+        ghl.send_sms(contact, text)
+
+    except Exception as error:
+        print(f"[GHL SMS] send to {recipient} failed: {error}")
+
+        sent = False
+
+    dashboard.log_outgoing(recipient, channel, [text], None, sent, True, sms=True)
 
     return sent
 

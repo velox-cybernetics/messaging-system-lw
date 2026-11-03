@@ -78,7 +78,7 @@ MEDIA_SECONDS: int = 30 * 86400
 
 STATE_SECONDS: int = 30 * 86400
 
-#a follow up that went out stays two weeks, as long as the follow ups page looks back, and a day more so its oldest day is always whole
+#a follow up that went out, or a hold, stays two weeks, as long as the follow ups page looks back, and a day more so its oldest day is always whole
 FOLLOWUP_SECONDS: int = 15 * 86400
 
 
@@ -693,8 +693,8 @@ def has_price(texts: list[str]) -> bool:
 
 #WRITE OUTGOING
 #each text is its own part with its pics right after it, the way the customer got them
-#from_ghl is a text sent from ghl itself, which shows in their thread but was never the system's reply
-def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]], at: int, sent: bool, is_followup: bool, from_ghl: bool) -> None:
+#from_ghl is a text sent from ghl itself, which shows in their thread but was never the system's reply, and sms is a follow up that went out from the shop's ghl number
+def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]], at: int, sent: bool, is_followup: bool, from_ghl: bool, sms: bool) -> None:
     parts: list[dict] = []
 
     for position, text in enumerate(texts):
@@ -708,6 +708,10 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
     #a text sent from ghl shows as a person's in their thread, not the system's
     if(from_ghl):
         entry["ghl"] = True
+
+    #an sms follow up came from the shop's ghl number, not hazel's line, so it shows in green in their thread
+    if(sms):
+        entry["sms"] = True
 
     #the customer may have gotten none of it, so it shows as failed and never counts as outbound
     if(not sent):
@@ -737,9 +741,9 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
 
 
 #LOG OUTGOING
-#sent is False when the channel refused any of the texts, is_followup is True for a follow up rather than a reply, from_ghl is True for a text sent from ghl
-def log_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None, sent: bool, is_followup: bool, from_ghl: bool = False) -> None:
-    in_background(write_outgoing, id, channel, list(texts), dict(attachments or {}), now_ms(), sent, is_followup, from_ghl)
+#sent is False when the channel refused any of the texts, is_followup is True for a follow up rather than a reply, from_ghl is True for a text sent from ghl, sms is True for a follow up sent from the shop's ghl number
+def log_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None, sent: bool, is_followup: bool, from_ghl: bool = False, sms: bool = False) -> None:
+    in_background(write_outgoing, id, channel, list(texts), dict(attachments or {}), now_ms(), sent, is_followup, from_ghl, sms)
 
 
 
@@ -818,7 +822,7 @@ def log_hand_off(id: str, kind: str, reason: str) -> None:
 
 
 #**********FOLLOW UPS**********
-#who the system follows up with and when: the morning's list the night picks, one line per conversation, and every follow up that went out
+#who the system follows up with and when: the morning's list the night picks, one line per conversation, every follow up that went out, and everyone blooio holds till they answer
 
 
 #WRITE FOLLOW UP PICKED
@@ -848,20 +852,26 @@ def log_followup_dropped(id: str) -> None:
 
 #WRITE FOLLOW UP SENT
 #theirs went out, so they come off the morning's list and it joins the ones sent, where anything older than FOLLOWUP_SECONDS comes off
-def write_followup_sent(id: str, channel: str, number: int, at: int) -> None:
-    sent: str = json.dumps({"id": id, "channel": channel, "number": number, "at": at}, ensure_ascii=False)
+#an sms one is marked so the follow ups page draws it in green
+def write_followup_sent(id: str, channel: str, number: int, at: int, sms: bool) -> None:
+    line: dict = {"id": id, "channel": channel, "number": number, "at": at}
+
+    if(sms):
+        line["sms"] = True
+
+    sent: str = json.dumps(line, ensure_ascii=False)
 
     pipeline([["HDEL", "followups:due", id], ["ZADD", "followups:sent", at, sent], ["ZREMRANGEBYSCORE", "followups:sent", "-inf", at - FOLLOWUP_SECONDS * 1000], ["INCR", "version"]])
 
 
 #LOG FOLLOW UP SENT
-#number is which follow up in a row it was, counted since they last wrote
-def log_followup_sent(id: str, channel: str, number: int) -> None:
-    in_background(write_followup_sent, id, channel, number, now_ms())
+#number is which follow up in a row it was, counted since they last wrote, sms is True for one sent from the shop's ghl number
+def log_followup_sent(id: str, channel: str, number: int, sms: bool = False) -> None:
+    in_background(write_followup_sent, id, channel, number, now_ms(), sms)
 
 
 #DUE BY
-#the ids on the morning's list whose follow up was due by at, upstash gives the list back as id, line, id, line
+#the ids on the morning's list whose follow up was due by at, or on the held list held by then, upstash gives either back as id, line, id, line
 #a line that can't be read counts as due, so it comes off too
 def due_by(due_list: object, at: int) -> list[str]:
     past: list[str] = []
@@ -895,6 +905,40 @@ def write_past_followups(at: int) -> None:
 #runs after the morning's send and before the night's pick, so a follow up called off, or a morning the server missed, never stays on the list
 def clear_past_followups() -> None:
     in_background(write_past_followups, now_ms())
+
+
+#WRITE FOLLOW UP HELD
+#blooio turned theirs down for the chat's cap, so they come off the morning's list and go on the held ones till they text back or react
+#anyone held longer ago than the page looks back comes off first, the way the follow ups that went out do
+def write_followup_held(id: str, channel: str, at: int) -> None:
+    held: str = json.dumps({"at": at, "channel": channel}, ensure_ascii=False)
+
+    stale: list[str] = due_by(command(["HGETALL", "followups:held"], WRITE_TIMEOUT), at - FOLLOWUP_SECONDS * 1000)
+
+    commands: list[list] = [["HDEL", "followups:due", id]]
+
+    if(len(stale) > 0):
+        commands.append(["HDEL", "followups:held", *stale])
+
+    commands.extend([["HSET", "followups:held", id, held], ["INCR", "version"]])
+
+    pipeline(commands)
+
+
+#LOG FOLLOW UP HELD
+def log_followup_held(id: str, channel: str) -> None:
+    in_background(write_followup_held, id, channel, now_ms())
+
+
+#WRITE FOLLOW UP RELEASED
+def write_followup_released(id: str) -> None:
+    pipeline([["HDEL", "followups:held", id], ["INCR", "version"]])
+
+
+#LOG FOLLOW UP RELEASED
+#they texted back or reacted, so blooio takes texts to them again and they come off the held ones
+def log_followup_released(id: str) -> None:
+    in_background(write_followup_released, id)
 
 
 

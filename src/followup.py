@@ -1,5 +1,6 @@
 #**********IMPORTS**********
-#python's clock, the shop's timezone, the reply writer and its final check, the senders, the conversation on file, the dashboard's switch and follow ups page, the held prints, the early color ask cut, the asked again check, and the follow up prompts
+#python's clock and patterns, the shop's timezone, the reply writer and its final check, the senders, the form name check, the conversation on file, the dashboard's switch and follow ups page, ghl for the sms ones, the held prints, the early color ask cut, the asked again check, and the follow up and sms prompts
+import re
 import time
 from datetime import datetime, timedelta
 
@@ -8,9 +9,11 @@ from helpers.channels import replies
 from helpers.channels import senders
 from helpers.models import models
 from helpers.models import retry
+from helpers.response import greeting
 from helpers.response import spacing
 from helpers.response import wording
 from helpers.state import dashboard
+from helpers.state import ghl
 from helpers.state import log
 from helpers.state import state_build
 from helpers.state import state_form
@@ -19,6 +22,7 @@ from src import routing
 from src import branches
 from src.prompts.followup import analyzer_examples as followup_examples
 from src.prompts.followup import generator as followup_generator
+from src.prompts.followup import sms_generator as sms_prompt
 
 
 
@@ -55,6 +59,11 @@ NIGHT_PICK_SECONDS: int = 24 * 3600
 CHANNEL_FOLLOWUPS: dict[str, int] = {"ig": 1}
 
 
+#BLOOIO FOLLOW UPS
+#how many follow ups in a row a text or form lead gets over blooio with no answer, every one after that goes by sms from the shop's ghl number
+BLOOIO_FOLLOWUPS: int = 3
+
+
 #META WINDOW
 #instagram and messenger refuse any message sent more than a day after the customer's last one, so a follow up there only goes out inside it
 META_WINDOW_SECONDS: int = 24 * 3600
@@ -71,12 +80,60 @@ FOLLOWUP_MAX_TOKENS: int = 10*100
 FOLLOWUP_EFFORT: str = "high"
 
 
+#SMS FOLLOW UP LIMITS
+#flashx writes the middle of the sms at high, and a middle that can't go out gets written again, up to SMS_TRIES in all
+SMS_MAX_TOKENS: int = 10*100
+
+SMS_EFFORT: str = "high"
+
+SMS_TRIES: int = 3
+
+#the middle stays one short sentence
+SMS_MAIN_MAX_LENGTH: int = 160
+
+
+#SMS NUMBER
+#the shop's number in ghl only texts us and canada numbers, never an imessage email or a number from another country
+SMS_NUMBER_PATTERN: re.Pattern = re.compile(r"\+1\d{10}")
+
+
+#SMS CHARACTERS
+#one curly quote, long dash or emoji turns the whole sms into the kind that splits every 70 characters, so they become plain ones or come off
+SMS_PLAIN_CHARACTERS: dict[str, str] = {"’": "'", "‘": "'", "“": '"', "”": '"', "—": "-", "–": "-", "…": "..."}
+
+SMS_EMOJI_PATTERN: re.Pattern = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]")
+
+
+#SMS PHONE NUMBER
+#a phone number written into the middle, which only the set call to text hazel ever has
+SMS_PHONE_PATTERN: re.Pattern = re.compile(r"\d{3}\D{0,2}\d{3}\D?\d{4}")
+
+
+#SMS GREETINGS
+#the intro already greets them, so the middle never opens with one of these
+SMS_GREETINGS: list[str] = ["hey", "heyy", "hi", "hello", "yo"]
+
+
+#SMS CAPITALS
+#the middle goes on from the intro's comma in lowercase, except for these words that always keep their capital
+SMS_KEEP_CAPITALS: list[str] = ["I", "I'm", "I'll", "I've", "I'd"]
+
+
 #FOLLOW UP FIELDS
 #what each conversation keeps on file for its follow ups: the channel it goes out on, when they last wrote in, and how many went out since
 FOLLOWUP_FIELDS: list[str] = ["channel", "last_message", "count"]
 
 #when the night or the morning's check picked them, only on file till the morning's follow up takes it off
 PICKED_FIELD: str = "prepped"
+
+#when blooio turned one down because the chat used up the texts it takes with no answer, on file till they text back or react, and none get written for them till then
+HELD_FIELD: str = "held"
+
+#when blooio stopped taking texts to them before its follow ups ran out, on file till they text back or react, and every follow up till then goes by sms
+SMS_FIELD: str = "sms"
+
+#when ghl showed they texted STOP to the shop's sms number, on file till they write in again, and no follow up goes out till then
+STOPPED_FIELD: str = "stopped"
 
 
 
@@ -91,7 +148,7 @@ def followup_key(id: str) -> str:
 
 
 #NOTE MESSAGE
-#they wrote in, so the channel and the time go on file, the count starts over, and a follow up picked for them is off
+#they wrote in, so the channel and the time go on file, the count starts over, a follow up picked for them is off, a STOP from before no longer keeps theirs off, and a text to the shop lifts blooio's hold on them
 def note_message(id: str, channel: str) -> None:
     try:
         log.write_info(followup_key(id), [channel, str(time.time()), "0"], FOLLOWUP_FIELDS)
@@ -100,9 +157,39 @@ def note_message(id: str, channel: str) -> None:
         if(log.take_info(followup_key(id), PICKED_FIELD)):
             dashboard.log_followup_dropped(id)
 
+        #writing in starts them over, and a STOP that still stands in ghl stops them again when an sms comes up
+        log.clear_info(followup_key(id), [STOPPED_FIELD])
+
+        #a form they filled in again never reached blooio, so only a text lifts its hold
+        if(channel not in state_form.FORM_CHANNELS):
+            release_followups(id)
+
     #a note that fails only costs them a follow up, their reply still goes out
     except Exception as error:
         print(f"FOLLOW UP NOTE ERROR: {error}")
+
+
+#RELEASE FOLLOW UPS
+#they texted back or reacted, which blooio counts as an answer, so it takes texts to them again and their follow ups pick back up there
+def release_followups(id: str) -> None:
+    #blooio takes texts to them again, so follow ups go back to it till its own run out
+    log.clear_info(followup_key(id), [SMS_FIELD])
+
+    if(log.take_info(followup_key(id), HELD_FIELD)):
+        dashboard.log_followup_released(id)
+
+        print(f"FOLLOW UP RELEASED: {id} answered, so blooio takes their follow ups again")
+
+
+#NOTE REACTION
+#they reacted to a text, which lifts blooio's hold the same as a text, the count stays since they wrote nothing
+def note_reaction(id: str) -> None:
+    try:
+        release_followups(id)
+
+    #a release that fails only keeps their follow ups held till they text
+    except Exception as error:
+        print(f"FOLLOW UP REACTION ERROR: {error}")
 
 
 #FOLLOW UP IDS
@@ -146,12 +233,39 @@ def window_open(channel: str, last_message: float, send_time: float) -> bool:
     return send_time - last_message < META_WINDOW_SECONDS
 
 
+#SMS REACHABLE
+#only a us or canada number takes a text from the shop's ghl number, never an imessage email or a number from another country
+def sms_reachable(id: str) -> bool:
+    return SMS_NUMBER_PATTERN.fullmatch(id) is not None
+
+
+#GOES BY SMS
+#a text or form lead past blooio's follow ups, or one blooio stopped taking texts to before those ran out
+def goes_by_sms(record: dict[str, str]) -> bool:
+    if(senders.service_of(record.get("channel", "")) != "blooio"):
+        return False
+
+    return SMS_FIELD in record or int(record.get("count", "0")) >= BLOOIO_FOLLOWUPS
+
+
 #FOLLOW UP ALLOWED
-#True when nothing on file rules a follow up out: they never went to booking, nobody has them, their channel's count isn't used up, they've been quiet long enough and meta's window is still open when it goes out
-def followup_allowed(record: dict[str, str], booked: bool, restricted: bool, send_time: float) -> bool:
+#True when nothing on file rules a follow up out: they never went to booking, nobody has them, blooio isn't holding their chat, they never texted STOP, a lead past blooio's follow ups can get an sms, their channel's count isn't used up, they've been quiet long enough and meta's window is still open when it goes out
+def followup_allowed(id: str, record: dict[str, str], booked: bool, restricted: bool, send_time: float) -> bool:
     channel: str = record.get("channel", "")
 
     if(channel == "" or booked or restricted):
+        return False
+
+    #blooio turned their last one down for the chat's cap, so nothing gets written for them till they text back or react
+    if(HELD_FIELD in record):
+        return False
+
+    #they texted STOP to the shop's sms number, so nothing goes out till they write in again
+    if(STOPPED_FIELD in record):
+        return False
+
+    #blooio's follow ups are done and the shop's ghl number can't text them, so theirs end there
+    if(goes_by_sms(record) and not sms_reachable(id)):
         return False
 
     channel_limit: int | None = CHANNEL_FOLLOWUPS.get(channel)
@@ -227,7 +341,7 @@ def prep_followup(id: str, send_time: float) -> None:
 
     record: dict[str, str] = log.read_info(followup_key(id))
 
-    if(not followup_allowed(record, went_to_booking(id), person_has_them(id), send_time)):
+    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), send_time)):
         return
 
     if(not_interested(quiet_state(id))):
@@ -358,6 +472,33 @@ def written_followup(id: str, channel: str, count: int) -> str:
     return replies.cleared_reply(id, channel, followup)
 
 
+#FOLLOW UP TEXTS
+#the follow up cut into texts, and over blooio put back together as one, since every text counts toward the few a quiet chat takes before they answer
+def followup_texts(followup: str, channel: str) -> list[str]:
+    texts: list[str] = spacing.split_texts(followup)
+
+    if(senders.service_of(channel) != "blooio"):
+        return texts
+
+    return [spacing.one_text(texts)]
+
+
+#HOLD FOLLOW UPS
+#blooio turned theirs down for the chat's cap, so none get written for them till they text back or react, and the dashboard shows them on hold
+def hold_followups(id: str, channel: str) -> None:
+    log.write_info(followup_key(id), [str(time.time())], [HELD_FIELD])
+
+    dashboard.log_followup_held(id, channel)
+
+    print(f"FOLLOW UP HELD: blooio takes no more texts to {id} till they text back or react, so theirs wait till then")
+
+
+#WROTE BACK
+#they wrote in after the morning's send read them, so the reply to that answers them instead
+def wrote_back(id: str, record: dict[str, str]) -> bool:
+    return log.read_info(followup_key(id)).get("last_message") != record.get("last_message")
+
+
 #SEND ONE
 #only the run that takes the pick off file sends it, so a run that stops halfway and goes again never texts anyone twice
 def send_followup(id: str) -> None:
@@ -369,26 +510,66 @@ def send_followup(id: str) -> None:
     channel: str = record.get("channel", "")
 
     #a booking, a person taking them or meta's window closing overnight calls it off, and so does the dashboard switching them off
-    if(not followup_allowed(record, went_to_booking(id), person_has_them(id), time.time()) or not dashboard.switched_on(id, channel)):
+    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), time.time()) or not dashboard.switched_on(id, channel)):
         return
 
     count: int = int(record.get("count", "0"))
 
+    #blooio is done with them, so this one goes by sms from the shop's ghl number
+    if(goes_by_sms(record)):
+        send_sms_followup(id, channel, count, record)
+
+        return
+
     followup: str = written_followup(id, channel, count)
 
     #they wrote back while it was being written, so the reply to that answers them instead
-    if(followup == "" or log.read_info(followup_key(id)).get("last_message") != record.get("last_message")):
+    if(followup == "" or wrote_back(id, record)):
         return
 
-    if(not senders.send_texts(id, channel, spacing.split_texts(followup), is_followup=True)):
-        print(f"FOLLOW UP NOT SENT: {channel} refused it for {id}, so nothing of it goes on file")
+    texts: list[str] = followup_texts(followup, channel)
+
+    delivery: senders.DELIVERY = senders.send_texts(id, channel, texts, is_followup=True)
+
+    #what went out, and whether blooio held the rest back for the chat's cap
+    texts_sent: list[str] = delivery[0]
+
+    capped: bool = delivery[2]
+
+    #blooio stopped taking texts to them before its follow ups ran out, so this one and the rest go by sms
+    if(capped and len(texts_sent) == 0 and sms_reachable(id)):
+        log.write_info(followup_key(id), [str(time.time())], [SMS_FIELD])
+
+        print(f"FOLLOW UP MOVED TO SMS: blooio takes no more texts to {id}, so this one and the rest go by sms")
+
+        send_sms_followup(id, channel, count, record)
 
         return
 
-    print(f"FOLLOW UP SENT to {id} on {channel}: {followup}")
+    #the shop's ghl number can't text them either, so they wait on blooio till they text back or react
+    if(capped):
+        hold_followups(id, channel)
+
+    if(len(texts_sent) == 0):
+        #a hold already said why nothing went out
+        if(not capped):
+            print(f"FOLLOW UP NOT SENT: {senders.service_of(channel)} refused it for {id} on {channel}, so nothing of it goes on file")
+
+        return
+
+    #only what reached them goes on file, so the next one never thinks they read a part that never went out
+    went_out: str = followup
+
+    if(len(texts_sent) < len(texts)):
+        went_out = " ".join(texts_sent)
+
+        print(f"FOLLOW UP PARTLY SENT to {id} on {channel}: {went_out}")
+
+    else:
+        print(f"FOLLOW UP SENT to {id} on {channel}: {followup}")
 
     #nothing of theirs came in before it, so it joins the shop's last reply in their history
-    log.add_to_last_message(f"systemres_{id}", followup)
+    log.add_to_last_message(f"systemres_{id}", went_out)
 
     log.write_info(followup_key(id), [str(count + 1)], ["count"])
 
@@ -410,3 +591,177 @@ def send_followups() -> None:
 
     #every one picked for this morning went out or got called off by now, so the ones called off come off the dashboard's list
     dashboard.clear_past_followups()
+
+
+
+#**********SMS FOLLOW UP**********
+#once blooio is done with them, the follow up goes by sms from the shop's ghl number: the set intro, a middle flashx writes, then the set call to text hazel and the opt out
+
+
+#SMS PLAIN
+#curly quotes and long dashes become plain ones and emoji come off, so the sms stays the cheap kind
+def sms_plain(text: str) -> str:
+    for fancy, plain in SMS_PLAIN_CHARACTERS.items():
+        text = text.replace(fancy, plain)
+
+    text = SMS_EMOJI_PATTERN.sub("", text)
+
+    return " ".join(text.split())
+
+
+#SMS MAIN
+#the written middle tidied to go on from the intro's comma: plain characters, no quotes around it, a lowercase start and a period on the end
+def sms_main(written: str) -> str:
+    main: str = sms_plain(written).strip('"').strip()
+
+    if(main == ""):
+        return main
+
+    first_word: str = main.split(" ", 1)[0]
+
+    #"Just wanted to" goes on from the comma as "just wanted to", while PPF or I'm keep their capitals
+    if(first_word not in SMS_KEEP_CAPITALS and first_word[:1].isupper() and first_word[1:] == first_word[1:].lower()):
+        main = main[0].lower() + main[1:]
+
+    #a question keeps its mark, so the check turns it down instead of a period hiding it
+    if(main[-1] not in ".!?"):
+        main = f"{main}."
+
+    return main
+
+
+#SMS MAIN PROBLEM
+#why the written middle can't go out, empty when it can
+def sms_main_problem(main: str) -> str:
+    lowered: str = main.lower()
+
+    if(main == ""):
+        return "it's empty"
+
+    if("?" in main):
+        return "it asks a question, the text after it already says what to do"
+
+    if(lowered.split(" ", 1)[0].strip(",.!") in SMS_GREETINGS):
+        return "it greets them, the intro already does"
+
+    if("lone wraps" in lowered or "hazel" in lowered):
+        return "it names the shop or Hazel, the text around it already does"
+
+    if(senders.LINK_PATTERN.search(main) or SMS_PHONE_PATTERN.search(main)):
+        return "it has a link or a phone number, only the text after it gives Hazel's number"
+
+    if(len(main) > SMS_MAIN_MAX_LENGTH):
+        return f"it runs past {SMS_MAIN_MAX_LENGTH} characters, it has to be one short sentence"
+
+    return ""
+
+
+#SMS MAIN CHAIN
+#flashx writes the middle, and one that can't go out gets written again with why, up to SMS_TRIES in all, empty when none could
+def sms_main_chain(state: dict, id: str) -> str:
+    system_prompt: str = sms_prompt.prompt()
+
+    sms_input: str = f"STATE: {state_form.state_to_text(state)}"
+
+    for attempt in range(1, SMS_TRIES + 1):
+        written: str = models.generator("SMS FOLLOW UP GENERATOR", system_prompt, sms_input, SMS_MAX_TOKENS, SMS_EFFORT, line_breaks=False)
+
+        main: str = sms_main(written)
+
+        problem: str = sms_main_problem(main)
+
+        if(problem == ""):
+            return main
+
+        print(f"SMS FOLLOW UP TRY {attempt} CAN'T GO OUT, {problem}: {written}")
+
+        #the next try sees the line it wrote that broke a rule and why, so it never writes the same one again
+        sms_input += f"\nCAN'T GO OUT: {written.strip()} ({problem})"
+
+    return ""
+
+
+#WRITTEN SMS MAIN
+#the middle written from the quiet conversation, run the way every chain is so a slow model gets its retries
+def written_sms_main(id: str, channel: str, count: int) -> str:
+    state: dict = quiet_state(id)
+
+    #which follow up in a row this is, so it never says an earlier one again
+    state["followup_number"] = count + 1
+
+    return retry.run_chain(sms_main_chain, state, id, [], channel, "SMS FOLLOW UP CHAIN ERROR")
+
+
+#SMS NAME
+#the first name off their form, else the one ghl has for them, empty when neither is a real name
+def sms_name(id: str, details: dict) -> str:
+    name: str = greeting.form_first_name({"name": log.read_info(f"lead_{id}").get("name", ""), "first_name": ""})
+
+    if(name == ""):
+        name = greeting.form_first_name({"name": str(details.get("firstName") or ""), "first_name": ""})
+
+    return name
+
+
+#SMS TEXT
+#the set intro, the written middle, then the set call to text hazel and the opt out, so every sms reads the same around what got written
+def sms_text(name: str, main: str) -> str:
+    intro: str = sms_prompt.INTRO_NO_NAME
+
+    if(name != ""):
+        intro = sms_prompt.INTRO.format(name=name)
+
+    return f"{intro} {main} {sms_prompt.CTA} {sms_prompt.ENDING}"
+
+
+#STOP FOLLOW UPS
+#they texted STOP to the shop's sms number, so none go out till they write in again
+def stop_followups(id: str) -> None:
+    log.write_info(followup_key(id), [str(time.time())], [STOPPED_FIELD])
+
+    print(f"FOLLOW UP STOPPED: {id} texted STOP to the shop's sms number, so none go out till they write in again")
+
+
+#SEND SMS FOLLOW UP
+#a STOP in ghl calls it off before anything gets written, and only an sms that went out goes on file
+def send_sms_followup(id: str, channel: str, count: int, record: dict[str, str]) -> None:
+    contact: str = ghl.contact_id(id)
+
+    details: dict = ghl.contact_details(contact)
+
+    if(ghl.sms_stopped(details)):
+        stop_followups(id)
+
+        return
+
+    main: str = written_sms_main(id, channel, count)
+
+    if(main == ""):
+        print(f"SMS FOLLOW UP NOT SENT: no middle for {id} could go out, so theirs tries again tomorrow")
+
+        return
+
+    #they wrote back while it was being written, so the reply to that answers them instead
+    if(wrote_back(id, record)):
+        return
+
+    #the whole sms gets the same final check as every reply
+    text: str = replies.cleared_reply(id, channel, sms_text(sms_name(id, details), main))
+
+    if(text == ""):
+        return
+
+    if(not senders.send_sms_text(id, channel, contact, text)):
+        print(f"SMS FOLLOW UP NOT SENT: ghl refused it for {id} on {channel}, so nothing of it goes on file")
+
+        return
+
+    print(f"SMS FOLLOW UP SENT to {id} on {channel}: {text}")
+
+    #nothing of theirs came in before it, so it joins the shop's last reply in their history
+    log.add_to_last_message(f"systemres_{id}", text)
+
+    log.write_info(followup_key(id), [str(count + 1)], ["count"])
+
+    #the dashboard's follow ups page moves them from the morning's list to the ones that went out, in green
+    dashboard.log_followup_sent(id, channel, count + 1, sms=True)

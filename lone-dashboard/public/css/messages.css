@@ -471,6 +471,11 @@ time {
     color: var(--limo);
 }
 
+/*an sms follow up from the shop's ghl number, green so it stands apart from hazel's texts*/
+.msg.is-sms .bubble {
+    background: var(--go);
+}
+
 .msg footer {
     display: flex;
     gap: 8px;
@@ -480,6 +485,10 @@ time {
 
 .msg-note.is-off {
     color: var(--stop);
+}
+
+.msg-note.is-sms {
+    color: var(--go);
 }
 
 .pic img {

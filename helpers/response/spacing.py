@@ -284,6 +284,12 @@ def split_texts(reply: str) -> list[str]:
     return texts
 
 
+#ONE TEXT
+#the texts a reply was cut into put back together as one, a blank line apart so it still reads in the same pieces, for a chat where every text counts toward blooio's cap
+def one_text(texts: list[str]) -> str:
+    return "\n\n".join(texts)
+
+
 
 #**********OPENER SPACING**********
 #keeps a reply from opening with the same word as the last couple of replies, swapping or cutting it

@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, ghl that logs every text a customer sends, senders and reply chains, the kept pics, and the instagram and messenger servers
+#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, ghl that logs every text a customer sends, senders and reply chains, the follow ups a tapback lifts blooio's hold on, the kept pics, and the instagram and messenger servers
 import asyncio
 import hashlib
 import hmac
@@ -24,6 +24,7 @@ from helpers.media import media_host
 from helpers.channels import senders
 from helpers.channels.senders import OWNER_NUMBER
 from src.core import core
+from src import followup
 from helpers.chains import color_chains
 from helpers.terminal import prints
 from servers import instagram, messenger
@@ -543,7 +544,7 @@ async def hosted_pic(file_name: str) -> Response:
 
 
 #BLOOIO HOOK
-#every text blooio delivers comes in here as a signed POST
+#every text and tapback blooio delivers comes in here as a signed POST
 #it answers with a dict or a JSONResponse, so fastapi makes no response model from the annotation
 @APP.post("/blooio/webhook", response_model=None)
 async def blooio_hook(request: Request) -> dict | JSONResponse:
@@ -593,6 +594,15 @@ async def blooio_hook(request: Request) -> dict | JSONResponse:
                     journal_entry: str = await asyncio.to_thread(journal.save, "blooio", id, [text, attachments])
 
                     queue_message(id, [text, attachments], journal_entry)
+
+    #a tapback they put on in their own chat counts as an answer to blooio, so it lifts the hold on their follow ups
+    elif(data.get("type") == "message.reaction"):
+        reaction: dict = data.get("data") or {}
+
+        sender: str = reaction.get("sender") or ""
+
+        if(sender != "" and reaction.get("direction") == "inbound" and reaction.get("action", "add") == "add" and not reaction.get("is_group")):
+            await asyncio.to_thread(followup.note_reaction, sender)
 
     elif(data.get("type") == "message.failed"):
         failed: dict = data.get("data")

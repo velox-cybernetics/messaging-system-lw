@@ -1,5 +1,5 @@
 /**********FOLLOW UPS**********/
-/*one row per customer, one column per day, a white dot went out, a white ring goes out next, today is the only tint*/
+/*one row per customer, one column per day, a white dot went out, a green dot went out by sms, a white ring goes out next, an amber ring is on hold, today is the only tint*/
 .follow-ups {
     max-width: var(--page);
     margin: 0 auto;
@@ -12,7 +12,7 @@
     line-height: 1;
 }
 
-/*who gets the next follow ups and when, in one sentence*/
+/*who gets the next follow ups and when, then who's on hold*/
 .lineup {
     max-width: 60ch;
     margin-top: 16px;
@@ -164,11 +164,23 @@ a.who-name {
     background: var(--white);
 }
 
+/*went out by sms from the shop's ghl number instead of hazel's line*/
+.mark.is-sent.is-sms {
+    background: var(--go);
+}
+
 /*a ring carries less ink than a dot, so it gets a pixel more to read the same size*/
 .mark.is-due {
     width: 11px;
     height: 11px;
     border: 1.5px solid var(--white);
+}
+
+/*on hold till they text back or react, the one mark in amber so it never reads as one going out*/
+.mark.is-held {
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid var(--hazard);
 }
 
 /*the one moving thing: a follow up sent while the page is open fills its ring in*/

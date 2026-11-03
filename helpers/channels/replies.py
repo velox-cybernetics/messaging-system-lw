@@ -1,10 +1,11 @@
 #**********IMPORTS**********
-#the sender that texts the customer, the owner's texts, the reply splitter and its final check, the conversation on file, and the color job a pic ask counts toward
+#the sender that texts the customer, the owner's texts, the reply splitter and its final check, the conversation on file, the lead form channels, and the color job a pic ask counts toward
 from helpers.channels import notify
 from helpers.channels import senders
 from helpers.response import final_check
 from helpers.response import spacing
 from helpers.state import log
+from helpers.state import state_form
 from src import branches
 
 
@@ -78,6 +79,10 @@ def send_response(id: str, system_response: str, channel: str) -> None:
     if(system_response != ""):
         #at most 3 sentences a text, and a question always starts its own text
         texts: list[str] = spacing.split_texts(system_response)
+
+        #a form lead hasn't texted the shop back yet, and blooio only takes 3 texts to someone till they answer, so the reply goes out as one and leaves the rest for the follow ups
+        if(channel in state_form.FORM_CHANNELS):
+            texts = [spacing.one_text(texts)]
 
         #it goes out on the channel they wrote in on
         senders.send_texts(id, channel, texts)

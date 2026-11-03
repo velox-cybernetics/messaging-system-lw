@@ -35,7 +35,7 @@ type PART = {text?: string; media?: MEDIA};
 
 
 //ENTRY
-type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string};
+type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean; sms?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string};
 
 
 //CONVO PAGE
@@ -334,10 +334,14 @@ function message_note(show: boolean | undefined, text: string): HTMLSpanElement 
 
 
 //SENDER NOTE
-//a text sent from ghl was a person, not the system, false gets left out of the footer
-function sender_note(from_ghl: boolean | undefined): HTMLSpanElement | false {
+//a text sent from ghl was a person, not the system, and an sms follow up went out from the shop's ghl number instead of hazel's line, false gets left out of the footer
+function sender_note(from_ghl: boolean | undefined, sms: boolean | undefined): HTMLSpanElement | false {
     if(from_ghl) {
         return shared.make_element("span", {"class": "msg-note"}, "Sent from GHL");
+    }
+
+    if(sms) {
+        return shared.make_element("span", {"class": "msg-note is-sms"}, "SMS follow up");
     }
 
     return false;
@@ -356,9 +360,16 @@ function entry_node(entry: ENTRY): HTMLElement {
     }
 
     if(entry.kind === "out") {
-        const footer: HTMLElement = shared.make_element("footer", {}, sender_note(entry.ghl), message_note(entry.failed, "Not delivered"), time);
+        const footer: HTMLElement = shared.make_element("footer", {}, sender_note(entry.ghl, entry.sms), message_note(entry.failed, "Not delivered"), time);
 
-        return shared.make_element("article", {"class": "msg is-out"}, ...part_nodes(entry.parts, false), footer);
+        let class_name: string = "msg is-out";
+
+        //sms follow ups show in green so they stand apart from hazel's texts
+        if(entry.sms) {
+            class_name = "msg is-out is-sms";
+        }
+
+        return shared.make_element("article", {"class": class_name}, ...part_nodes(entry.parts, false), footer);
     }
 
     if(entry.kind === "hil") {

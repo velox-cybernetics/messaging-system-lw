@@ -9,12 +9,13 @@ import * as shared from "./shared.js";
 
 
 //FOLLOW UP
-//number is which one in a row it is, counted since the customer last wrote
-type FOLLOW_UP = {at: number; number: number};
+//number is which one in a row it is, counted since the customer last wrote, sms is one that went out from the shop's ghl number
+type FOLLOW_UP = {at: number; number: number; sms: boolean};
 
 
 //CUSTOMER
-type CUSTOMER = {id: string; name: string; channel: string; tab: string | null; due: FOLLOW_UP | null; sent: FOLLOW_UP[]};
+//held is when blooio started holding their texts till they text back or react, null when it isn't
+type CUSTOMER = {id: string; name: string; channel: string; tab: string | null; due: FOLLOW_UP | null; sent: FOLLOW_UP[]; held: number | null};
 
 
 //FOLLOW UPS
@@ -23,8 +24,8 @@ type FOLLOW_UPS = {pick_hour: number; send_hour: number; recheck_minutes: number
 
 
 //DAY
-//what one customer has on one day, the ones that went out and the next one
-type DAY = {sent: FOLLOW_UP[]; due: FOLLOW_UP | null};
+//what one customer has on one day, the ones that went out, the next one, and when blooio held them
+type DAY = {sent: FOLLOW_UP[]; due: FOLLOW_UP | null; held: number | null};
 
 
 //DAYS BACK
@@ -244,6 +245,44 @@ function lineup_text(data: FOLLOW_UPS): string {
 }
 
 
+//HELD TEXT
+//how many on the track blooio holds till they text back or react, empty when nobody
+function held_text(data: FOLLOW_UPS): string {
+    const first_day: string = add_days(shared.shop_parts(Date.now()).date, -DAYS_BACK);
+
+    let held: number = 0;
+
+    for(const customer of data.customers) {
+        if(customer.held !== null && shared.shop_parts(customer.held).date >= first_day) {
+            held++;
+        }
+    }
+
+    if(held === 0) {
+        return "";
+    }
+
+    if(held === 1) {
+        return "1 customer is on hold till they text back or react, Blooio won't take more texts to them before then.";
+    }
+
+    return `${held} customers are on hold till they text back or react, Blooio won't take more texts to them before then.`;
+}
+
+
+//HEADLINE
+//the lineup, then who's on hold
+function headline(data: FOLLOW_UPS): string {
+    const held: string = held_text(data);
+
+    if(held === "") {
+        return lineup_text(data);
+    }
+
+    return `${lineup_text(data)} ${held}`;
+}
+
+
 
 //**********TRACK**********
 //the table of customers by day
@@ -274,7 +313,7 @@ function day_head(date: string, today: string): HTMLTableCellElement {
 
 
 //DAY CELL
-//dot for one that went out, ring for the next one, exact times in the tooltip
+//dot for one that went out, green when it went by sms, ring for the next one, amber ring for the day blooio held them, exact times in the tooltip
 function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HTMLTableCellElement {
     if(!day) {
         return shared.make_element("td", {"class": class_name});
@@ -283,20 +322,41 @@ function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HT
     const lines: string[] = [];
 
     for(const each of day.sent) {
-        lines.push(`${nth(each.number)} follow up in a row, sent ${MOMENT_FORMAT.format(each.at)}`);
+        let how: string = "sent";
+
+        if(each.sms) {
+            how = "sent by SMS";
+        }
+
+        lines.push(`${nth(each.number)} follow up in a row, ${how} ${MOMENT_FORMAT.format(each.at)}`);
     }
 
     if(day.due) {
         lines.push(`${nth(day.due.number)} follow up in a row, goes out ${MOMENT_FORMAT.format(day.due.at)}`);
     }
 
-    let mark_class: string = "mark is-due";
-
-    if(day.sent.length > 0) {
-        mark_class = "mark is-sent";
+    if(day.held !== null) {
+        lines.push(`On hold since ${MOMENT_FORMAT.format(day.held)}, Blooio takes no more texts till they text back or react`);
     }
 
-    if(is_new) {
+    let mark_class: string = "mark is-due";
+
+    //a hold is where they are now, so it shows over a send that day
+    if(day.held !== null) {
+        mark_class = "mark is-held";
+    }
+
+    else if(day.sent.length > 0) {
+        mark_class = "mark is-sent";
+
+        for(const each of day.sent) {
+            if(each.sms) {
+                mark_class = "mark is-sent is-sms";
+            }
+        }
+    }
+
+    if(is_new && day.held === null) {
         mark_class += " is-new";
     }
 
@@ -313,7 +373,7 @@ function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HT
 function day_of(by_date: Map<string, DAY>, at: number): DAY {
     const date: string = shared.shop_parts(at).date;
 
-    const day: DAY = by_date.get(date) ?? {"sent": [], "due": null};
+    const day: DAY = by_date.get(date) ?? {"sent": [], "due": null, "held": null};
 
     by_date.set(date, day);
 
@@ -349,6 +409,10 @@ function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTa
 
     if(customer.due) {
         day_of(by_date, customer.due.at).due = customer.due;
+    }
+
+    if(customer.held !== null) {
+        day_of(by_date, customer.held).held = customer.held;
     }
 
     let in_range: boolean = false;
@@ -404,7 +468,7 @@ function render(): void {
         return;
     }
 
-    LINEUP.textContent = lineup_text(LATEST);
+    LINEUP.textContent = headline(LATEST);
 
     SCHEDULE.textContent = `Picked every night at ${shared.hour_text(LATEST.pick_hour)}, checked again at ${recheck_text(LATEST)} for anyone who texted overnight, sent at ${shared.hour_text(LATEST.send_hour)}.`;
 
@@ -540,7 +604,7 @@ function tick(): void {
     }
 
     else {
-        LINEUP.textContent = lineup_text(LATEST);
+        LINEUP.textContent = headline(LATEST);
     }
 }
 
