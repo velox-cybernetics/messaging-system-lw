@@ -35,7 +35,7 @@ type PART = {text?: string; media?: MEDIA};
 
 
 //ENTRY
-type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean} | {at: number; kind: "flag"; feedback: string};
+type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string};
 
 
 //CONVO PAGE
@@ -333,6 +333,18 @@ function message_note(show: boolean | undefined, text: string): HTMLSpanElement 
 }
 
 
+//SENDER NOTE
+//a text sent from ghl was a person, not the system, false gets left out of the footer
+function sender_note(from_ghl: boolean | undefined): HTMLSpanElement | false {
+    if(from_ghl) {
+        return shared.make_element("span", {"class": "msg-note"}, "Sent from GHL");
+    }
+
+    return false;
+}
+
+
+
 //ENTRY NODE
 function entry_node(entry: ENTRY): HTMLElement {
     const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(entry.at).toISOString()}, shared.shop_parts(entry.at).time);
@@ -344,7 +356,7 @@ function entry_node(entry: ENTRY): HTMLElement {
     }
 
     if(entry.kind === "out") {
-        const footer: HTMLElement = shared.make_element("footer", {}, message_note(entry.failed, "Not delivered"), time);
+        const footer: HTMLElement = shared.make_element("footer", {}, sender_note(entry.ghl), message_note(entry.failed, "Not delivered"), time);
 
         return shared.make_element("article", {"class": "msg is-out"}, ...part_nodes(entry.parts, false), footer);
     }
@@ -360,6 +372,11 @@ function entry_node(entry: ENTRY): HTMLElement {
     if(entry.kind === "switch") {
         if(entry.on) {
             return shared.make_element("p", {"class": "event"}, "System switched back on from the dashboard.", time);
+        }
+
+        //the owner texting them from ghl switches them off on its own
+        if(entry.by === "ghl") {
+            return shared.make_element("p", {"class": "event is-off"}, "System switched off: the owner texted them from GHL.", time);
         }
 
         return shared.make_element("p", {"class": "event is-off"}, "System switched off from the dashboard.", time);

@@ -6,3 +6,4 @@ upstash-redis
 pillow_heif
 Pillow
 google-auth
+cryptography

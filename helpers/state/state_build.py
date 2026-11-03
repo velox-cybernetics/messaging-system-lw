@@ -21,6 +21,7 @@ from src import branches
 #CRITICAL FIELDS
 CRITICAL_FIELD_NAMES: list[str] = ["make", "model", "color"]
 
+
 #VEHICLE FIELDS
 #the critical fields and the models of their other vehicles named next to the model, which only the form intro names
 VEHICLE_FIELD_NAMES: list[str] = [*CRITICAL_FIELD_NAMES, "other_models"]
@@ -143,12 +144,17 @@ def vehicle_models(critical_info: dict[str, str]) -> list[str]:
 
     kept: list[str] = []
 
+    #each model lowercased, so a model written twice in different capitals is still kept once
+    kept_lower: list[str] = []
+
     for model in read_models:
         #"Telluride." comes out as Telluride, the intro ends on its own period
         model = model.strip(" .")
 
-        if(model != "" and model.lower() not in [kept_model.lower() for kept_model in kept]):
+        if(model != "" and model.lower() not in kept_lower):
             kept.append(model)
+
+            kept_lower.append(model.lower())
 
     return kept
 

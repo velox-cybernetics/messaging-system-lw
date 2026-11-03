@@ -693,7 +693,8 @@ def has_price(texts: list[str]) -> bool:
 
 #WRITE OUTGOING
 #each text is its own part with its pics right after it, the way the customer got them
-def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]], at: int, sent: bool, is_followup: bool) -> None:
+#from_ghl is a text sent from ghl itself, which shows in their thread but was never the system's reply
+def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]], at: int, sent: bool, is_followup: bool, from_ghl: bool) -> None:
     parts: list[dict] = []
 
     for position, text in enumerate(texts):
@@ -703,6 +704,10 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
             parts.append(media_part({"url": url, "caption": ""}))
 
     entry: dict = {"at": at, "kind": "out", "parts": parts}
+
+    #a text sent from ghl shows as a person's in their thread, not the system's
+    if(from_ghl):
+        entry["ghl"] = True
 
     #the customer may have gotten none of it, so it shows as failed and never counts as outbound
     if(not sent):
@@ -714,8 +719,8 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
 
     #a reply to a message that wasn't the system's to answer doesn't count either
     if(sent and summary.get("counted", True)):
-        #a follow up is the system reaching out on its own, so it never counts as them getting a reply
-        if(not is_followup):
+        #a follow up is the system reaching out on its own and a text from ghl is a person, so neither counts as the system replying
+        if(not is_followup and not from_ghl):
             commands.extend(count_commands("out", 1, at))
 
             commands.extend(people_commands("out", id, at))
@@ -732,14 +737,14 @@ def write_outgoing(id: str, channel: str, texts: list[str], attachments: dict[in
 
 
 #LOG OUTGOING
-#sent is False when the channel refused any of the texts, is_followup is True for a follow up rather than a reply
-def log_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None, sent: bool, is_followup: bool) -> None:
-    in_background(write_outgoing, id, channel, list(texts), dict(attachments or {}), now_ms(), sent, is_followup)
+#sent is False when the channel refused any of the texts, is_followup is True for a follow up rather than a reply, from_ghl is True for a text sent from ghl
+def log_outgoing(id: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None, sent: bool, is_followup: bool, from_ghl: bool = False) -> None:
+    in_background(write_outgoing, id, channel, list(texts), dict(attachments or {}), now_ms(), sent, is_followup, from_ghl)
 
 
 
 #**********SWITCH**********
-#a customer switched off in the dashboard gets nothing at all from the bot, not even a hold reply, and so does everyone on a tab switched off there
+#a customer switched off in the dashboard gets nothing at all from the bot, not even a hold reply, and so does everyone on a tab switched off there, and the owner texting them from ghl switches them off the same way
 
 
 #SWITCHED ON
@@ -764,6 +769,24 @@ def switched_on(id: str, channel: str) -> bool:
     LAST_TAB_SWITCH[tab] = answers[1] != 1
 
     return LAST_SWITCH[id] and LAST_TAB_SWITCH[tab]
+
+
+#SWITCH OFF
+#the owner texted them from ghl, so they go off the same as switching them off in the dashboard, with a note in their thread that ghl did it
+#written right away rather than in the background, so a batch of theirs already counting down reads them off
+def switch_off(id: str) -> None:
+    #the answer the bot falls back on when the dashboard can't be reached, so they stay off then too
+    LAST_SWITCH[id] = False
+
+    if(not ENABLED):
+        return
+
+    commands: list[list] = [["SADD", "off", id]]
+
+    commands.extend(entry_commands(id, {"at": now_ms(), "kind": "switch", "on": False, "by": "ghl"}))
+
+    #it sits in front of his text going out, so it gives up as fast as the on or off check
+    pipeline(commands, SWITCH_TIMEOUT)
 
 
 

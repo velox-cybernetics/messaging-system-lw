@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's async tools, the web server tools, the journal of waiting messages, the dashboard's heartbeat, the follow ups and the five webhook servers that get joined into one
+#python's async tools, the web server tools, the journal of waiting messages, the dashboard's heartbeat, the follow ups and the six webhook servers that get joined into one
 import asyncio
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
@@ -12,6 +12,7 @@ from starlette.routing import Route
 from helpers.state import dashboard
 from helpers.state import journal
 from servers import blooio
+from servers import ghl_provider
 from servers import instagram
 from servers import messenger
 from servers import meta_form
@@ -119,7 +120,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 #APP
-#one app serving every webhook on port 8000, so a single ngrok http 8000 tunnel covers blooio, instagram, messenger and both quote forms
+#one app serving every webhook on port 8000, so a single ngrok http 8000 tunnel covers blooio, instagram, messenger, both quote forms and ghl
 APP: FastAPI = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
 
 
@@ -150,7 +151,7 @@ def webhook_paths(server_app: FastAPI) -> list[str]:
 #ADD ROUTES
 #each webhook path is handed to the whole server it came from, so that server's own middleware still runs on it
 def add_webhook_routes() -> None:
-    for server in (blooio, instagram, messenger, meta_form, website_form):
+    for server in (blooio, instagram, messenger, meta_form, website_form, ghl_provider):
         for path in webhook_paths(server.APP):
             APP.router.routes.append(Route(path, endpoint=server.APP))
 

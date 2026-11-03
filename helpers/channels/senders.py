@@ -323,7 +323,7 @@ def send_blooio_texts(recipient: str, texts: list[str], attachments: dict[int, l
 
 
 #**********CUSTOMER SENDS**********
-#sends the reply to the customer on the channel they wrote in on, in order and one at a time
+#sends the reply to the customer on the channel they wrote in on, in order and one at a time, and the owner's texts from ghl on the blooio line
 
 
 #SEND ON CHANNEL
@@ -352,6 +352,25 @@ def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict
     dashboard.log_outgoing(recipient, channel, texts, attachments, all_sent, is_followup)
 
     return all_sent
+
+
+#GHL TEXT
+#a text the owner sent from ghl goes out over blooio from the number the bot texts from, even to someone switched off, since a person wrote it
+#no typing bubble, and never logged back in ghl where it was written, but it shows in the dashboard
+def send_ghl_text(recipient: str, text: str, attachments: list[str]) -> bool:
+    send_url: str = f"{BLOOIO_BASE_URL}/chats/{quote(recipient, safe='')}/messages"
+
+    payload: dict = {"text": text}
+
+    #his pics go along with his text, the way he sent them from ghl
+    if(attachments):
+        payload["attachments"] = attachments
+
+    sent: bool = send_message("GHL TEXT", recipient, send_url, BLOOIO_API_KEY, payload)
+
+    dashboard.log_outgoing(recipient, "blooio", [text], {0: attachments}, sent, False, from_ghl=True)
+
+    return sent
 
 
 
