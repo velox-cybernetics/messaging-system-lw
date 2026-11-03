@@ -353,7 +353,7 @@ def written_followup(id: str, channel: str, count: int) -> str:
     followup = routing.cut_early_color_ask(state, id, followup)
 
     #a follow up picks the conversation back up, so hazel's heyy stays on it
-    followup = wording.wording_rules(followup, channel, state["message_history"], [], "", follow_up=True)
+    followup = wording.wording_rules(followup, channel, state["message_history"], [], [], follow_up=True)
 
     return replies.cleared_reply(id, channel, followup)
 

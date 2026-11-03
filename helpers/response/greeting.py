@@ -263,9 +263,21 @@ def service_phrase(service: str) -> str:
     return ""
 
 
+#VEHICLE NAMES
+#the models as the intro says them, "the Tacoma" for one and "the Tacoma and Telluride" for two, empty for none
+def vehicle_names(vehicle_models: list[str]) -> str:
+    if(len(vehicle_models) == 0):
+        return ""
+
+    if(len(vehicle_models) == 1):
+        return f"the {vehicle_models[0]}"
+
+    return f"the {', '.join(vehicle_models[:-1])} and {vehicle_models[-1]}"
+
+
 #FORM INTRO
-#the set intro to a form lead, with their first name, the service they picked and their vehicle
-def form_intro(current_message_batch: list, channel: str, vehicle_model: str) -> str:
+#the set intro to a form lead, with their first name, the service they picked and every vehicle on the form
+def form_intro(current_message_batch: list, channel: str, vehicle_models: list[str]) -> str:
     form: dict[str, str] = state_form.form_fields(current_message_batch)
 
     first_name: str = form_first_name(form)
@@ -285,11 +297,11 @@ def form_intro(current_message_batch: list, channel: str, vehicle_model: str) ->
         if(service != ""):
             request = f"{request} for {service}"
 
-    #the model the vehicle extractor read, so "mclaren 570s 2021" goes out as the 570S, never their raw text
-    vehicle: str = vehicle_model.strip(" .")
+    #the models the vehicle extractor read, so "mclaren 570s 2021" goes out as the 570S, never their raw text, and a form with two vehicles names both
+    vehicles: str = vehicle_names(vehicle_models)
 
-    if(vehicle != ""):
-        request = f"{request} on the {vehicle}"
+    if(vehicles != ""):
+        request = f"{request} on {vehicles}"
 
     return f"{greeting} this is Hazel at the Lone Wraps team, {request}."
 
@@ -315,7 +327,7 @@ def replied_before(message_history: dict) -> bool:
 
 #FIX GREETING
 #the reply with its greeting cut mid conversation, on the first reply to a form lead the set intro in front of it, and on a follow up or the first reply to someone who texted first the greeting left on
-def fix_greeting(reply: str, channel: str, message_history: dict, current_message_batch: list, vehicle_model: str, follow_up: bool = False) -> str:
+def fix_greeting(reply: str, channel: str, message_history: dict, current_message_batch: list, vehicle_models: list[str], follow_up: bool = False) -> str:
     first_reply: bool = not replied_before(message_history)
 
     #hazel's heyy can open the first reply to someone who texted first, and a follow up after the conversation went quiet
@@ -329,7 +341,7 @@ def fix_greeting(reply: str, channel: str, message_history: dict, current_messag
 
     #only the first reply to a form lead gets the set intro, and it goes out even when the answer is empty
     if(first_reply):
-        intro: str = form_intro(current_message_batch, channel, vehicle_model)
+        intro: str = form_intro(current_message_batch, channel, vehicle_models)
 
         #the intro takes them in, so the answer after it starts right with what it says
         answer = remove_opener(remove_introduction(answer))

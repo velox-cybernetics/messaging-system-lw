@@ -321,11 +321,11 @@ def extract(label: str, model: str, system_prompt: str, user_text: str) -> str:
 
 
 #VEHICLE EXTRACTOR
-#their make, model and the color it is now, out of their message, their media and what the shop last asked
+#their make, model and the color it is now, and the models of their other vehicles named for the work, out of their message, their media and what the shop last asked
 def extract_vehicle(user_text: str, user_media: dict, shop_last_reply: str) -> str:
     #a message with no text and no media has nothing to analyze, the model would only ask for one, so nothing goes out
     if(user_text.strip() == "" and user_media == {}):
-        return "MAKE: | MODEL: | COLOR:"
+        return "MAKE: | MODEL: | COLOR: | OTHER_MODELS:"
 
     media_as_text: str = json.dumps(user_media, ensure_ascii=False, separators=(",", ":"))
 

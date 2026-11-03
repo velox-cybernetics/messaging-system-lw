@@ -232,10 +232,10 @@ def send_materials(id: str, answer: str, channel: str) -> str:
 
 #MATERIALS REPLY
 #the materials go out right after the answer to their message, so the pick question is the only question
-def materials_reply(id: str, system_response: str, channel: str, message_history: dict, current_message_batch: list, model: str) -> None:
+def materials_reply(id: str, system_response: str, channel: str, message_history: dict, current_message_batch: list, vehicle_models: list[str]) -> None:
     answer: str = booking_chains.answer_only(system_response)
 
-    answer = wording.wording_rules(answer, channel, message_history, current_message_batch, model)
+    answer = wording.wording_rules(answer, channel, message_history, current_message_batch, vehicle_models)
 
     #an answer the final check stops never goes out, and the materials still do on their own
     answer = replies.cleared_reply(id, channel, answer)

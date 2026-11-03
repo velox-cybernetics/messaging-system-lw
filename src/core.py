@@ -91,8 +91,8 @@ def main_reply(current_message_batch: list, user_message: dict, message_history:
 
         critical_info: dict[str, str] = branch_parts[1]
 
-        #the model the vehicle check read, the form intro names it
-        model: str = critical_info.get("model", "")
+        #the models the vehicle check read, the form intro names each one
+        vehicle_models: list[str] = state_build.vehicle_models(critical_info)
 
         system_response: str = retry.run_chain(routing.main_route, state, id, [], channel, "CORE ERROR")
 
@@ -115,7 +115,7 @@ def main_reply(current_message_batch: list, user_message: dict, message_history:
 
             good_news_sent = good_news_parts[1]
 
-        system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, model)
+        system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, vehicle_models)
 
         #the owner's answer on their color landed while this was written, so it gets written again carrying what he found
         if(reply_held(id, channel)):
@@ -155,7 +155,7 @@ def restricted_reply(current_message_batch: list, user_message: dict, message_hi
 
         critical_info: dict[str, str] = branch_parts[1]
 
-        model: str = critical_info.get("model", "")
+        vehicle_models: list[str] = state_build.vehicle_models(critical_info)
 
         color_status: str = owner.color_check_status(id)
 
@@ -188,10 +188,10 @@ def restricted_reply(current_message_batch: list, user_message: dict, message_hi
             return False
 
         if(materials_due):
-            color_chains.materials_reply(id, system_response, channel, message_history, current_message_batch, model)
+            color_chains.materials_reply(id, system_response, channel, message_history, current_message_batch, vehicle_models)
 
         else:
-            system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, model)
+            system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, vehicle_models)
 
             replies.send_response(id, system_response, channel)
 
@@ -215,11 +215,11 @@ def pending_reply(chain: Callable[..., str], extra_inputs: list, step_name: str,
 
         critical_info: dict[str, str] = branch_parts[1]
 
-        model: str = critical_info.get("model", "")
+        vehicle_models: list[str] = state_build.vehicle_models(critical_info)
 
         system_response: str = retry.run_chain(chain, state, id, extra_inputs, channel, f"{step_name} CHAIN ERROR")
 
-        system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, model)
+        system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, vehicle_models)
 
         replies.send_response(id, system_response, channel)
 

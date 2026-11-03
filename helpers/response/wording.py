@@ -12,9 +12,9 @@ from helpers.response import spacing
 
 #WORDING RULES
 #runs every wording fix over the reply in order and hands back the reply that goes out
-def wording_rules(system_response: str, channel: str, message_history: dict, current_message_batch: list, model: str, follow_up: bool = False) -> str:
-    #the first reply to a form lead greets with the set intro naming the model read off the form, the greeting only stays on where a conversation opens or picks back up
-    system_response = greeting.fix_greeting(system_response, channel, message_history, current_message_batch, model, follow_up)
+def wording_rules(system_response: str, channel: str, message_history: dict, current_message_batch: list, vehicle_models: list[str], follow_up: bool = False) -> str:
+    #the first reply to a form lead greets with the set intro naming every model read off the form, the greeting only stays on where a conversation opens or picks back up
+    system_response = greeting.fix_greeting(system_response, channel, message_history, current_message_batch, vehicle_models, follow_up)
 
     #a laugh only ever goes out as haha, lol or the laugh emoji, so any other laugh the model wrote becomes haha
     system_response = laughs.fix_laughs(system_response)

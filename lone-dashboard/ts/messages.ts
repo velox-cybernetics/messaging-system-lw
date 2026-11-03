@@ -132,6 +132,15 @@ const LOG: HTMLElement = shared.by_id<HTMLElement>("log");
 const BACK_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("back");
 
 
+//COMPOSE PARTS
+//texts out from the dashboard go on the blooio line, so only the forms tab gets the box
+const COMPOSE_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("compose");
+
+const COMPOSE_TEXT: HTMLTextAreaElement = shared.by_id<HTMLTextAreaElement>("compose-text");
+
+const COMPOSE_SEND: HTMLButtonElement = shared.by_id<HTMLButtonElement>("compose-send");
+
+
 //FLAG PARTS
 const FLAG_DIALOG: HTMLDialogElement = shared.by_id<HTMLDialogElement>("flag-dialog");
 
@@ -443,6 +452,8 @@ function render_head(convo: THREAD_CONVO): void {
     }
 
     FLAG_BUTTON.title = flag_title;
+
+    COMPOSE_FORM.hidden = convo.tab !== "forms";
 }
 
 
@@ -501,6 +512,8 @@ function show_list(): void {
     PAGE.classList.remove("show-thread");
 
     THREAD_HEAD.hidden = true;
+
+    COMPOSE_FORM.hidden = true;
 
     CURRENT_CONVO = null;
 
@@ -1078,6 +1091,66 @@ async function send_flag(event: SubmitEvent): Promise<void> {
 
 
 
+//**********COMPOSE**********
+//a text from the shop, sent right from the dashboard over blooio
+
+
+//SEND TEXT
+async function send_text(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+
+    const text: string = COMPOSE_TEXT.value.trim();
+
+    if(CURRENT_CONVO === null || text === "" || COMPOSE_SEND.disabled) {
+        return;
+    }
+
+    COMPOSE_SEND.disabled = true;
+
+    COMPOSE_SEND.textContent = "Sending…";
+
+    try {
+        await shared.ask_server("/api/send", "POST", {"id": CURRENT_CONVO.id, "text": text});
+
+        COMPOSE_TEXT.value = "";
+    }
+
+    catch(error: unknown) {
+        let message: string = "The text didn't send. Check your connection and try again.";
+
+        if(error instanceof shared.ServerError) {
+            message = error.message;
+        }
+
+        shared.toast(message);
+    }
+
+    finally {
+        COMPOSE_SEND.disabled = false;
+
+        COMPOSE_SEND.textContent = "Send";
+
+        LOG.scrollTop = LOG.scrollHeight;
+
+        load_thread(false);
+
+        load_list();
+    }
+}
+
+
+//SEND ON ENTER
+//enter sends, shift enter starts a new line
+function send_on_enter(event: KeyboardEvent): void {
+    if(event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+
+        COMPOSE_FORM.requestSubmit();
+    }
+}
+
+
+
 //**********PULSE**********
 //the feed wrote something new
 
@@ -1150,6 +1223,12 @@ FLAG_BUTTON.addEventListener("click", open_flag);
 FLAG_CANCEL.addEventListener("click", close_flag);
 
 FLAG_FORM.addEventListener("submit", send_flag);
+
+
+//COMPOSE
+COMPOSE_FORM.addEventListener("submit", send_text);
+
+COMPOSE_TEXT.addEventListener("keydown", send_on_enter);
 
 
 //FIRST LOAD

@@ -15,11 +15,15 @@ from src import branches
 
 
 #**********GLOBALS**********
-#the vehicle details every price needs
+#the vehicle details every price needs, and what the vehicle check reads
 
 
 #CRITICAL FIELDS
 CRITICAL_FIELD_NAMES: list[str] = ["make", "model", "color"]
+
+#VEHICLE FIELDS
+#the critical fields and the models of their other vehicles named next to the model, which only the form intro names
+VEHICLE_FIELD_NAMES: list[str] = [*CRITICAL_FIELD_NAMES, "other_models"]
 
 
 
@@ -89,11 +93,12 @@ def critical_info_check(user_message: dict, message_history: dict, id: str) -> s
 
     critical_output: str = models.extract_vehicle(user_text, user_media, shop_last_reply)
 
-    critical_values: list[str] = models.extractor_values(critical_output, CRITICAL_FIELD_NAMES)
+    #an answer missing the other models still reads, it just has none on file
+    critical_values: list[str] = models.extractor_values(critical_output, VEHICLE_FIELD_NAMES)
 
-    log.write_info(f"criticalInfo_{id}", critical_values, CRITICAL_FIELD_NAMES)
+    log.write_info(f"criticalInfo_{id}", critical_values, VEHICLE_FIELD_NAMES)
 
-    color_now: str = critical_values[CRITICAL_FIELD_NAMES.index("color")]
+    color_now: str = critical_values[VEHICLE_FIELD_NAMES.index("color")]
 
     #a pic of their vehicle shows the color it is now over one they typed
     if(color_now != ""):
@@ -129,6 +134,23 @@ def vehicle_missing(critical_info: dict[str, str]) -> bool:
             return True
 
     return False
+
+
+#VEHICLE MODELS
+#the model on file and then each other model of theirs read next to it, each once, so the form intro names every vehicle on the form
+def vehicle_models(critical_info: dict[str, str]) -> list[str]:
+    read_models: list[str] = [critical_info.get("model", ""), *critical_info.get("other_models", "").split(",")]
+
+    kept: list[str] = []
+
+    for model in read_models:
+        #"Telluride." comes out as Telluride, the intro ends on its own period
+        model = model.strip(" .")
+
+        if(model != "" and model.lower() not in [kept_model.lower() for kept_model in kept]):
+            kept.append(model)
+
+    return kept
 
 
 #VEHICLE FILL
