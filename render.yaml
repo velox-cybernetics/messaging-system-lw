@@ -56,8 +56,10 @@ services:
         sync: false
       - key: GHL_LOCATION_ID
         sync: false
-      #the shop's own ghl marketplace app, ghl's sms provider for texts sent from ghl
+      #the shop's own ghl marketplace app and its conversation provider, the bot's number as its own channel in ghl
       - key: GHL_APP_CLIENT_ID
         sync: false
       - key: GHL_APP_CLIENT_SECRET
+        sync: false
+      - key: GHL_PROVIDER_ID
         sync: false

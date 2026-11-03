@@ -21,7 +21,7 @@ from servers.blooio import read_body
 
 
 #**********GLOBALS**********
-#the web server ghl hands every text the owner sends from it to, since the shop's ghl app is its sms provider
+#the web server ghl hands every text the owner sends on the bot's channel to, since the shop's ghl app is that channel
 
 
 #LOAD ENV
@@ -52,6 +52,11 @@ REDIRECT_URI: str = f"{os.getenv('PUBLIC_BASE_URL', '').rstrip('/')}{CALLBACK_PA
 GHL_PUBLIC_KEY_TEXT: str = "MCowBQYDK2VwAyEAi2HR1srL4o18O8BRa7gVJY7G7bupbN3H9AwJrHCDiOg="
 
 GHL_PUBLIC_KEY: Ed25519PublicKey = Ed25519PublicKey.from_public_bytes(base64.b64decode(GHL_PUBLIC_KEY_TEXT)[-32:])
+
+
+#TEXT TYPES
+#a text sent on the bot's channel can come in as an sms or as the channel's own custom type
+TEXT_TYPES: list[str] = ["SMS", "Custom"]
 
 
 #SEEN TIME
@@ -157,11 +162,11 @@ async def ghl_install(code: str = "") -> HTMLResponse:
 
     print("[GHL] the app is connected to the shop's sub-account")
 
-    return HTMLResponse("Connected. Now pick this app as the SMS provider in GHL under Settings, Phone Numbers, Advanced Settings.")
+    return HTMLResponse("Connected. The bot's number now shows in GHL's message box as its own channel, system-line.")
 
 
 #GHL HOOK
-#every text sent from ghl comes in here as a signed POST, an sms for the shop's sub-account goes out over blooio
+#every text sent on the bot's channel in ghl comes in here as a signed POST, a text for the shop's sub-account goes out over blooio
 #it answers with a dict or a JSONResponse, so fastapi makes no response model from the annotation
 @APP.post(DELIVERY_PATH, response_model=None)
 async def ghl_hook(request: Request) -> dict | JSONResponse:
@@ -179,9 +184,9 @@ async def ghl_hook(request: Request) -> dict | JSONResponse:
 
     data: dict = json.loads(body)
 
-    #the app is only ever the sms provider of the shop's own sub-account
-    if(data.get("type") != "SMS" or data.get("locationId") != ghl.GHL_LOCATION_ID):
-        print(f"GHL DELIVERY SKIPPED: a {data.get('type')} for {data.get('locationId')}, only the shop's sms goes out")
+    #the app is only ever the bot's channel in the shop's own sub-account, and it only ever sends texts
+    if(data.get("type") not in TEXT_TYPES or data.get("locationId") != ghl.GHL_LOCATION_ID):
+        print(f"GHL DELIVERY SKIPPED: a {data.get('type')} for {data.get('locationId')}, only the shop's texts go out")
 
         return {"status": "ok"}
 

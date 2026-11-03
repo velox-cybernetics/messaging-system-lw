@@ -15,7 +15,7 @@ from helpers.state import log
 
 
 #**********GLOBALS**********
-#the shop's ghl sub-account every text the bot sends or a customer sends in gets logged in, the worker that logs them, and the shop's own app ghl hands every text he sends from it to
+#the shop's ghl sub-account every text the bot sends or a customer sends in gets logged in, the worker that logs them, and the shop's own app that is the bot's channel in ghl
 
 
 #LOAD ENV
@@ -37,10 +37,12 @@ GHL_BASE_URL: str = "https://services.leadconnectorhq.com"
 
 
 #API VERSIONS
-#contacts and conversations each answer to their own version
+#contacts, conversations and the app's sub-account token each answer to their own version
 CONTACTS_VERSION: str = "2021-07-28"
 
 CONVERSATIONS_VERSION: str = "2021-04-15"
+
+OAUTH_VERSION: str = "2021-07-28"
 
 
 #REQUEST TIME
@@ -66,11 +68,16 @@ WORKER: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=1, thread_name_prefi
 
 
 #APP KEYS
-#the shop's own marketplace app is ghl's sms provider, so a text he sends from ghl comes to the bot to go out over blooio
+#the shop's own marketplace app adds the bot's number to ghl as its own channel, so a text he sends on it comes to the bot to go out over blooio
 #getenv so the bot still runs before the app is made, nothing of the app works till they're in
 GHL_APP_CLIENT_ID: str = os.getenv("GHL_APP_CLIENT_ID", "")
 
 GHL_APP_CLIENT_SECRET: str = os.getenv("GHL_APP_CLIENT_SECRET", "")
+
+
+#BOT CHANNEL
+#the app's conversation provider, every text over blooio is logged under it, so his normal numbers stay on their own channel in ghl
+GHL_PROVIDER_ID: str = os.getenv("GHL_PROVIDER_ID", "")
 
 
 #APP TOKENS
@@ -108,7 +115,7 @@ def ghl_request(method: str, path: str, version: str, token: str = GHL_API_KEY, 
 
 
 #**********PROVIDER APP**********
-#the app's tokens, got once when it's installed on the shop's sub-account and refreshed as they run out, since only its token can say whether a text he sent from ghl went out
+#the app's tokens, got once when it's installed on the shop's sub-account and refreshed as they run out, since only its token can add texts to its channel and say whether one he sent went out
 
 
 #TOKEN REQUEST
@@ -134,10 +141,22 @@ def save_app_tokens(answer: dict) -> str:
     return answer["access_token"]
 
 
+#LOCATION TOKEN
+#an agency admin installing the app hands back an agency token, which trades for the shop's sub-account token and the refresh token that keeps it going
+def location_token(agency_answer: dict) -> dict:
+    form: dict[str, str] = {"companyId": agency_answer.get("companyId", ""), "locationId": GHL_LOCATION_ID}
+
+    return ghl_request("post", "/oauth/locationToken", OAUTH_VERSION, token=agency_answer["access_token"], data=form)
+
+
 #CONNECT APP
 #the code ghl hands back when the app gets installed, only an install on the shop's own sub-account puts its tokens on file
 def connect_app(code: str, redirect_uri: str) -> None:
     answer: dict = token_request({"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri})
+
+    #an agency admin's install is for the agency, so it gets traded for the shop's sub-account
+    if(answer.get("userType") == "Company"):
+        answer = location_token(answer)
 
     if(answer.get("locationId") != GHL_LOCATION_ID):
         raise ValueError(f"the app was installed on {answer.get('locationId')}, not the shop's sub-account")
@@ -216,21 +235,22 @@ def contact_id(id: str) -> str:
 
 
 #**********LOGGING**********
-#every text the bot sends a customer over blooio, and every text they send it there, goes in their conversation in ghl, since ghl never sees blooio
+#every text the bot sends a customer over blooio, and every text they send it there, goes in their conversation in ghl on the bot's channel, since ghl never sees blooio
 
 
 #LOG TEXT
 #one text goes in their conversation, as one the shop sent or one they sent, with its pics and the moment it went out or came in
 #the inbound route only adds it to the conversation, sending it through ghl would text them a second time
+#it goes in on the app's own token, the one ghl lets add texts to the app's channel
 def log_text(contact: str, text_entry: SENT, direction: str) -> None:
     text, pics, logged_at = text_entry
 
-    message: dict = {"type": "SMS", "contactId": contact, "message": text, "direction": direction, "date": datetime.fromtimestamp(logged_at, timezone.utc).isoformat()}
+    message: dict = {"type": "Custom", "conversationProviderId": GHL_PROVIDER_ID, "contactId": contact, "message": text, "direction": direction, "date": datetime.fromtimestamp(logged_at, timezone.utc).isoformat()}
 
     if(len(pics) > 0):
         message["attachments"] = pics
 
-    ghl_request("post", "/conversations/messages/inbound", CONVERSATIONS_VERSION, json=message)
+    ghl_request("post", "/conversations/messages/inbound", CONVERSATIONS_VERSION, token=app_token(), json=message)
 
 
 #WRITE TEXTS
