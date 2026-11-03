@@ -1423,6 +1423,27 @@ def examples() -> str:
     It'd typically run $2950 + tax on the Q50, the exact price just depends on what color it is right now, so if you can shoot me a pic of it I can get you the exact price
     answer: False
     REASON: What it typically runs goes out again with "typically" since they asked what it costs (held price rule 1), what the exact price depends on is said in the same flow as the ask and is never a why (price why rule 16), the pic gets asked in new words (question rule 3, asked again rule 19), and the high quality film and the warranty aren't said again (repeated line rule 24).
+
+    WHAT'S MISSING: The make and model.
+    STATE: {"current_date_time":"Tuesday, November 03, 2026 at 11:00 AM","current_user_message":{"user_media":{},"user_text":"can you guys do the windshield too? dont want the cops on me"},"message_history":{}}
+    SYSTEM_RESPONSE:
+    Yeah, we do windshields, just a heads up a full windshield is technically not legal in Utah, only the top strip is. What vehicle is it?
+    answer: True
+    REASON: They only asked whether the shop does the windshield, so the heads up that a full windshield isn't legal and only the top strip is breaks the windshield law rule 37, even with them bringing up the cops, since it only talks them out of it.
+
+    WHAT'S MISSING: The make and model.
+    STATE: {"current_date_time":"Tuesday, November 03, 2026 at 11:00 AM","current_user_message":{"user_media":{},"user_text":"can you guys do the windshield too? dont want the cops on me"},"message_history":{}}
+    SYSTEM_RESPONSE:
+    Yeah, we do the windshield too, and we could do a 70% on it to add the ceramic, since 70% is pretty light so you won't have to worry about the cops. What vehicle is it?
+    answer: True
+    REASON: The owner's 70% line is right, but "so you won't have to worry about the cops" promises the windshield won't get them pulled over, which the shop can't promise (windshield law rule 37).
+
+    WHAT'S MISSING: The make and model.
+    STATE: {"current_date_time":"Tuesday, November 03, 2026 at 11:00 AM","current_user_message":{"user_media":{},"user_text":"can you guys do the windshield too? dont want the cops on me"},"message_history":{}}
+    SYSTEM_RESPONSE:
+    Yeah, we do the windshield too, and we could do a 70% on it to add the ceramic, since 70% is pretty light. What vehicle is it?
+    answer: False
+    REASON: The cops came up, so the windshield gets the owner's 70% line with nothing on its law and no promise about getting pulled over (windshield law rule 37), and the vehicle is the one question #WHAT'S MISSING gives (question rule 3).
 """
 
 
@@ -1604,6 +1625,10 @@ def rules() -> str:
     #Existing PPF Rule To Enforce
     -The response breaks the existing PPF rule when:
     36. current_user_message asks about PPF or clear bra that's on their vehicle now going under the wrap (whether the shop can wrap over it, whether it has to come off first, whether it costs more or takes more work), and the response says or hints it has to come off, costs extra or takes extra work, needs a look, a photo or a person to check it first, or that its edges can show through, or leaves out that it's treated just like regular paint. Saying it's treated just like regular paint, with no extra cost and no extra work, like "we can wrap right over the PPF, it's treated just like regular paint, so there's no extra cost or extra work for it", follows this rule.
+
+    #Windshield Law Rule To Enforce
+    -The response breaks the windshield law rule when:
+    37. It says or hints that a full windshield tint isn't legal or that only the top strip is, says the windshield could get them pulled over or a ticket, or offers the visor strip as the legal or safe option in place of the windshield, when current_user_message doesn't ask straight out whether a windshield tint is legal, even when they brought up the law, cops or getting pulled over, now or earlier, since it only talks them out of the windshield. It also breaks this rule when it promises the windshield won't get them pulled over or a ticket or says it's fine with the law, next to the owner's line or on its own ("since 70% is pretty light, so you won't have to worry about getting pulled over", "so nothing that'd get you pulled over"), since the shop can't promise that. The owner's line on the windshield once they brought up the law, cops or getting pulled over, that we could do a 70% to add the ceramic since 70% is pretty light, follows this rule, and it's the answer when they ask whether the windshield would get them pulled over. So does a response that leaves the windshield's law out altogether. When current_user_message asks straight out whether a windshield tint is legal, the owner's no with that line right after it ("Technically only the top strip is, but we could do a 70% on the windshield to add the ceramic, since 70% is pretty light") follows this rule, while a no without that line breaks it.
 """
 
 
