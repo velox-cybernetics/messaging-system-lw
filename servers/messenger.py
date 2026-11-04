@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's tools, the web server, the dashboard, the journal that keeps every waiting message, and the core that answers each messenger message
+#python's tools, the web server, the dashboard, the journal that keeps every waiting message, the spam check every message gets first, and the core that answers each messenger message
 import asyncio
 import hashlib
 import hmac
@@ -18,6 +18,7 @@ from helpers.state import journal
 from helpers.state.state_form import message_history_form
 from helpers.response import spacing
 from src.core import core
+from src import spam
 from helpers.chains import color_chains
 from helpers.channels import username
 from helpers.terminal import prints
@@ -446,6 +447,28 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
 
 
 
+#**********TAKING IN**********
+#every message gets its spam check before anything else sees it, then goes to the dashboard and the batch
+
+
+#TAKE MESSAGE
+#their messages take turns through the spam check, so each one still reaches the dashboard and the batch in the order it came in
+#spam goes no further, so it never shows in the dashboard and never gets a reply
+async def take_message(id: str, message: list) -> None:
+    async with spam.intake_lock(id):
+        #a message is text + attachments + referral, only its text can be spam
+        if(await asyncio.to_thread(spam.is_spam, id, message[0], "messenger")):
+            return
+
+        #every message but spam shows in the dashboard, and only one from a customer switched on there gets batched
+        if(await asyncio.to_thread(dashboard.take_in, id, "messenger", message)):
+            #on file before it waits in the batch, so a restart while it waits never loses it
+            journal_entry: str = await asyncio.to_thread(journal.save, "messenger", id, message)
+
+            queue_message(id, message, journal_entry)
+
+
+
 #**********MESSENGER WEBHOOK**********
 #answers meta's verify check, then takes every message messenger delivers, checks it's real, and sends it to the batch
 
@@ -510,12 +533,7 @@ async def messenger_hook(request: Request) -> JSONResponse:
 
             #a message is text + attachments + referral
             if(await new_message(event_message_id(event, id))):
-                #every message shows in the dashboard, and only one from a customer switched on there gets batched
-                if(await asyncio.to_thread(dashboard.take_in, id, "messenger", message)):
-                    #on file before it waits in the batch, so a restart while it waits never loses it
-                    journal_entry: str = await asyncio.to_thread(journal.save, "messenger", id, message)
-
-                    queue_message(id, message, journal_entry)
+                await take_message(id, message)
 
     return JSONResponse({"status": "ok"})
 

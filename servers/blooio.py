@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, ghl that logs every text a customer sends, senders and reply chains, the follow ups a tapback lifts blooio's hold on, the kept pics, and the instagram and messenger servers
+#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, ghl that logs every text a customer sends, senders and reply chains, the follow ups a tapback lifts blooio's hold on, the spam check every text gets first, the kept pics, and the instagram and messenger servers
 import asyncio
 import hashlib
 import hmac
@@ -25,6 +25,7 @@ from helpers.channels import senders
 from helpers.channels.senders import OWNER_NUMBER
 from src.core import core, booking_silent
 from src import followup
+from src import spam
 from helpers.chains import color_chains
 from helpers.terminal import prints
 from servers import instagram, messenger
@@ -565,6 +566,30 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
 
 
 
+#**********TAKING IN**********
+#every customer's text gets its spam check before anything else sees it, then goes to ghl, the dashboard and the batch
+
+
+#TAKE MESSAGE
+#their texts take turns through the spam check, so each one still reaches ghl, the dashboard and the batch in the order it came in
+#spam goes no further, so it never shows in ghl or the dashboard and never gets a reply
+async def take_message(id: str, text: str | None, attachments: list | None) -> None:
+    async with spam.intake_lock(id):
+        if(await asyncio.to_thread(spam.is_spam, id, text, "blooio")):
+            return
+
+        #ghl never sees blooio, so every text a customer sends goes in their conversation there, switched on in the dashboard or not
+        ghl.log_received(id, text, attachments)
+
+        #every message but spam shows in the dashboard, and only one from a customer switched on there gets batched
+        if(await asyncio.to_thread(dashboard.take_in, id, "blooio", [text, attachments])):
+            #on file before it waits in the batch, so a restart while it waits never loses it
+            journal_entry: str = await asyncio.to_thread(journal.save, "blooio", id, [text, attachments])
+
+            queue_message(id, [text, attachments], journal_entry)
+
+
+
 #**********BLOOIO WEBHOOK**********
 #serves the owner's pics to blooio, and takes every text blooio delivers, checks it's real, and sends it to the owner or the batch
 
@@ -622,17 +647,9 @@ async def blooio_hook(request: Request) -> dict | JSONResponse:
 
         #a message is its text and its attachments
         if(await new_message(message_id)):
-            #the owner's number only ever answers color checks, so nothing from it goes in the batch, every customer's text does
+            #the owner's number only ever answers color checks, so nothing from it goes in the batch, every customer's text gets taken in
             if(not await owner_checked(id, text, attachments)):
-                #ghl never sees blooio, so every text a customer sends goes in their conversation there, switched on in the dashboard or not
-                ghl.log_received(id, text, attachments)
-
-                #every message shows in the dashboard, and only one from a customer switched on there gets batched
-                if(await asyncio.to_thread(dashboard.take_in, id, "blooio", [text, attachments])):
-                    #on file before it waits in the batch, so a restart while it waits never loses it
-                    journal_entry: str = await asyncio.to_thread(journal.save, "blooio", id, [text, attachments])
-
-                    queue_message(id, [text, attachments], journal_entry)
+                await take_message(id, text, attachments)
 
     #a tapback they put on in their own chat counts as an answer to blooio, so it lifts the hold on their follow ups
     elif(data.get("type") == "message.reaction"):
