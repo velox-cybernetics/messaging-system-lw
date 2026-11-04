@@ -59,8 +59,8 @@ def schedule_check_reply(state: dict, confirmed_services: dict) -> str:
 def hold_for_schedule(id: str) -> None:
     clear_time: datetime = datetime.now(open_dates.SHOP_TIMEZONE) + timedelta(days=BOOKING_HOLD_DAYS)
 
-    #the plain string "HIL" on file means a person has the chat, so their messages take the restricted route till it comes off
-    log.write_state(f"restricted_{id}", "HIL")
+    #a person is fitting them a day, so their messages get nothing back from the bot till it comes off, not even a hold reply
+    log.write_state(f"restricted_{id}", owner.BOOKING_STATE)
 
     log.expire_at(f"restricted_{id}", clear_time)
 

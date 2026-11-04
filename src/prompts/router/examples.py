@@ -315,6 +315,12 @@ SERVICE_PRICING_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"how much to wrap my 2019 civic? also do you guys do the stars in the headliner?"},"message_history":{}}
     category: service_pricing
 
+    state: {"current_user_message":{"user_media":{},"user_text":"Full body. Theres a few scratches on the drivers door from a parking lot so id want that repainted first, then the ppf over everything"},"message_history":{"user_message_0":{"user_text":"hello my name is Derek Holt, I am looking to get the service of Paint Protection Film the vehicle I have is 2023 BMW X5"},"system_response_to_user_message_0":"Heyy Derek, this is Hazel at the Lone Wraps team, saw your quote request for paint protection film on the X5. The front end covers the full hood, fenders, bumper, headlights and mirrors, and the full body covers all the painted surfaces and comes with free side and rear window tint, both with a lifetime warranty. Are you looking for just the front end or full body on the X5?"}}
+    category: service_pricing
+
+    state: {"current_user_message":{"user_media":{"media_element_0":{"media_description":"brief_description: A close up photo of the front bumper of a dark gray Toyota Highlander in a driveway, with a row of small rock chips along the lower edge and a few spots dabbed with paint a shade lighter than the bumper.\nservice_ques: damage like a scratch\ntext_overlays: none\nbright_vehicle: no"}},"user_text":"heres the chips. I dabbed some touch up paint on them myself but it came out lighter than the rest"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for full front ppf on my 2022 highlander? the bumper has some chips that need painted first"},"system_response_to_user_message_0":"For sure, do you have a pic of the chips on the bumper?"}}
+    category: service_pricing
+
     state: {"current_user_message":{"user_media":{},"user_text":"do you guys do matte ppf?"},"message_history":{}}
     category: service_pricing
 
@@ -565,6 +571,9 @@ SERVICES_REQ_HUMANS_EXAMPLES: str = r"""
     category: services_req_humans
 
     state: {"current_user_message":{"user_media":{},"user_text":"You guys don't do body work do you?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Would like to get a quote for a full wrap on an 08 Silverado 2500 crew cab short bed in gloss black"},"system_response_to_user_message_0":"We can get a full wrap done on this vehicle for $3450 plus tax"}}
+    category: services_req_humans
+
+    state: {"current_user_message":{"user_media":{},"user_text":"can you guys fix the dent in my tailgate before you put the ppf on? its a 2021 f150"},"message_history":{}}
     category: services_req_humans
 
     state: {"current_user_message":{"user_media":{},"user_text":"Can you guys do motorcycles??"},"message_history":{}}

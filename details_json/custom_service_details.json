@@ -97,7 +97,7 @@
         "care" : "Hand washing makes it last longest, but it holds up fine going through car washes"
     }},
     "c5" : {"service" : "Other Job", "service_details" : {
-        "description" : "Any other job the services don't list that the shop doesn't say it won't do, like body work, dents, paint or touch up paint, a wrap or film going over hail damage, dents or body damage, PPF or clear bra on just one piece like just the hood, just the bumper or just the headlights, redoing a wrap or PPF on certain panels after an accident, for insurance or because a piece is lifting, wheels, rims, calipers, motorcycles, boats, jet skis, RVs and motorhomes, side by sides and UTVs, ATVs, snowmobiles, golf carts and interior pieces",
+        "description" : "Any other job the services don't list that the shop doesn't say it won't do, like body work, dents, a wrap or film going over hail damage, dents or body damage, PPF or clear bra on just one piece like just the hood, just the bumper or just the headlights, redoing a wrap or PPF on certain panels after an accident, for insurance or because a piece is lifting, wheels, rims, calipers, motorcycles, boats, jet skis, RVs and motorhomes, side by sides and UTVs, ATVs, snowmobiles, golf carts and interior pieces",
 
         "seen_first" : "Whether the shop takes one of these on, and what it costs, gets decided once the owner sees it, so nobody can say yes or no on it before that. Motorcycles are the one exception (see motorcycles)",
         "info_needed" : "A photo of the vehicle or the piece, and what they want done to it only when they haven't said yet. Asking whether the shop wraps a boat already says what they want done, a wrap, so then it's just the photo",

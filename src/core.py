@@ -77,13 +77,72 @@ def reply_held(id: str, channel: str) -> bool:
 
 
 
+#**********FOLDED REPLIES**********
+#a reply written while they kept sending never goes out, so its batch joins the one carrying what they sent since and one reply answers it all
+
+
+#FOLD WINDOW
+#the path a folded batch started from stays on file this long, the batch it joined gets answered well before then
+FOLD_MINUTES: int = 30
+
+
+#FOLDED PATH
+#the restricted state the folded batch's reply started from, "" for the main path, None when no batch was folded into this one, taken off once it's read
+def folded_path(id: str) -> str | None:
+    folded: dict | str = log.read_state(f"folded_{id}")
+
+    if(not isinstance(folded, dict) or "restricted" not in folded):
+        return None
+
+    log.clear_state(f"folded_{id}")
+
+    return folded["restricted"]
+
+
+#PATH KEPT
+#the reply only answered them or handed them to a person, so answering it all again from the path it started on writes the same way
+#a reply that started a booking step, wrapped them up, made a side ask or took the restriction off with their pick goes out, what it did is already on file
+def path_kept(id: str, restricted_start: str) -> bool:
+    if(log.read_info(f"date_pending_{id}") or log.read_info(f"contact_pending_{id}")):
+        return False
+
+    if(log.read_state(f"convo_ended_{id}") or log.read_info(f"side_ask_notify_{id}")):
+        return False
+
+    return restricted_start == "" or bool(log.read_state(f"restricted_{id}"))
+
+
+#REPLY FOLDED
+#they sent more while this reply was written, so it never goes out: their message comes back off file and the path it started from goes on file for the batch carrying what they sent
+#sent_since is None for a channel that never folds, like a lead form, and a reply with nothing to send never folds, nothing of it would go out
+def reply_folded(id: str, has_reply: bool, restricted_start: str, sent_since: Callable[[], bool] | None) -> bool:
+    if(sent_since is None or not has_reply or not sent_since()):
+        return False
+
+    if(not path_kept(id, restricted_start)):
+        print("REPLY NOT FOLDED: they sent more while it was written, but it started a step that's already on file, so it goes out as written")
+
+        return False
+
+    log.remove_last_message(f"usermsg_{id}")
+
+    log.write_state(f"folded_{id}", {"restricted": restricted_start})
+
+    log.expire_at(f"folded_{id}", datetime.now(open_dates.SHOP_TIMEZONE) + timedelta(minutes=FOLD_MINUTES))
+
+    print("REPLY FOLDED: they sent more while this reply was written, so it never goes out and their next batch answers it all at once")
+
+    return True
+
+
+
 #**********BRANCH REPLIES**********
 #each one builds the state, gets its branch's reply, fixes the wording, then sends it
 
 
 #MAIN REPLY
-#the router picks the branch, and the owner's good news about their color rides along when it's due, False when it was held for his answer
-def main_reply(current_message_batch: list, user_message: dict, message_history: dict, id: str, channel: str) -> bool:
+#the router picks the branch, and the owner's good news about their color rides along when it's due, False when it was held for his answer or folded into the batch carrying what they sent since
+def main_reply(current_message_batch: list, user_message: dict, message_history: dict, id: str, channel: str, sent_since: Callable[[], bool] | None) -> bool:
     try:
         branch_parts: tuple[dict, dict[str, str]] = state_build.branch_state(user_message, message_history, id, current_message_batch)
 
@@ -121,6 +180,10 @@ def main_reply(current_message_batch: list, user_message: dict, message_history:
         if(reply_held(id, channel)):
             return False
 
+        #they sent more while this was written, so the batch carrying it answers this one with it
+        if(reply_folded(id, system_response.strip() != "", "", sent_since)):
+            return False
+
         replies.send_response(id, system_response, channel)
 
         #the good news only goes out once, and its schedule question answers a booking held for the color
@@ -140,14 +203,15 @@ def main_reply(current_message_batch: list, user_message: dict, message_history:
 
 
 #RESTRICTED REPLY
-#a person has them, so only their service or shop questions get answered, or their pick of the materials, and the rest get a hold reply every other time, False when it was held for his answer
-def restricted_reply(current_message_batch: list, user_message: dict, message_history: dict, id: str, channel: str) -> bool:
+#a person has them, so only their service or shop questions get answered, or their pick of the materials, and the rest get a hold reply every other time, False when it was held for his answer or folded into the batch carrying what they sent since
+#restricted_start is the restricted state core picked this path from
+def restricted_reply(current_message_batch: list, user_message: dict, message_history: dict, id: str, channel: str, restricted_start: str, sent_since: Callable[[], bool] | None) -> bool:
     try:
         #the owner is checking an exact color they sent, the vehicle check clears it when they send a different one
         color_checked: bool = owner.color_check_status(id) != ""
 
-        #their last message got a hold reply, read before the chain runs so a timeout running it again holds them the same way
-        held: bool = owner.held(id)
+        #their last message got a hold reply, read before the chain runs so a timeout or a folded batch running it again holds them the same way
+        held: bool = restricted_start == owner.HELD_STATE
 
         branch_parts: tuple[dict, dict[str, str]] = state_build.branch_state(user_message, message_history, id, current_message_batch)
 
@@ -187,12 +251,18 @@ def restricted_reply(current_message_batch: list, user_message: dict, message_hi
         if(reply_held(id, channel)):
             return False
 
+        #the materials reply fixes the wording of its own answer
+        if(not materials_due):
+            system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, vehicle_models)
+
+        #they sent more while this was written, so the batch carrying it answers this one with it, the materials going out with it too
+        if(reply_folded(id, materials_due or system_response.strip() != "", restricted_start, sent_since)):
+            return False
+
         if(materials_due):
             color_chains.materials_reply(id, system_response, channel, message_history, current_message_batch, vehicle_models)
 
         else:
-            system_response = wording.wording_rules(system_response, channel, message_history, current_message_batch, vehicle_models)
-
             replies.send_response(id, system_response, channel)
 
         notify.notify_hand_off(id, channel, user_message)
@@ -232,13 +302,48 @@ def pending_reply(chain: Callable[..., str], extra_inputs: list, step_name: str,
 
 
 
+#**********BOOKING SILENCE**********
+#a person fitting them a day on the schedule has them, so nothing from the bot reaches them, the owner just hears what they sent
+
+
+#BOOKING SILENT
+#read before the typing bubble, so not even that goes up for them
+#a batch folded into this one carries a reply that never went out, so it gets written on the path that reply started from
+def booking_silent(id: str) -> bool:
+    try:
+        if(log.read_state(f"folded_{id}")):
+            return False
+
+        return owner.booking_held(id)
+
+    #a read that fails never silences them, their batch goes the way it would have
+    except Exception as error:
+        print(f"BOOKING HOLD READ ERROR: {error}")
+
+        return False
+
+
+#BOOKING HOLD
+#nothing goes back to them: the empty reply goes on file so their message keeps its place, and the owner gets texted what they sent
+def booking_hold_reply(user_message: dict, id: str, channel: str) -> None:
+    print("BOOKING HOLD: a person is fitting them a day on the schedule, so nothing goes back to them and the owner gets texted what they sent")
+
+    replies.write_message(f"systemres_{id}", "")
+
+    owner.note_booking_message(id)
+
+    notify.notify_hand_off(id, channel, user_message)
+
+
+
 #**********CORE**********
 #takes one batch of their texts, picks which branch answers it, and sends the reply
 
 
 #CORE
-#True once their batch got its answer, False when its reply was held for the owner's answer landing, so the server answers it again
-def core(current_message_batch: list, id: str, channel: str) -> bool:
+#True once their batch got its answer, False when its reply was held for the owner's answer landing or folded into the batch carrying what they sent since, so the server answers it again or with that batch
+#sent_since is True once they sent more after this batch was taken, None on a lead form, which never folds
+def core(current_message_batch: list, id: str, channel: str, sent_since: Callable[[], bool] | None = None) -> bool:
     #they or their whole channel got switched off in the dashboard while their batch waited, so nothing of it gets read, written or sent
     if(not dashboard.switched_on(id, channel)):
         print(f"SWITCHED OFF: {id} or their channel is off in the dashboard, so their batch gets no reply")
@@ -255,8 +360,12 @@ def core(current_message_batch: list, id: str, channel: str) -> bool:
 
         return False
 
+    #a person fitting them a day on the schedule keeps the bot silent, so not even the typing bubble goes up
+    silent: bool = booking_silent(id)
+
     #the customer sees the typing bubble the whole time core works on the reply
-    senders.start_typing(id, channel)
+    if(not silent):
+        senders.start_typing(id, channel)
 
     user_message: dict = state_build.user_message_form(current_message_batch, channel)
 
@@ -275,15 +384,22 @@ def core(current_message_batch: list, id: str, channel: str) -> bool:
         if(channel in state_form.FORM_CHANNELS):
             notify.note_lead(current_message_batch, id)
 
-        restricted: str | dict = log.read_state(f"restricted_{id}")
+        #a batch folded into this one gets answered from the path its reply started on, so a reply that handed them to a person gets written the same way again
+        folded: str | None = folded_path(id) if sent_since is not None else None
+
+        restricted: str | dict = log.read_state(f"restricted_{id}") if folded is None else folded
 
         date_pending: dict[str, str] = log.read_info(f"date_pending_{id}")
 
         contact_pending: dict[str, str] = log.read_info(f"contact_pending_{id}")
 
+        #a person is fitting them a day on the schedule, so their message goes on file and the owner hears about it, with nothing sent back
+        if(silent):
+            booking_hold_reply(user_message, id, channel)
+
         #a person has them now, so the bot only answers what they ask about the services or the shop
-        if(restricted):
-            answered = restricted_reply(current_message_batch, user_message, message_history, id, channel)
+        elif(restricted):
+            answered = restricted_reply(current_message_batch, user_message, message_history, id, channel, restricted, sent_since)
 
         elif(date_pending):
             pending_reply(booking_chains.date_propose_chain, [], "DATE", current_message_batch, user_message, message_history, id, channel)
@@ -293,7 +409,7 @@ def core(current_message_batch: list, id: str, channel: str) -> bool:
             pending_reply(booking_chains.contact_chain, [channel], "CONTACT", current_message_batch, user_message, message_history, id, channel)
 
         else:
-            answered = main_reply(current_message_batch, user_message, message_history, id, channel)
+            answered = main_reply(current_message_batch, user_message, message_history, id, channel, sent_since)
 
     except Exception as error:
         print(f"READ ERROR FOR READING PENDING|RESTRICTED: {error}")

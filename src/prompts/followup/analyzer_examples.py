@@ -39,3 +39,28 @@ state: {"current_user_message":{"user_media":{},"user_text":""},"message_history
 answer: False
 state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"thinking about getting my 2022 bronco wrapped"},"system_response_to_user_message_0":"Sweet, what color are you thinking for the Bronco, and what color is it right now? Send me a pic if you can","user_message_1":{"user_media":{},"user_text":"ill send pics when I get home"},"system_response_to_user_message_1":"Sounds good, just send them over whenever."}}
 answer: False"""
+
+
+#SPAM
+#the yes and no rules and samples for whether nobody looking to get work done was ever on the other end, read every night before a follow up gets picked
+def spam_examples() -> str:
+    return r"""Yes: every message of theirs in `message_history` comes from a business, a service or a bot instead of a person who wants work done on a vehicle: ads and offers (insurance, an auto warranty or coverage plan, loans), alerts and notices (a settlement or claim, an account, a delivery, a document to sign, a verification code), a message written to someone else by name, a link to click, anything with an opt out on it like "Reply STOP to opt out", or someone selling something to the shop or pitching it marketing, leads or a website. The shop's replies to it never change that, even when they ask what they're looking to get done.
+No: a person who reached out about work on a vehicle at any point, even when they went quiet, said it was a wrong number, turned the job down or only asked about the shop, and a business that wants work done on its own vehicles, like a fleet or commercial wrap, which is a customer.
+The conversation went quiet, so `current_user_message` is empty and every message of theirs is in `message_history`, oldest first: user_message_N is theirs and system_response_to_user_message_N is the shop's reply to it, and a conversation_summary entry holds earlier turns that no longer fit. When it isn't clear it's spam, it's No. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"Velo Auto Protect: your vehicle's coverage plan is ready at $52/mo, see the details here: https://vap.co/x8Kq Reply STOP to opt out"},"system_response_to_user_message_0":"Haha I think that one got sent to the wrong number. Anything you were looking to get done on your car by chance?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hi Dana, your claim payout is waiting on one last step. Confirm here: https://claims-center.co/7Hd2 Txt STOP to end"},"system_response_to_user_message_0":"No worries, looks like that was meant for someone else. Anything you were looking to get done on your car by chance?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"Your verification code is 482913. Do not share it with anyone."},"system_response_to_user_message_0":"Looks like this might be a wrong number, I'm Hazel with Lone Wraps. Anything you were looking to get done on your car by chance?"}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey there! We help auto shops rank #1 on Google Maps, can I send over a quick proposal for Lone Wraps?"},"system_response_to_user_message_0":"I'll pass that along to the owner and he'll reach out if he's interested."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2022 tacoma green, its white"},"system_response_to_user_message_0":"Sweet, so green on the Tacoma would run $3450 + tax for a full wrap, do you have an exact green in mind? If you do, can you shoot a pic of it over"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"hey"},"system_response_to_user_message_0":"Hey, what are you looking to get done?","user_message_1":{"user_media":{},"user_text":"sorry wrong number"},"system_response_to_user_message_1":"No worries."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"We have 6 work vans that need our logo and phone number on them, do you guys do fleet wraps?"},"system_response_to_user_message_0":"Yeah, we can definitely do fleet wraps. What are the years, makes and models of the vans?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_text":"hello my name is Mia Torres, I am interested in your services, the vehicle I have is 2021 Honda Civic."},"system_response_to_user_message_0":"Heyy Mia, this is Hazel at the Lone Wraps team, saw your quote request on the Civic. What are you looking to get done?"}}
+answer: False"""

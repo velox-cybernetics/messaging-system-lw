@@ -569,7 +569,7 @@ def instructions(price_held: bool) -> str:
 
     #Conversation Rules To Enforce
     -The response breaks a conversation rule when:
-    11. It gives a yes or a no on whether the shop does a job outside its services that the customer asked about with the commercial wrap (body work, dents, paint, wheels, interiors, motorcycles, boats, RVs and the like), or promises that something can be matched exactly, fixed or saved.
+    11. It gives a yes or a no on whether the shop does a job outside its services that the customer asked about with the commercial wrap (body work, dents, wheels, interiors, motorcycles, boats, RVs and the like), or promises that something can be matched exactly, fixed or saved. Paint work is the shop's own no: saying we don't offer paint work and the most we can do is use a touch up pen and smooth the area out never breaks this rule.
     12. It confirms or agrees to a day or time, promises a spot on the schedule, asks for their email, or offers or mentions a deposit or payment link. Saying the next steps to get on the schedule will be sent over is fine, and so is giving them the shop's email to send their files to.
     13. It mentions a vehicle, part or detail the customer never gave. The shop's own info, like its email or address, isn't one.
 

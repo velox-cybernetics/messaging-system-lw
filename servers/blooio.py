@@ -23,7 +23,7 @@ from helpers.response import spacing
 from helpers.media import media_host
 from helpers.channels import senders
 from helpers.channels.senders import OWNER_NUMBER
-from src.core import core
+from src.core import core, booking_silent
 from src import followup
 from helpers.chains import color_chains
 from helpers.terminal import prints
@@ -227,8 +227,14 @@ async def wait_for_pic(id: str) -> None:
 
 #NATURAL TYPING
 #the batch waits out its time with the bubble going up and down, so it looks like someone typing and stopping
+#a person fitting them a day on the schedule keeps the bot silent, so their batch waits out its time with no bubble at all
 async def natural_typing(id: str) -> None:
     end: float = time.monotonic() + BLOOIO_BATCH_TIME
+
+    if(await asyncio.to_thread(booking_silent, id)):
+        await asyncio.sleep(max(0.0, end - time.monotonic()))
+
+        return
 
     while(time.monotonic() < end):
         await asyncio.to_thread(senders.start_blooio_typing, id)
@@ -466,8 +472,32 @@ async def owner_checked(id: str, text: str | None, attachments: list | None) -> 
 #holds their texts until they stop sending, shows the typing bubble, then answers them all at once
 
 
+#SENT SINCE
+#they texted again after their batch was taken, so the reply being written for it never goes out and the batch carrying the new texts answers both
+def sent_since(id: str) -> bool:
+    return id in MESSAGE_BATCHES
+
+
+#FOLD BATCH
+#a batch whose reply never went out goes in front of the texts they sent since, so one reply answers them all, False when nothing of theirs is waiting
+def fold_batch(id: str, current_message_batch: list, current_entries: list[str]) -> bool:
+    if(id not in MESSAGE_BATCHES):
+        return False
+
+    MESSAGE_BATCHES[id][:0] = current_message_batch
+
+    BATCH_ENTRIES[id][:0] = current_entries
+
+    print(f"BATCH FOLDED: {id} texted again while their reply was being written, so their next batch answers it all at once")
+
+    print()
+
+    return True
+
+
 #BATCH
 #waits on an asked-for pic and the typing, then answers the whole batch, again if its reply was held for the owner's answer
+#it stays open till it holds their lock, so a text that lands while their last batch is still being answered joins it
 async def batch(id: str) -> None:
     #everything this batch prints, its countdown included, comes out in one block once its reply went out or it failed
     with prints.held():
@@ -475,22 +505,11 @@ async def batch(id: str) -> None:
 
         await natural_typing(id)
 
-        current_message_batch: list = MESSAGE_BATCHES[id]
+        current_message_batch: list = []
 
-        current_entries: list[str] = BATCH_ENTRIES[id]
+        current_entries: list[str] = []
 
-        #nothing waits from here to their lock, so what the owner found never goes out on its own in between
-        del BATCH_COUNTDOWNS[id]
-
-        del MESSAGE_BATCHES[id]
-
-        del BATCH_ENTRIES[id]
-
-        print(f"INCOMING MESSAGE BATCH FROM on blooio from: {id}")
-
-        print(f"Message batch: {current_message_batch}")
-
-        print()
+        taken: bool = False
 
         answered: bool = False
 
@@ -498,8 +517,28 @@ async def batch(id: str) -> None:
         while(not answered):
             #a batch closing while their last one is still being answered waits, so it sees that reply in the history
             async with customer_lock(id):
+                #it closes the first time it holds their lock, and nothing waits from here to core, so what the owner found never goes out on its own in between
+                if(not taken):
+                    current_message_batch = MESSAGE_BATCHES.pop(id)
+
+                    current_entries = BATCH_ENTRIES.pop(id)
+
+                    del BATCH_COUNTDOWNS[id]
+
+                    taken = True
+
+                    print(f"INCOMING MESSAGE BATCH FROM on blooio from: {id}")
+
+                    print(f"Message batch: {current_message_batch}")
+
+                    print()
+
                 #core runs in its own worker thread, so the server keeps taking webhooks while it works
-                answered = await asyncio.to_thread(core, current_message_batch, id, "blooio")
+                answered = await asyncio.to_thread(core, current_message_batch, id, "blooio", lambda: sent_since(id))
+
+                #they texted again while its reply was being written, so the batch carrying those answers this one with them
+                if(not answered and fold_batch(id, current_message_batch, current_entries)):
+                    return
 
         #answered, so its texts come off the journal and a restart never answers them again
         await asyncio.to_thread(journal.clear, "blooio", id, current_entries)

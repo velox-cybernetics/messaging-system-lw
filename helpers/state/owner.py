@@ -48,6 +48,8 @@ REASONS["owner_ask"] = "Part of what they asked has no answer in the details and
 
 REASONS["side_ask"] = "They asked again about something small the details have no answer for, after the reply told them Hazel would ask you"
 
+REASONS["booking_hold"] = "They messaged while you're fitting them a day on the schedule, nothing went back to them, so it waits on you"
+
 
 #SIDE ASK DAYS
 #a small thing the new girl said she'd ask the owner about stays open this long, so asking about it again hands them to him
@@ -112,6 +114,11 @@ NEWS_LANDING: dict[str, int] = {}
 HELD_STATE: str = "HIL HELD"
 
 
+#BOOKING STATE
+#on file in place of "HIL" while a person fits them a day on the schedule, so nothing from the bot goes out to them till it comes off
+BOOKING_STATE: str = "HIL BOOKING"
+
+
 
 #**********HAND OFFS**********
 #hands a conversation to the owner and keeps what his text needs until it goes out
@@ -138,6 +145,28 @@ def hold(id: str) -> None:
 #True when the last message they sent while a person has them got a hold reply
 def held(id: str) -> bool:
     return log.read_state(f"restricted_{id}") == HELD_STATE
+
+
+#RESTRICT BOOKING
+#a person fits them a day on the schedule from here, so the bot goes silent for them, and the reason is kept so the owner gets texted once the reply goes out
+def restrict_booking(id: str, reason: str) -> None:
+    #write_state keeps the time a schedule hold ends at
+    log.write_state(f"restricted_{id}", BOOKING_STATE)
+
+    #kept until the owner's text goes out, so a chain that runs again after a timeout never texts them twice
+    log.write_info(f"hil_notify_{id}", [reason], ["reason"])
+
+
+#BOOKING HELD
+#True while a person is fitting them a day on the schedule, when the bot sends them nothing at all
+def booking_held(id: str) -> bool:
+    return log.read_state(f"restricted_{id}") == BOOKING_STATE
+
+
+#BOOKING MESSAGE
+#they wrote in while a person fits them a day, so the owner gets texted what they sent, and the booking hold stays as it was
+def note_booking_message(id: str) -> None:
+    log.write_info(f"hil_notify_{id}", [REASONS["booking_hold"]], ["reason"])
 
 
 #NOTIFY REASON

@@ -293,6 +293,11 @@ SMALL_ASK_THRESHOLD: float = 0.6
 SIDE_ASK_PERSIST_THRESHOLD: float = 0.6
 
 
+#COLOR CHECK ASKS
+#a yes over this means they asked about the color they sent, so the line saying the color books are still getting checked stays, under half on purpose since cutting the answer to their ask costs more than saying it once more
+COLOR_CHECK_ASKED_THRESHOLD: float = 0.4
+
+
 
 #**********GENERATION LIMITS**********
 #how long each reply can get and how hard its model thinks before it writes
@@ -1791,6 +1796,57 @@ def asked_again_reply(state: dict, reply: str) -> str:
         reply = kept_reply
 
     return reply
+
+
+
+#**********COLOR CHECK REPEATS**********
+#the color books getting checked goes out once, so a later reply only says it again when they ask about the color they sent, whichever branch wrote the reply
+
+
+#COLOR CHECK ASKED
+#True when their message asks about the exact color they sent: whether the shop found it or can get it, where the check stands or when they'll hear back on it
+def color_check_asked(state: dict) -> bool:
+    asked_question: dict = {"type": "noul", "instructions": f"Is the customer asking about the exact color they sent over for their wrap or colored PPF, whether the shop found it or can get it, where the check on it stands or when they'll hear back on it, in `current_user_message`?\n{pricing_examples.color_check_asked_examples()}"}
+
+    probability_yes: float = models.decision_answer("color_check_asked", asked_question, state)["noul"]
+
+    print(f"COLOR CHECK ASKED: {probability_yes:.2f}")
+
+    return probability_yes > COLOR_CHECK_ASKED_THRESHOLD
+
+
+#REPEATED CHECK REPLY
+#the reply with the line saying the color books are still getting checked taken out, once a reply already told them and their message doesn't ask about the color
+#a reply that's only that line keeps it, so something still goes out
+def repeated_check_reply(state: dict, reply: str) -> str:
+    check_lines: list[str] = spacing.still_checking_lines(reply)
+
+    if(len(check_lines) == 0):
+        return reply
+
+    #no reply told them the color books are getting checked yet, so this one telling them stays
+    if(not spacing.color_check_sent(state["message_history"])):
+        return reply
+
+    kept_reply: str = repeats.drop_questions(reply, check_lines)
+
+    if(kept_reply == ""):
+        print(f"STILL CHECKING KEPT, NOTHING ELSE IN THE REPLY: {reply}")
+
+        return reply
+
+    #they asked about the color they sent, so where it stands is their answer
+    if(color_check_asked(state)):
+        return reply
+
+    for sentence in check_lines:
+        print(f"STILL CHECKING CUT: {sentence}")
+
+    #a reply never ends on a period, the way the shop texts, so the one the cut left at its end comes off
+    if(kept_reply.endswith(".") and not kept_reply.endswith("..")):
+        kept_reply = kept_reply[:-1]
+
+    return kept_reply
 
 
 

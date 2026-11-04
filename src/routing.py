@@ -448,6 +448,9 @@ def main_route(state: dict, id: str) -> str:
     if(route_result not in ["booking_service_acknowledge", "end_conversation"]):
         system_response = cut_made_up_days(system_response, id)
 
+    #the color books getting checked goes out once, so a reply only says they're still getting checked when they ask about the color, whichever branch wrote it
+    system_response = branches.repeated_check_reply(state, system_response)
+
     #a question the shop already asked never goes out again in those words, whichever branch wrote the reply
     return branches.asked_again_reply(state, system_response)
 
@@ -519,6 +522,9 @@ def restricted_route(state: dict, id: str, color_swapped: bool, held: bool) -> s
     system_response = cut_early_color_ask(state, id, system_response)
 
     system_response = cut_made_up_days(system_response, id)
+
+    #a pricing, business or hold reply only says the color books are still getting checked when they ask about the color, the same as on the main route
+    system_response = branches.repeated_check_reply(state, system_response)
 
     #a question the shop already asked never goes out again in those words, the same as on the main route
     return branches.asked_again_reply(state, system_response)

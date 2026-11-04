@@ -137,13 +137,13 @@ def research_days(state: dict, id: str, date_pending: dict[str, str], offered_da
 
     research_dates: list[str] = research_return[1]
 
-    #3 fresh sets went out already or nothing new is open in 3 weeks, so a person finds them a day
+    #3 fresh sets went out already or nothing new is open in 3 weeks, so a person finds them a day and the bot goes silent for them
     if(len(research_dates) == 0):
         print(f"DATE RESEARCH RAN OUT: {researches} researches, {len(turned_down_dates)} days turned down")
 
         system_response: str = branches.booking_date_ack_reply(state, offered_dates, "")
 
-        owner.restrict(id, owner.REASONS["days_ran_out"])
+        owner.restrict_booking(id, owner.REASONS["days_ran_out"])
 
         return system_response
 
@@ -161,9 +161,9 @@ def offer_days(state: dict, id: str, reply_before: str) -> str:
 
     offered_dates: list[str] = booking_return[1]
 
-    #nothing is open in the next 3 weeks, so the ack went out and a person finds them a day
+    #nothing is open in the next 3 weeks, so the ack went out and a person finds them a day, with the bot silent for them till then
     if(len(offered_dates) == 0):
-        owner.restrict(id, owner.REASONS["no_open_days"])
+        owner.restrict_booking(id, owner.REASONS["no_open_days"])
 
     #a first set starts with nothing turned down and no research, a past booking's days never carry over
     else:
@@ -358,11 +358,11 @@ def contact_chain(state: dict, id: str, channel: str) -> str:
     #jev decides if they won't give it, are getting it, asked a pricing or business question, or sent spam
     no_contact_result: str = branches.no_contact_analyzer(state)
 
-    #case 1, they won't give it, so the ack goes out and a person sorts out the invoice
+    #case 1, they won't give it, so the ack goes out and a person sorts out the invoice, with the bot silent for them from here
     if(no_contact_result == "wont_give_info"):
         system_response = branches.no_contact_ack_reply(state, no_contact_result, drop_off_date)
 
-        owner.restrict(id, owner.REASONS["contact_refused"])
+        owner.restrict_booking(id, owner.REASONS["contact_refused"])
 
     #case 2, they're getting it, so the ack goes out and the shop keeps waiting on their info
     elif(no_contact_result == "getting_info"):
@@ -372,8 +372,8 @@ def contact_chain(state: dict, id: str, channel: str) -> str:
     elif(no_contact_result == "service_pricing" or no_contact_result == "business_operations"):
         system_response = answer_then_ask_contact(state, id, no_contact_result, missing, drop_off_date)
 
-    #case 4, spam or harassment gets nothing back, a person takes it from here
+    #case 4, spam or harassment gets nothing back, a person takes it from here and the bot stays silent
     elif(no_contact_result == "spam_harass"):
-        owner.restrict(id, owner.REASONS["spam_harass"])
+        owner.restrict_booking(id, owner.REASONS["spam_harass"])
 
     return system_response

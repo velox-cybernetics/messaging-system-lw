@@ -74,6 +74,11 @@ META_WINDOW_SECONDS: int = 24 * 3600
 NOT_INTERESTED_THRESHOLD: float = 0.5
 
 
+#SPAM
+#a yes over this means nobody looking to get work done was ever on the other end, like a business texting ads, alerts or links, so they never get one
+SPAM_THRESHOLD: float = 0.5
+
+
 #FOLLOW UP LIMITS
 FOLLOWUP_MAX_TOKENS: int = 10*100
 
@@ -219,9 +224,21 @@ def person_has_them(id: str) -> bool:
     return bool(log.read_state(f"restricted_{id}"))
 
 
+#NAME ATTACHED
+#a number only gets a follow up with a real name on file from their quote form, someone who only ever texted the shop's number never gave one, and that's where spam texts come from
+#instagram and messenger chats always come with the name they go by there
+def name_attached(id: str, channel: str) -> bool:
+    if(channel in senders.META_CHANNELS):
+        return True
+
+    names: list[str] = log.read_info(f"lead_{id}").get("name", "").split()
+
+    return len(names) > 0 and greeting.real_name(names[0])
+
+
 
 #**********WHO GETS ONE**********
-#the checks that need no model, then the not interested check the decisions model makes on the whole conversation
+#the checks that need no model, then the not interested and spam checks the decisions model makes on the whole conversation
 
 
 #WINDOW OPEN
@@ -249,11 +266,11 @@ def goes_by_sms(record: dict[str, str]) -> bool:
 
 
 #FOLLOW UP ALLOWED
-#True when nothing on file rules a follow up out: they never went to booking, nobody has them, blooio isn't holding their chat, they never texted STOP, a lead past blooio's follow ups can get an sms, their channel's count isn't used up, they've been quiet long enough and meta's window is still open when it goes out
-def followup_allowed(id: str, record: dict[str, str], booked: bool, restricted: bool, send_time: float) -> bool:
+#True when nothing on file rules a follow up out: they never went to booking, nobody has them, a number has a name on file, blooio isn't holding their chat, they never texted STOP, a lead past blooio's follow ups can get an sms, their channel's count isn't used up, they've been quiet long enough and meta's window is still open when it goes out
+def followup_allowed(id: str, record: dict[str, str], booked: bool, restricted: bool, named: bool, send_time: float) -> bool:
     channel: str = record.get("channel", "")
 
-    if(channel == "" or booked or restricted):
+    if(channel == "" or booked or restricted or not named):
         return False
 
     #blooio turned their last one down for the chat's cap, so nothing gets written for them till they text back or react
@@ -290,16 +307,30 @@ def quiet_state(id: str) -> dict:
     return state_build.state_formulation(empty_message, state_build.message_history_read(id))
 
 
-#NOT INTERESTED
-#True when the whole conversation shows they're done with the shop for good, so no follow up goes out to them
-def not_interested(state: dict) -> bool:
-    not_interested_question: dict = {"type": "noul", "instructions": f"Is the customer completely not interested, done with the shop for good going by the whole conversation in `message_history`?\n{followup_examples.not_interested_examples()}"}
+#SKIP REASON
+#why the whole conversation rules a follow up out, done with the shop for good or spam that was never a customer at all, asked in one go, empty when it doesn't
+def skip_reason(state: dict) -> str:
+    questions: dict = {}
 
-    probability_yes: float = models.decision_answer("not_interested", not_interested_question, state)["noul"]
+    questions["not_interested"] = {"type": "noul", "instructions": f"Is the customer completely not interested, done with the shop for good going by the whole conversation in `message_history`?\n{followup_examples.not_interested_examples()}"}
 
-    print(f"NOT INTERESTED: {probability_yes:.2f}")
+    questions["spam"] = {"type": "noul", "instructions": f"Is this conversation spam, with nobody looking to get work done on a vehicle ever on the other end, going by every message of theirs in `message_history`?\n{followup_examples.spam_examples()}"}
 
-    return probability_yes > NOT_INTERESTED_THRESHOLD
+    answers: dict = models.decision_answers(questions, state)
+
+    not_interested_yes: float = answers["not_interested"]["noul"]
+
+    spam_yes: float = answers["spam"]["noul"]
+
+    print(f"NOT INTERESTED: {not_interested_yes:.2f} | SPAM: {spam_yes:.2f}")
+
+    if(spam_yes > SPAM_THRESHOLD):
+        return "is spam, never a customer"
+
+    if(not_interested_yes > NOT_INTERESTED_THRESHOLD):
+        return "is done with the shop for good"
+
+    return ""
 
 
 
@@ -341,11 +372,19 @@ def prep_followup(id: str, send_time: float) -> None:
 
     record: dict[str, str] = log.read_info(followup_key(id))
 
-    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), send_time)):
+    named: bool = name_attached(id, record.get("channel", ""))
+
+    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), named, send_time)):
+        #a number with no name is the one rule out that gets said, so the night's check shows who it left out for it
+        if(not named):
+            print(f"FOLLOW UP SKIPPED: {id} has no name on file")
+
         return
 
-    if(not_interested(quiet_state(id))):
-        print(f"FOLLOW UP SKIPPED: {id} is done with the shop for good")
+    reason: str = skip_reason(quiet_state(id))
+
+    if(reason != ""):
+        print(f"FOLLOW UP SKIPPED: {id} {reason}")
 
         return
 
@@ -509,8 +548,8 @@ def send_followup(id: str) -> None:
 
     channel: str = record.get("channel", "")
 
-    #a booking, a person taking them or meta's window closing overnight calls it off, and so does the dashboard switching them off
-    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), time.time()) or not dashboard.switched_on(id, channel)):
+    #a booking, a person taking them, a number with no name or meta's window closing overnight calls it off, and so does the dashboard switching them off
+    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), name_attached(id, channel), time.time()) or not dashboard.switched_on(id, channel)):
         return
 
     count: int = int(record.get("count", "0"))

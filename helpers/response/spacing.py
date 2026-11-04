@@ -25,6 +25,14 @@ PIC_WORDS: list[str] = ["pic", "pics", "photo", "photos", "picture", "pictures",
 COLOR_CHECK_PATTERN: re.Pattern = re.compile(r"\b(let me|i'll|i will) check the color books\b|\bcheck the color books to see\b", re.IGNORECASE)
 
 
+#STILL CHECKING
+#a sentence that only says the color books are still getting checked, with what's getting checked and that they'll hear what the shop finds ("Still checking the color books on that grey, I'll let you know what I find", "Still flipping through the color books on that satin black, I'll let you know once I find one"), never "Let me check the color books", "As soon as I'm done checking the color books", "once I'm done flipping through the color books" or a sentence that says anything else with it
+STILL_CHECKING_PATTERN: re.Pattern = re.compile(r"^(?:(?:and|also),?\s+)?(?:(?:i'm|im|we're)\s+)?still (?:checking|flipping through|going through|looking through) the colou?r books?(?:\s+(?:on|for)(?:\s+[\w'-]+){1,6})?(?:,?\s+(?:and\s+)?(?:i'll|ill|we'll|i will|we will|will)\s+let you know (?:what|once|when|as soon as|if) (?:i|we) (?:find|hear)(?:\s+(?:out|one|it|back))?)?[^\w?]*$", re.IGNORECASE)
+
+#that they'll hear what the shop finds, said on its own ("I'll let you know what I find", "I'll let you know once I find one")
+FIND_LINE_PATTERN: re.Pattern = re.compile(r"^(?:(?:and|also),?\s+)?(?:i'll|ill|we'll|i will|we will|will)\s+let you know (?:what|once|when|as soon as|if) (?:i|we) (?:find|hear)(?:\s+(?:out|one|it|back))?[^\w?]*$", re.IGNORECASE)
+
+
 #COLOR WANT ASKS
 #the colors a customer names, so an ask naming one reads as an ask for the color they want ("Do you have an exact green in mind?")
 COLOR_NAMES: str = r"black|white|gr[ae]y|silver|red|blue|green|yellow|orange|purple|pink|brown|gold|bronze|teal|maroon|burgundy|navy|lime|olive|violet|copper|champagne|nardo"
@@ -782,3 +790,32 @@ def off_list_asks(reply: str) -> list[str]:
             asks.append(sentence.strip())
 
     return asks
+
+
+
+#**********STILL CHECKING**********
+#spots the line saying the color books are still getting checked, so a later reply only says it again when they ask about the color they sent
+
+
+#STILL CHECKING LINES
+#the sentences of the reply that only say the color books are still getting checked or that they'll hear what the shop finds
+def still_checking_lines(reply: str) -> list[str]:
+    lines: list[str] = []
+
+    for sentence in split_sentences(reply):
+        text: str = sentence.replace("’", "'").strip()
+
+        if(STILL_CHECKING_PATTERN.match(text) is not None or FIND_LINE_PATTERN.match(text) is not None):
+            lines.append(sentence.strip())
+
+    return lines
+
+
+#COLOR CHECK SENT
+#whether a reply the shop already sent told them the color books are getting checked for the color they sent, the first time or since
+def color_check_sent(message_history: dict) -> bool:
+    for reply in sent_replies(message_history):
+        if(promises_color_check(reply) or len(still_checking_lines(reply)) > 0):
+            return True
+
+    return False
