@@ -333,6 +333,18 @@ SERVICE_PRICING_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"We had the wrap taken off my husbands Audi S5 after a door ding, now hes wanting clear bra on the hood and fenders before it gets chipped"},"message_history":{}}
     category: service_pricing
 
+    state: {"current_user_message":{"user_media":{},"user_text":"Just looking to have my headlights ppfd"},"message_history":{}}
+    category: service_pricing
+
+    state: {"current_user_message":{"user_media":{},"user_text":"I will let you know I might have found another place that will do it for me here in America fork\nHello good morning I was just wondering how much would it cost I’d do a clear wrap on a 2025 Toyota Rav 4 just the hood for Rock chip protection"},"message_history":{}}
+    category: service_pricing
+
+    state: {"current_user_message":{"user_media":{},"user_text":"Its got matte paint so we want the clear matte wrap. Could I get a quote for the whole car and for just the front and hood?"},"message_history":{"user_message_0":{"user_text":"hello my name is Casey Hall, I am interested in your services, the vehicle I have is 2025 Porsche Macan."},"system_response_to_user_message_0":"Heyy Casey, this is Hazel at the Lone Wraps team, saw your quote request on the Macan. What are you looking to get done?"}}
+    category: service_pricing
+
+    state: {"current_user_message":{"user_media":{},"user_text":"the wrap, and can you put ppf on just the hood over it?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 camaro, its black, want to change the color, whats the price on a wrap vs colored ppf"},"system_response_to_user_message_0":"Two ways to go on the Camaro, a vinyl wrap is the more affordable one, and colored PPF changes the color and protects the paint from rock chips at the same time. The wrap would be $2950 plus tax and colored PPF $6400 plus tax for the full body. Which route are you leaning towards?"}}
+    category: service_pricing
+
     state: {"current_user_message":{"user_media":{},"user_text":"Sorry I had my notifications off,  think the front doors might have ppf on it, does it cost to have that removed or do I need to do it before?\nI work in salt lake so I would just need to plan ahead of time to be able to have a different car, hopefully in the month of October though"},"message_history":{"user_message_0":{"user_media":{},"user_text":"I am looking to get my Tesla y wrapped a nardo gray type color. What would the cost be on that and how long would you need the car?"},"system_response_to_user_message_0":"That would be $2800, we would need the car for three days\nHow soon are you looking to get this done?"}}
     category: service_pricing
 
@@ -558,10 +570,10 @@ SERVICES_REQ_HUMANS_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"hey guys how much to wrap my passenger fender/my bottom half front bumper in solar octane\nthe vehicle got in an accident and they didn't really paint match it during the repair."},"message_history":{}}
     category: services_req_humans
 
-    state: {"current_user_message":{"user_media":{},"user_text":"Just looking to have my headlights ppfd"},"message_history":{}}
+    state: {"current_user_message":{"user_media":{},"user_text":"I only need the bumper done, not the rest of the front"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for clear bra on just the front bumper of my 2021 camry"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Camry would run $1600 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and it comes with a lifetime warranty. Did you want to get it on the schedule?"}}
     category: services_req_humans
 
-    state: {"current_user_message":{"user_media":{},"user_text":"I will let you know I might have found another place that will do it for me here in America fork\nHello good morning I was just wondering how much would it cost I’d do a clear wrap on a 2025 Toyota Rav 4 just the hood for Rock chip protection"},"message_history":{}}
+    state: {"current_user_message":{"user_media":{},"user_text":"can you just do the hood though? dont need the fenders or mirrors"},"message_history":{"user_message_0":{"user_media":{},"user_text":"ppf on the hood of my 2024 tacoma, its getting chipped up"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Tacoma would run $1800 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $6900 plus tax. Which option are you leaning towards?"}}
     category: services_req_humans
 
     state: {"current_user_message":{"user_media":{},"user_text":"Hey so I had my car wrapped by you guys about a year and a half ago. I was recently in an accident and messed up a couple panels. Caliber Collision reached out last week about getting it rewrapped and told me I'd just need to schedule an appointment to get it taken care of"},"message_history":{}}
@@ -670,9 +682,6 @@ SERVICES_REQ_HUMANS_EXAMPLES: str = r"""
     category: services_req_humans
 
     state: {"current_user_message":{"user_media":{},"user_text":"skip the tint, but could you do the hood in gloss black instead of matte?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 bmw m4, its blue, want matte grey, and how much for tint?"},"system_response_to_user_message_0":"Sweet, so matte grey on the M4 would run $2950 plus tax for a full wrap, and ceramic tint on the sides and rear is $300 on top since it's a 2 door."}}
-    category: services_req_humans
-
-    state: {"current_user_message":{"user_media":{},"user_text":"the wrap, and can you put ppf on just the hood over it?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"2023 camaro, its black, want to change the color, whats the price on a wrap vs colored ppf"},"system_response_to_user_message_0":"Two ways to go on the Camaro, a vinyl wrap is the more affordable one, and colored PPF changes the color and protects the paint from rock chips at the same time. The wrap would be $2950 plus tax and colored PPF $6400 plus tax for the full body. Which route are you leaning towards?"}}
     category: services_req_humans
 
     state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a graphic wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}

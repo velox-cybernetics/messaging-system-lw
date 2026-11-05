@@ -2108,7 +2108,7 @@ def custom_analyzer_questions() -> dict[str, dict]:
 
     questions["c4"] = {"type": "noul", "instructions": f"Is the customer asking about a chrome delete (covering or blacking out the chrome) in `current_user_message`?\n{custom_examples.chrome_delete_examples()}"}
 
-    questions["c5"] = {"type": "noul", "instructions": f"Is the customer asking about some other job the shop's services don't list, one that isn't a commercial wrap, a custom wrap, old PPF or an old wrap coming off or a chrome delete (body work, PPF on just one piece, a motorcycle, boat or RV and the like), in `current_user_message`?\n{custom_examples.other_job_examples()}"}
+    questions["c5"] = {"type": "noul", "instructions": f"Is the customer asking about some other job the shop's services don't list, one that isn't a commercial wrap, a custom wrap, old PPF or an old wrap coming off or a chrome delete (body work, PPF on just one piece outside the front end or after the shop offered them the front end, a motorcycle, boat or RV and the like), in `current_user_message`?\n{custom_examples.other_job_examples()}"}
 
     questions["c6"] = {"type": "noul", "instructions": f"Is the customer asking about a vinyl wrap that's already on the vehicle now getting taken off, redone or replaced in `current_user_message`?\n{custom_examples.wrap_removal_examples()}"}
 
