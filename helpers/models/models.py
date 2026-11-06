@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's json and patterns, web requests, the model lineups, the reply cleaners and every extractor's instructions
+#python's json and patterns, web requests, the model lineups, the reply cleaners, the note on which generator wrote a reply and every extractor's instructions
 import json
 import re
 
@@ -7,6 +7,7 @@ import requests
 
 from helpers.models import chat
 from helpers.models import openrouter
+from helpers.models import writer
 from helpers.response.reasoning import has_reasoning, cut_reasoning
 from helpers.response.sanitize import sanitize_reply, sanitize_text
 from helpers.state import state_form
@@ -213,6 +214,9 @@ def generator_reply(label: str, lineup: list[tuple[str, str]], body: dict) -> st
 #WRITTEN REPLY
 #the reply the lineup wrote, asked for again while the model's own notes leak into it
 def written_reply(label: str, lineup: list[tuple[str, str]], system_prompt: str, user_text: str, line_breaks: bool) -> str:
+    #the generator writing it gets noted, so an upvote in the dashboard knows which one's examples the reply goes in
+    writer.note_generator(system_prompt, user_text)
+
     body: dict = chat_body(system_prompt, user_text)
 
     reply: str = generator_reply(label, lineup, body)

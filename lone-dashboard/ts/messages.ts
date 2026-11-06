@@ -5,7 +5,7 @@ import * as shared from "./shared.js";
 
 
 //**********GLOBALS**********
-//shapes from api/convos.ts and api/thread.ts, the page's parts and what's open
+//shapes from api/convos.ts, api/thread.ts and api/upvote.ts, the page's parts and what's open
 
 
 //TAB
@@ -35,7 +35,7 @@ type PART = {text?: string; media?: MEDIA};
 
 
 //ENTRY
-type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean; sms?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string};
+type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean; sms?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string} | {at: number; kind: "upvote"; reason: string; generator: string; example: number};
 
 
 //CONVO PAGE
@@ -48,6 +48,25 @@ type THREAD = {convo: THREAD_CONVO; entries: ENTRY[]};
 
 //FLAG RESULT
 type FLAG_RESULT = {ok: boolean; sent_to: string; flagged_at: number};
+
+
+//UPVOTE RESULT
+//the prompt file the example went in, its number and the commit it got pushed in
+type UPVOTE_RESULT = {ok: boolean; generator: string; example: number; commit: string};
+
+
+//LIVE RESULT
+type LIVE_RESULT = {commit: string; running: string; live: boolean};
+
+
+//UPVOTE STAGE
+//writing while the example gets written and pushed, deploying till the system runs it, then done, or failed on the way
+type UPVOTE_STAGE = "idle" | "writing" | "deploying" | "done" | "failed";
+
+
+//UPVOTE
+//the convo it's for, how far it got, the commit it went out in and when it got pushed
+type UPVOTE = {id: string; stage: UPVOTE_STAGE; commit: string; pushed_at: number};
 
 
 //TAB PARTS
@@ -78,6 +97,21 @@ const WEB_LINK: RegExp = /^https?:\/\//i;
 const NEAR_BOTTOM_PX: number = 80;
 
 
+//UPVOTE TIMES
+//render takes a few minutes to deploy, so the check goes every 15s and gives up after 15 minutes
+const UPVOTE_CHECK_MS: number = 15 * 1000;
+
+const UPVOTE_WAIT_MS: number = 15 * 60 * 1000;
+
+//a failed one stays red as long as its toast shows, then clears
+const UPVOTE_RED_MS: number = 5000;
+
+
+//UPVOTE TITLES
+//what the arrow says at each stage when you hover it
+const UPVOTE_TITLES: Record<UPVOTE_STAGE, string> = {"idle": "Upvote the system's last reply", "writing": "Writing the example and pushing it…", "deploying": "Pushed, waiting on the system to run it…", "done": "Updated, the system is running with this example", "failed": "The upvote didn't go through"};
+
+
 //LIST PARTS
 const PAGE: HTMLElement = shared.by_id<HTMLElement>("messages");
 
@@ -100,6 +134,8 @@ const THREAD_META: HTMLParagraphElement = shared.by_id<HTMLParagraphElement>("th
 const SWITCH_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("switch");
 
 const SWITCH_LABEL: HTMLSpanElement = shared.by_id<HTMLSpanElement>("switch-label");
+
+const UPVOTE_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("upvote");
 
 const FLAG_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("flag");
 
@@ -155,6 +191,18 @@ const FLAG_CANCEL: HTMLButtonElement = shared.by_id<HTMLButtonElement>("flag-can
 const FLAG_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("flag-form");
 
 
+//UPVOTE PARTS
+const UPVOTE_DIALOG: HTMLDialogElement = shared.by_id<HTMLDialogElement>("upvote-dialog");
+
+const UPVOTE_TEXT: HTMLTextAreaElement = shared.by_id<HTMLTextAreaElement>("upvote-text");
+
+const UPVOTE_ERROR: HTMLParagraphElement = shared.by_id<HTMLParagraphElement>("upvote-error");
+
+const UPVOTE_CANCEL: HTMLButtonElement = shared.by_id<HTMLButtonElement>("upvote-cancel");
+
+const UPVOTE_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("upvote-form");
+
+
 //TRASH PARTS
 const TRASH_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("trash");
 
@@ -196,6 +244,9 @@ let CURRENT_CONVO: THREAD_CONVO | null = null;
 
 //tabs with their whole channel switched off, as of the last list load
 let OFF_TABS: Set<TAB> = new Set<TAB>();
+
+//the one upvote going, null till there's one
+let CURRENT_UPVOTE: UPVOTE | null = null;
 
 
 
@@ -397,6 +448,10 @@ function entry_node(entry: ENTRY): HTMLElement {
         return shared.make_element("p", {"class": "event is-hil"}, `Flagged: ${entry.feedback}`, time);
     }
 
+    if(entry.kind === "upvote") {
+        return shared.make_element("p", {"class": "event is-upvote"}, `Upvoted, Ex ${entry.example} in ${entry.generator}: ${entry.reason}`, time);
+    }
+
     return shared.make_element("p", {"class": "event"}, "An entry this dashboard doesn't know how to show.");
 }
 
@@ -482,6 +537,8 @@ function render_head(convo: THREAD_CONVO): void {
     FLAG_BUTTON.title = flag_title;
 
     COMPOSE_FORM.hidden = convo.tab !== "forms";
+
+    render_upvote();
 }
 
 
@@ -1118,6 +1175,169 @@ async function send_flag(event: SubmitEvent): Promise<void> {
 }
 
 
+//**********UPVOTE**********
+//the system's last reply was good, so it goes in as an example for the generator that wrote it, and the ring around the arrow fills as the system gets the update
+
+
+//RENDER UPVOTE
+//the ring only shows on the convo the upvote is for
+function render_upvote(): void {
+    let stage: UPVOTE_STAGE = "idle";
+
+    if(CURRENT_UPVOTE !== null && CURRENT_UPVOTE.id === CURRENT_ID) {
+        stage = CURRENT_UPVOTE.stage;
+    }
+
+    UPVOTE_BUTTON.dataset.stage = stage;
+
+    UPVOTE_BUTTON.title = UPVOTE_TITLES[stage];
+}
+
+
+//OPEN UPVOTE
+function open_upvote(): void {
+    if(CURRENT_CONVO === null) {
+        return;
+    }
+
+    //one at a time, a second push would land while render is still deploying the first
+    if(CURRENT_UPVOTE !== null && (CURRENT_UPVOTE.stage === "writing" || CURRENT_UPVOTE.stage === "deploying")) {
+        shared.toast("The last upvote is still updating the system. This one can go once its ring fills.");
+
+        return;
+    }
+
+    UPVOTE_ERROR.hidden = true;
+
+    UPVOTE_TEXT.value = "";
+
+    UPVOTE_DIALOG.showModal();
+}
+
+
+//CLOSE UPVOTE
+function close_upvote(): void {
+    UPVOTE_DIALOG.close();
+}
+
+
+//SEND UPVOTE
+//the box closes right away, and the ring around the arrow shows the rest
+async function send_upvote(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+
+    if(CURRENT_CONVO === null) {
+        return;
+    }
+
+    const reason: string = UPVOTE_TEXT.value.trim();
+
+    if(reason === "") {
+        UPVOTE_ERROR.textContent = "Write what made it good first.";
+
+        UPVOTE_ERROR.hidden = false;
+
+        return;
+    }
+
+    const upvote: UPVOTE = {"id": CURRENT_CONVO.id, "stage": "writing", "commit": "", "pushed_at": 0};
+
+    CURRENT_UPVOTE = upvote;
+
+    UPVOTE_DIALOG.close();
+
+    render_upvote();
+
+    try {
+        const result: UPVOTE_RESULT = await shared.ask_server<UPVOTE_RESULT>("/api/upvote", "POST", {"id": upvote.id, "reason": reason});
+
+        upvote.stage = "deploying";
+
+        upvote.commit = result.commit;
+
+        upvote.pushed_at = Date.now();
+
+        render_upvote();
+
+        shared.toast(`Ex ${result.example} went in ${result.generator} and got pushed. The ring fills once the system is running it.`);
+
+        load_thread(false);
+
+        check_upvote(upvote);
+    }
+
+    catch(error: unknown) {
+        let message: string = "The upvote didn't go through. Check your connection.";
+
+        if(error instanceof shared.ServerError) {
+            message = error.message;
+        }
+
+        fail_upvote(upvote, message);
+    }
+}
+
+
+//CHECK UPVOTE
+//asks every 15s whether the system is running the push yet, till it is or the wait runs out
+async function check_upvote(upvote: UPVOTE): Promise<void> {
+    try {
+        const live: LIVE_RESULT = await shared.ask_server<LIVE_RESULT>(`/api/upvote?commit=${upvote.commit}`);
+
+        if(live.live) {
+            upvote.stage = "done";
+
+            render_upvote();
+
+            shared.toast("Updated. The system is running with the new example.");
+
+            return;
+        }
+    }
+
+    catch {
+        //missed one, the next check tries again
+    }
+
+    if(Date.now() - upvote.pushed_at > UPVOTE_WAIT_MS) {
+        fail_upvote(upvote, "The example got pushed, but the system still isn't running it after 15 minutes. Check its deploy on Render.");
+
+        return;
+    }
+
+    window.setTimeout((): void => { check_upvote(upvote); }, UPVOTE_CHECK_MS);
+}
+
+
+//FAIL UPVOTE
+//the ring goes red with what broke, then clears and says to try again once that's fixed
+function fail_upvote(upvote: UPVOTE, message: string): void {
+    upvote.stage = "failed";
+
+    render_upvote();
+
+    shared.toast(message, true);
+
+    window.setTimeout((): void => { clear_upvote(upvote, message); }, UPVOTE_RED_MS);
+}
+
+
+//CLEAR UPVOTE
+function clear_upvote(upvote: UPVOTE, message: string): void {
+    //a newer upvote already took its place
+    if(CURRENT_UPVOTE !== upvote) {
+        return;
+    }
+
+    CURRENT_UPVOTE = null;
+
+    render_upvote();
+
+    shared.toast(`Try again after fixing: ${message}`, true);
+}
+
+
+
 
 //**********COMPOSE**********
 //a text from the shop, sent right from the dashboard over blooio
@@ -1251,6 +1471,14 @@ FLAG_BUTTON.addEventListener("click", open_flag);
 FLAG_CANCEL.addEventListener("click", close_flag);
 
 FLAG_FORM.addEventListener("submit", send_flag);
+
+
+//UPVOTE
+UPVOTE_BUTTON.addEventListener("click", open_upvote);
+
+UPVOTE_CANCEL.addEventListener("click", close_upvote);
+
+UPVOTE_FORM.addEventListener("submit", send_upvote);
 
 
 //COMPOSE

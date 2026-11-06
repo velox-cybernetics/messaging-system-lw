@@ -97,6 +97,9 @@ COUNT_KEY_STARTS: tuple[str, ...] = ("day:", "month:", "year:")
 #while the server runs it checks in this often, so the overview can tell when it stops
 BEAT_SECONDS: int = 300
 
+#the commit render deployed the server from, so the dashboard knows when an upvote's example is live, empty anywhere but render
+UP_COMMIT: str = os.getenv("RENDER_GIT_COMMIT", "")
+
 
 #PIC SIZE
 #longest side of a kept pic, big enough to read the color off a car, small enough that a month of pics fits the free plan's 250 MB
@@ -765,7 +768,7 @@ def write_forget(id: str) -> None:
 
     commands: list[list] = take_back_commands(id)
 
-    commands.extend([["DEL", f"thread:{id}", f"state:{id}", *pic_keys(entries)], ["HDEL", "summaries", id], ["HDEL", "flagged", id]])
+    commands.extend([["DEL", f"thread:{id}", f"state:{id}", f"writer:{id}", *pic_keys(entries)], ["HDEL", "summaries", id], ["HDEL", "flagged", id]])
 
     commands.extend(["ZREM", f"convos:{tab}", id] for tab in sorted(set(TABS.values())))
 
@@ -1077,10 +1080,14 @@ def remember_tab_switches(off_tabs: object) -> None:
 
 
 #WRITE BEAT
-#notes when the bot was last seen and reads back both off lists
+#notes when the bot was last seen and the commit it runs, and reads back both off lists
 def write_beat(at: int) -> None:
     #the off lists go first, so their answers are always the first two results
     commands: list[list] = [["SMEMBERS", "off"], ["SMEMBERS", "off_tabs"], ["SET", "up_last", at]]
+
+    #a server run off render has no commit, so it never covers up the one render is running
+    if(UP_COMMIT != ""):
+        commands.append(["SET", "up_commit", UP_COMMIT])
 
     results: list = pipeline(commands)
 
@@ -1140,3 +1147,24 @@ def name_convo(id: str, name: str) -> None:
         return
 
     in_background(write_name, id, name.strip())
+
+
+
+#**********UPVOTE DETAILS**********
+#what an upvote in the dashboard writes its example from, the generator that wrote the reply, what it was handed and the reply it wrote
+
+
+#WRITE WRITER
+def write_writer(id: str, writer_text: str) -> None:
+    command(["SET", f"writer:{id}", writer_text, "EX", STATE_SECONDS], WRITE_TIMEOUT)
+
+
+#NOTE WRITER
+#generator is the prompt file that wrote the reply, "" when only the code did, kept as long as the state it was written from
+def note_writer(id: str, generator: str, generator_input: str, reply: str) -> None:
+    if(not ENABLED):
+        return
+
+    writer_text: str = json.dumps({"at": now_ms(), "generator": generator, "input": generator_input, "reply": reply}, ensure_ascii=False)
+
+    in_background(write_writer, id, writer_text)

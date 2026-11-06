@@ -58,6 +58,11 @@ time {
         background: var(--smoke);
     }
 
+    .upvote-button:hover {
+        border-color: var(--go);
+        color: var(--go);
+    }
+
     .flag-button:hover {
         border-color: var(--hazard);
         color: var(--hazard);
@@ -393,6 +398,75 @@ time {
     fill: currentColor;
 }
 
+/*UPVOTE RING*/
+/*the ring around the up arrow fills green as the example gets written and pushed, then once the system runs it, and goes red when something broke*/
+.upvote-button {
+    position: relative;
+}
+
+.upvote-ring {
+    position: absolute;
+    inset: -4px;
+    width: calc(100% + 8px);
+    height: calc(100% + 8px);
+    pointer-events: none;
+    transform: rotate(-90deg);
+}
+
+/*the circle is 2 x pi x 24, about 150.8 around, so each stage's offset is the part of it still empty*/
+.upvote-ring circle {
+    fill: none;
+    stroke: var(--go);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 150.8;
+    stroke-dashoffset: 150.8;
+    opacity: 0;
+    transition: stroke-dashoffset 600ms var(--ease), stroke var(--quick) var(--ease), opacity var(--quick) var(--ease);
+}
+
+.upvote-button[data-stage="writing"] circle {
+    stroke-dashoffset: 100.5;
+    opacity: 1;
+}
+
+.upvote-button[data-stage="deploying"] circle {
+    stroke-dashoffset: 50.3;
+    opacity: 1;
+}
+
+.upvote-button[data-stage="done"] circle,
+.upvote-button[data-stage="failed"] circle {
+    stroke-dashoffset: 0;
+    opacity: 1;
+}
+
+.upvote-button[data-stage="failed"] circle {
+    stroke: var(--stop);
+}
+
+/*still going, so the ring breathes*/
+.upvote-button[data-stage="writing"] .upvote-ring,
+.upvote-button[data-stage="deploying"] .upvote-ring {
+    animation: breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.upvote-button[data-stage="done"] {
+    border-color: var(--go);
+    color: var(--go);
+}
+
+.upvote-button[data-stage="failed"] {
+    border-color: var(--stop);
+    color: var(--stop);
+}
+
 .log {
     display: flex;
     flex-direction: column;
@@ -531,7 +605,8 @@ time {
     color: var(--hazard);
 }
 
-.event.is-booked {
+.event.is-booked,
+.event.is-upvote {
     color: var(--go);
 }
 
@@ -542,7 +617,7 @@ time {
 
 
 /**********DIALOGS**********/
-/*flag a conversation, or delete it*/
+/*upvote the last reply, flag a conversation, or delete it*/
 .dialog {
     width: min(520px, calc(100vw - 32px));
     padding: 24px;
@@ -701,8 +776,8 @@ time {
     }
 }
 
-/*smallest phones: the switch keeps its color and drops its words so the name still fits*/
-@media (max-width: 359px) {
+/*phones under 420px: the switch keeps its color and drops its words so the name still fits next to the three round buttons*/
+@media (max-width: 419px) {
     #switch-label {
         display: none;
     }

@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's clock, the web request errors, the texts that tell the developer a reply was lost, and the dashboard that keeps the state each reply came from
+#python's clock, the web request errors, the texts that tell the developer a reply was lost, the dashboard that keeps the state each reply came from, and the note on which generator wrote it
 import time
 from collections.abc import Callable
 
@@ -7,6 +7,7 @@ import requests
 
 from helpers.channels import notify
 from helpers.state import dashboard
+from helpers.models import writer
 
 
 
@@ -100,6 +101,9 @@ def run_chain(chain: Callable[..., str], state: dict, id: str, extra_inputs: lis
     system_response: str = ""
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        #each try notes the generator that writes it from scratch
+        writer.start_note()
+
         try:
             system_response = chain(state, id, *extra_inputs)
 
@@ -115,5 +119,8 @@ def run_chain(chain: Callable[..., str], state: dict, id: str, extra_inputs: lis
                 break
 
             wait_before_retry(attempt)
+
+    #the generator that wrote it goes to the dashboard with the reply, so an upvote there adds its example to that generator
+    writer.save_note(id, system_response)
 
     return system_response

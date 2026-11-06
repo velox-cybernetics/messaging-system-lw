@@ -183,7 +183,7 @@ async function delete_thread(request: Request): Promise<Response> {
 
     const pics: string[] = pic_keys(shop.parse_entries(reads[0]));
 
-    const commands: redis.COMMAND[] = [...reads[1], ...reads[2], ["DEL", `thread:${id}`, `state:${id}`, ...pics], ["HDEL", "summaries", id], ["HDEL", "flagged", id]];
+    const commands: redis.COMMAND[] = [...reads[1], ...reads[2], ["DEL", `thread:${id}`, `state:${id}`, `writer:${id}`, ...pics], ["HDEL", "summaries", id], ["HDEL", "flagged", id]];
 
     for(const tab of shop.TABS) {
         commands.push(["ZREM", `convos:${tab}`, id]);
