@@ -116,7 +116,7 @@ def first_clause(text: str) -> str:
 
 
 #IS INTRODUCTION
-#whether a clause is the model introducing itself or the form, like "this is Hazel at the Lone Wraps team"
+#whether a clause is the model introducing itself or the form, like "this is Hazel with the Lone Wraps team"
 def is_introduction(clause: str) -> bool:
     words: str = ""
 
@@ -144,7 +144,7 @@ def remove_introduction(reply: str) -> str:
 
     clause: str = first_clause(rest)
 
-    #"this is Hazel at the Lone Wraps team, saw your quote request on the 570S." comes off one clause at a time
+    #"this is Hazel with the Lone Wraps team, saw your quote request on the 570S." comes off one clause at a time
     while(is_introduction(clause)):
         rest = rest[len(clause):]
 
@@ -303,7 +303,7 @@ def form_intro(current_message_batch: list, channel: str, vehicle_models: list[s
     if(vehicles != ""):
         request = f"{request} on {vehicles}"
 
-    return f"{greeting} this is Hazel at the Lone Wraps team, {request}."
+    return f"{greeting} this is Hazel with the Lone Wraps team, {request}."
 
 
 
