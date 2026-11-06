@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's json and patterns, web requests, the model lineups, the reply cleaners, every extractor's instructions and the leak question
+#python's json and patterns, web requests, the model lineups, the reply cleaners and every extractor's instructions
 import json
 import re
 
@@ -10,7 +10,6 @@ from helpers.models import openrouter
 from helpers.response.reasoning import has_reasoning, cut_reasoning
 from helpers.response.sanitize import sanitize_reply, sanitize_text
 from helpers.state import state_form
-from src.prompts import shared
 from src.prompts.custom.extractors import commercial_wrap_extractor
 from src.prompts.custom.extractors import photo_extractor
 from src.prompts.custom.extractors import removal_extractor
@@ -255,7 +254,7 @@ def s_p_generator(label: str, system_prompt: str, user_text: str, max_tokens: in
 
 
 #**********REPLY CHECKS**********
-#makes sure a reply sticks to the shop's details and rules before it goes out
+#makes sure a reply sticks to the shop's details before it goes out
 
 
 #CHECKER
@@ -275,30 +274,6 @@ def checker(checker_instruction: str, state: dict, details_label: str, details: 
     print(f"CHECKER: {check_result}({probability_yes:.2f})")
 
     return check_result
-
-
-#ENFORCER
-#how likely the reply breaks a rule or has the model's own notes in it, shop_last_reply is None for a branch whose rules never check a line its last reply said going out again
-def enforcer(enforce_instruction: str, state: dict, response: str, shop_last_reply: str | None) -> float:
-    #the leak question rides in the same request as the branch's rules, asked on its own so notes never get lost among them
-    questions: dict = {"enforce_A": {"type": "noul", "instructions": enforce_instruction}, "leak": {"type": "noul", "instructions": shared.leak_question()}}
-
-    state_as_text: str = state_form.state_to_text(state)
-
-    enforce_state: str = f"STATE: {state_as_text}\nSYSTEM_RESPONSE:\n{response}"
-
-    #the shop's last reply goes in on its own, so a line from it said again is easy to spot next to the reply
-    if(shop_last_reply is not None):
-        enforce_state = f"STATE: {state_as_text}\nSHOP_LAST_REPLY:\n{shop_last_reply}\nSYSTEM_RESPONSE:\n{response}"
-
-    answers: dict = decision_answers(questions, enforce_state)
-
-    leak_probability: float = answers["leak"]["noul"]
-
-    print(f"LEAK CHECK: {leak_probability:.2f}")
-
-    #a reply with the model's notes in it gets written again the same as one that breaks a rule
-    return max(answers["enforce_A"]["noul"], leak_probability)
 
 
 

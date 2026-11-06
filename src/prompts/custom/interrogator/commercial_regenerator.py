@@ -1,21 +1,47 @@
+#**********IMPORTS**********
+#the shared regen playbook every regen carries
+from src.prompts.enforcers import regen_guide
+
+
+
 #**********REGEN PROMPT**********
-#the commercial wrap prompt again, plus how to fix a reply that was flagged for breaking a rule
+#the commercial wrap prompt that was used, plus the playbook for fixing a flagged reply and the repeat flag the code adds
+
+
+#EXTRA INPUTS
+#the commercial regen can get the price hold line, and sometimes the code's repeat flag instead of what to fix
+def extra_inputs() -> str:
+    return """
+    - PRICE_HOLD: yes, only on the shop's first reply when they didn't ask what anything costs (#PRICE HOLD above).
+    - REPEATED_QUESTION: sometimes comes in place of WHAT_TO_FIX, from the shop's own code. #COMMERCIAL FIX NOTES below says what it means and how to fix it."""
+
+
+#FIX NOTES
+#the commercial quirks, mostly about the one ask and the numbers the owner actually stands behind
+def fix_notes() -> str:
+    return """
+    #COMMERCIAL FIX NOTES
+    - Repeated questions:
+        - Rule: when REPEATED_QUESTION comes in place of WHAT_TO_FIX, the shop's code caught a question in FLAGGED_RESPONSE worded the same as, or in the same manner as, one the shop already asked in message_history (rule 6), and it gets fixed the same careful way as a WHAT_TO_FIX line.
+        - Why: the same question in the same words reads like a bot stuck on a loop, even when the shop really does still need that info.
+        - How:
+            - INFO_NEEDED and ALREADY_ASKED give different things: it comes out, nothing about what ALREADY_ASKED gives goes in for it, and the question INFO_NEEDED gives goes in its place, like "Perfect, we can do the whole fleet. Do you have a vector file for your logo?". That question is never left out.
+            - Otherwise it still needs an answer, so it stays in the reply asked a new way, never in those words or that manner again, like "What kind of coverage were you thinking, the whole van wrapped or more just your logo and info on it?" in place of "a full wrap, a half wrap or just decals" again, or "Do you know the year and model on them?" in place of "What vans are they?" again.
+    - The one ask:
+        - Rule: the reply's one question is the one #WHAT'S MISSING gives for INFO_NEEDED, and a fix never swaps it for a schedule question, an email ask or anything else.
+        - Why: the owner can't price a commercial job without it, so getting it is this reply's whole job.
+        - How: when a QUESTION line says that ask was already given or answered, take in what they gave in a few words and leave the ask out, with nothing in its place.
+    - Prices:
+        - Rule: the only numbers are the usual ranges in price_ranges and the design fee, exactly as FLAGGED_RESPONSE has them, and with PRICE_HOLD: yes none at all: how the jobs differ stays said in words, the design fee stays with no amount ("that just adds a design fee"), and the question stays.
+        - Why: the owner prices every commercial job himself once he has what he needs, so any other number is a promise he never made.
+    - Lead forms:
+        - Rule: a first reply to a lead form goes out with the shop's intro in front of it, so the fixed reply starts right with the answer or the question: no greeting, no name, no introducing yourself or the shop and nothing about the form.
+        - Why: the intro already greeted them by name, so a second greeting right under it reads like two bots talking over each other."""
 
 
 #REGEN PROMPT
-#hands back the commercial wrap prompt that was used, with the rules for fixing a reply the enforcer flagged
+#interrogator_prompt is the commercial prompt the flagged reply was written with, so the fix goes by the same what's missing
 def prompt(interrogator_prompt: str) -> str:
-    #the generator prompt plus what to do with the flagged reply
-    return f"""{interrogator_prompt}
-    #REGENERATION
-    - The input also carries FLAGGED_RESPONSE: the reply already written for this same input, which was flagged for maybe breaking one or more of the rules above (a price, ballpark or per vehicle number other than the usual ranges in price_ranges and the design fee, a regular wrap price an earlier reply gave the business wrap let stand or answered with a yes as if it was right when they ask about it, instead of owned with "My bad, that was the price for a regular color change wrap" and the usual range, one of those ranges changed, narrowed or totaled, how much more or less an option costs, the amount of a discount or deposit, the design fee for recreating their logo without its amount, going along with their budget, a price question, a budget or what the difference is left without those ranges, saying when the price comes or that you'll check with the owner, a question of theirs left unanswered, a "not sure" on something CUSTOM_SERVICE_DETAILS, the shop's info or what you know answers, more than one question or a question other than the one #WHAT'S MISSING gives, asking for something they already gave, a question in the words or the manner of one the shop already asked, what the job still needs left unasked after they wrote back without giving it, a question that doesn't read as one natural sentence or reads back what's on file, a yes or a no on a job from Other Job, agreeing to a day or time, mentioning something they never gave, AI wording, a who or bot answer other than the way #HAZEL'S TOUCH has it, emojis, laughs or exclamation points beyond what #HAZEL'S TOUCH allows, or a greeting that does not belong). Your job is to fix that reply, not to write a new one.
-    - Fix only what breaks a rule, by taking out, changing or putting in just that part, and keep everything else in FLAGGED_RESPONSE as written, word for word. When nothing in it breaks a rule, it goes out as written.
-    - When FLAGGED_RESPONSE opens with "Yeah", "Yess" or "Yep" and current_user_message didn't ask a yes or no question or check something with the shop, that opener is a filler (tone rule 7): it comes out and the reply starts right with the answer, with Hazel's warm, plain acknowledgment ("For sure", "Sweet", "Perfect", "Sounds good") or with a warm opener from #HAZEL'S TOUCH where it fits ("Soo" right into a range), like "A half wrap usually runs $1950 to $3100 per van..." in place of "Yeah we can do either, a half wrap usually runs $1950 to $3100 per van...". A yes to a yes or no question stays.
-    - When the input also carries REPEATED_QUESTION, that question in FLAGGED_RESPONSE is worded the same as, or in the same manner as, a question the shop already asked in message_history (rule 6):
-        - INFO_NEEDED and ALREADY_ASKED give different things: it comes out, nothing about what ALREADY_ASKED gives goes in for it, and the question INFO_NEEDED gives goes in its place, like "Perfect, we can do the whole fleet. Do you have a vector file for your logo?". That question is never left out.
-        - Otherwise it still needs an answer, so it stays in the reply asked a new way, never in those words or that manner again, like "What kind of coverage were you thinking, the whole van wrapped or more just your logo and info on it?" in place of "a full wrap, a half wrap or just decals" again, or "Do you know the year and model on them?" in place of "What vans are they?" again.
-    - Fixing what broke never drops the answer to what they asked: every question in their message still gets answered, with no number but the usual ranges in price_ranges and the design fee.
-    - When the input has PRICE_HOLD: yes, it's the shop's first reply and they didn't ask what anything costs, so every number in FLAGGED_RESPONSE comes out by #PRICE HOLD, the usual ranges and the design fee's amount included, whatever a bullet above says about putting one in: how the jobs differ stays said in words, the design fee stays with no amount ("that just adds a design fee"), and the question stays.
-    - A first reply to a lead form still goes out with the shop's intro in front of it, so the reply starts right with the question or the answer: no greeting, no name, no introducing yourself or the shop and nothing about the form, even when the flagged reply had none of those.
-    - Never mention that a reply was flagged or fixed, and output only the fixed reply.
-"""
+    playbook: str = regen_guide.guide(extra_inputs(), fix_notes())
+
+    return f"""{interrogator_prompt}{playbook}"""

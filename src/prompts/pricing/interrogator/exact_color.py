@@ -168,7 +168,7 @@ def examples() -> str:
 
 
 #WHATS MISSING
-#shared with the interrogator enforcer and regenerator, so all three hold the same thing back
+#rides in the prompt, and the regen gets the whole prompt, so both hold the same thing back
 def whats_missing() -> str:
     return """
     #WHAT'S MISSING

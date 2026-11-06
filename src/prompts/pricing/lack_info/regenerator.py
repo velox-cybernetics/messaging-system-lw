@@ -1,19 +1,35 @@
 #**********IMPORTS**********
-#the prompt for replies about things the shop has no info on yet
+#the not sure prompt the rewrite starts from, and the shared regen playbook
+from src.prompts.enforcers import regen_guide
 from src.prompts.pricing.lack_info import generator as pricing_lack_info_generator
 
 
 
 #**********REGEN PROMPT**********
-#builds the prompt that rewrites a flagged not sure reply so it follows the rules
+#the not sure prompt plus the playbook for fixing a flagged reply, with what a fix can never touch
+
+
+#FIX NOTES
+#the not sure reply has a couple of untouchables, and here's why
+def fix_notes() -> str:
+    return """
+    #NOT SURE FIX NOTES
+    - The new girl line:
+        - Rule: the line saying she's not sure, that she's still new and learning the ropes, and that she'll ask the owner stays in the fixed reply with its 😅, the way FLAGGED_RESPONSE has it.
+        - Why: it's how the shop is honest about not knowing without guessing, and it tells them the owner will get back to them with the real answer, so it's the whole point of this reply.
+        - How: fix around it, and never reword it into an answer, a promise or a when.
+    - No answers:
+        - Rule: nothing gets answered, guessed or hinted while fixing: no yes or no, no hours, no numbers, no "probably".
+        - Why: SERVICE_DETAILS had nothing on what they asked, so any answer would be made up, and a made up answer that turns out wrong costs more trust than not knowing.
+    - Lead forms:
+        - Rule: a first reply to a lead form goes out with the shop's intro in front of it, so the fixed reply never starts with a greeting, a name, an introduction or anything about the form.
+        - Why: the intro already greeted them by name, so a second greeting right under it reads like two bots talking over each other."""
 
 
 #REGEN PROMPT
-#same rules and examples as the lack info generator, plus what to do with the flagged reply
+#same rules and examples as the not sure generator, then the playbook for fixing what got flagged
 def prompt() -> str:
-    return f"""{pricing_lack_info_generator.prompt()}
-    #REGENERATION
-    - The input also carries FLAGGED_RESPONSE: a reply already written for this same input that broke one or more of the rules above (an answer or a guess at what they asked, saying again what an earlier reply in message_history said about it, not saying you're not sure, not saying you're new and still learning the ropes, not saying you'll ask the owner, saying you'll look into it, check on it or get back to them, missing the 😅 or using another emoji, pitching the wrap instead, promising when the answer comes, picking a meaning instead of asking, skipping over something else they said, mentioning something they never gave, AI wording, or a greeting that does not belong).
-    - A first reply to a lead form still goes out with the shop's intro in front of it, so the new reply starts right with the answer: no greeting, no name, no introducing yourself or the shop and nothing about the form, even when the flagged reply had none of those.
-    - Write a fresh reply to the same STATE that follows every rule. Never reuse the flagged wording, never mention that a reply was flagged, and output only the new reply.
-"""
+    #no extra inputs here, just the flagged reply and what to fix
+    playbook: str = regen_guide.guide("", fix_notes())
+
+    return f"""{pricing_lack_info_generator.prompt()}{playbook}"""

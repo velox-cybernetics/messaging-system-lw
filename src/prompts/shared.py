@@ -177,7 +177,7 @@ def new_info() -> str:
 
 
 #SUPERCARS
-#read by every pricing generator, enforcer and regenerator, so a supercar gets one price, one line on what comes off when they ask and the owner's why when it runs over a number they had
+#read by every pricing generator and regenerator, so a supercar gets one price, one line on what comes off when they ask and the owner's why when it runs over a number they had
 def supercars() -> str:
     return """
     #SUPERCARS
@@ -191,7 +191,7 @@ def supercars() -> str:
 
 
 #EXACT COLOR
-#read by every pricing generator, enforcer and regenerator, so a wrap or colored PPF waits for an exact color the shop can get
+#read by every pricing generator and regenerator, so a wrap or colored PPF waits for an exact color the shop can get
 def exact_color() -> str:
     return """
     #EXACT COLOR
@@ -212,7 +212,7 @@ def exact_color() -> str:
 
 
 #TYPED COLOR NOW
-#read by every pricing generator, enforcer and regenerator, so a neutral color they typed, or any other after two asks for a pic, stands in for the pic
+#read by every pricing generator and regenerator, so a neutral color they typed, or any other after two asks for a pic, stands in for the pic
 def typed_color_now() -> str:
     return """
     #TYPED COLOR NOW
@@ -221,32 +221,3 @@ def typed_color_now() -> str:
     - Once color_now is on file, a pic of their vehicle never gets asked for again, and nothing says the color still needs a pic, that the price could change once one comes or that what they typed doesn't count. A pic or video of their own vehicle they send after it is the color it is now instead.
     - color_now is the color it is now, never the color they want, so the exact color ask never names it: it names a color they want that they typed, or says "an exact color" when they named none, like "Do you have an exact color in mind? If you do, can you shoot a pic of it over" for a 570S that's blue now, never "an exact blue".
 """
-
-
-
-#**********ENFORCER QUESTIONS**********
-#asked with every enforcer check on top of its own branch's rules
-
-
-#LEAK QUESTION
-#asked on its own next to every enforcer check, so a reply with the model's own notes in it gets flagged and written again
-def leak_question() -> str:
-    return r"""Does SYSTEM_RESPONSE have anything in it besides the text that goes to the customer?
-Yes: any of the writer's own notes about the reply, what it's going to answer, say, mention, ask or leave out, in any form and anywhere in it, before the text, after it or between its parts: a plan ("I'll answer the brands question with the material line"), orders to itself ("give them the warranty line, then ask for the pic"), labels or a summary of the reply ("Warranty question:", "Short answer, then the pic ask."), the reply drafted in quotes with notes around it, talk about the rules, the examples, the state, message_history, SERVICE_DETAILS or what's missing, or talk about the customer instead of to them ("the customer asked about brands", "they typed white, so ask for a pic"). The owner never puts quotes around what he texts.
-No: it's only the text the customer gets, the way the shop texts, however short it is, in one part or in parts on their own lines, even when it says what the shop will do ("I'll let you know what I find", "Let me check the color books") or says "they" about anything but the customer ("they come in gloss, satin and matte").
-Examples:
-SYSTEM_RESPONSE: Since the color books are still being checked, I'll answer the brands question with the material line and say the check on that military green is still in progress.
-
-"The wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want
-And I'm still checking the color books on that military green, I'll let you know what I find"
-answer: True
-SYSTEM_RESPONSE: Customer wants the warranty, give the 6 month line, no question since the last reply asked one.
-Our warranty is 6 months and covers any peeling or bubbling from the install
-answer: True
-SYSTEM_RESPONSE: Sweet, so a ceramic coating on the 4Runner would run $700 + tax. Did you want to hop on the schedule?
-answer: False
-SYSTEM_RESPONSE: So the wrap on the F150 takes about 4 to 5 days
-And our warranty is 6 months and covers any peeling or bubbling, so if it peels you just bring it back and we'll get it fixed
-answer: False
-SYSTEM_RESPONSE: Perfect, that matte military green would look clean on the F150. Let me check the color books to see if we can get something like that done
-answer: False"""

@@ -435,7 +435,7 @@ def examples() -> str:
 
 
 #WHATS MISSING
-#shared with the interrogator enforcer and regenerator, so all three go by the same held prices
+#rides in the prompt, and the regen gets the whole prompt, so both go by the same held prices
 def whats_missing() -> str:
     return """
     #WHAT'S MISSING

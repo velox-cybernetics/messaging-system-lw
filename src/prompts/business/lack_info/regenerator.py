@@ -1,19 +1,32 @@
 #**********IMPORTS**********
-#the new girl's "I'll ask the owner" reply prompt, so a flagged reply gets rewritten with the same rules
+#the new girl's "I'll ask the owner" prompt the rewrite starts from, and the shared regen playbook
+from src.prompts.enforcers import regen_guide
 from src.prompts.business.lack_info import generator as business_lack_info_generator
 
 
 
 #**********REGEN PROMPT**********
-#the "I'll ask the owner" prompt again, plus how to rewrite a reply that broke a rule
+#the "I'll ask the owner" prompt plus the playbook for fixing a flagged reply, with what a fix can never touch
+
+
+#FIX NOTES
+#the not sure reply has a couple of untouchables, and here's why
+def fix_notes() -> str:
+    return """
+    #NOT SURE FIX NOTES
+    - The new girl line:
+        - Rule: the line saying she's not sure, that she's still new and learning the ropes, and that she'll ask the owner stays in the fixed reply with its 😅, the way FLAGGED_RESPONSE has it.
+        - Why: it's how the shop is honest about not knowing without guessing, and it tells them the owner will get back to them with the real answer, so it's the whole point of this reply.
+        - How: fix around it, and never reword it into an answer, a promise or a when.
+    - No answers:
+        - Rule: nothing gets answered, guessed or hinted while fixing: no yes or no, no hours, no address, no numbers, no "probably".
+        - Why: BUSINESS_DETAILS had nothing on what they asked, so any answer would be made up, and a made up answer that turns out wrong costs more trust than not knowing."""
 
 
 #REGEN PROMPT
-#hands back the lack info generator prompt with the rewrite rules for a reply the enforcer flagged
+#same rules and examples as the not sure generator, then the playbook for fixing what got flagged
 def prompt() -> str:
-    #the generator prompt plus what to do with the flagged reply
-    return f"""{business_lack_info_generator.prompt()}
-    #REGENERATION
-    - The input also carries FLAGGED_RESPONSE: a reply already written for this same input that broke one or more of the rules above (an answer or a guess at what they asked, saying again what an earlier reply in message_history said about it, not saying you're not sure, not saying you're new and still learning the ropes, not saying you'll ask the owner, saying you'll look into it, check on it or get back to them, missing the 😅 or using another emoji, promising when the answer comes, picking a meaning instead of asking, skipping over something else they said, mentioning something they never gave, AI wording, or a greeting that does not belong).
-    - Write a fresh reply to the same STATE that follows every rule. Never reuse the flagged wording, never mention that a reply was flagged, and output only the new reply.
-"""
+    #no extra inputs here, just the flagged reply and what to fix
+    playbook: str = regen_guide.guide("", fix_notes())
+
+    return f"""{business_lack_info_generator.prompt()}{playbook}"""

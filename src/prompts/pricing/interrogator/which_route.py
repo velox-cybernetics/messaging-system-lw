@@ -217,7 +217,7 @@ def examples() -> str:
 
 
 #WHATS MISSING
-#shared with the interrogator enforcer and regenerator, so all three hold the same prices and end on the same question
+#rides in the prompt, and the regen gets the whole prompt, so both hold the same prices and end on the same question
 def whats_missing() -> str:
     return """
     #WHAT'S MISSING
