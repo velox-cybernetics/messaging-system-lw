@@ -119,6 +119,11 @@ HELD_STATE: str = "HIL HELD"
 BOOKING_STATE: str = "HIL BOOKING"
 
 
+#CONVO STATE
+#on file in place of "HIL" when they were already talking with the owner before the bot showed up, so the bot stays a ghost for good
+CONVO_STATE: str = "HIL CONVO"
+
+
 
 #**********HAND OFFS**********
 #hands a conversation to the owner and keeps what his text needs until it goes out
@@ -167,6 +172,18 @@ def booking_held(id: str) -> bool:
 #they wrote in while a person fits them a day, so the owner gets texted what they sent, and the booking hold stays as it was
 def note_booking_message(id: str) -> None:
     log.write_info(f"hil_notify_{id}", [REASONS["booking_hold"]], ["reason"])
+
+
+#RESTRICT CONVO
+#they were the owner's before the bot ever showed up, so he keeps them and the bot never says a word
+def restrict_convo(id: str) -> None:
+    log.write_state(f"restricted_{id}", CONVO_STATE)
+
+
+#CONVO HELD
+#True when they were already talking with the owner before the bot showed up, when the bot sends them nothing at all
+def convo_held(id: str) -> bool:
+    return log.read_state(f"restricted_{id}") == CONVO_STATE
 
 
 #NOTIFY REASON

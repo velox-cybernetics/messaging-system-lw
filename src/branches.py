@@ -266,7 +266,7 @@ COLOR_ROUTE_THRESHOLD: float = 0.75
 
 #REPLY CHECKS
 #a yes over this means the details can't answer it, low enough that a question they have nothing on goes to a person instead of getting a made up answer, answered messages stay under it
-CHECKER_THRESHOLD: float = 0.6
+CHECKER_THRESHOLD: float = 0.65
 
 
 #ENFORCERS

@@ -18,6 +18,7 @@ from helpers.state import log
 from helpers.state import state_build
 from helpers.state import state_form
 from src import followup
+from src import in_conversation
 from src import routing
 
 
@@ -342,6 +343,10 @@ def core(current_message_batch: list, id: str, channel: str, sent_since: Callabl
 
         return True
 
+    #already the owner's from before the bot showed up, so it keeps its mouth shut
+    if(in_conversation.owner_has_them(id)):
+        return True
+
     if(form_repeated(id, channel)):
         return True
 
@@ -361,6 +366,10 @@ def core(current_message_batch: list, id: str, channel: str, sent_since: Callabl
     user_message: dict = state_build.user_message_form(current_message_batch, channel)
 
     message_history: dict = state_build.message_history_read(id)
+
+    #first we've heard of them, so make sure it's not the owner's buddy picking back up before the bot butts in
+    if(in_conversation.picks_up(user_message, message_history, id, channel)):
+        return True
 
     replies.write_message(f"usermsg_{id}", user_message)
 
