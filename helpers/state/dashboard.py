@@ -1,5 +1,5 @@
 #**********IMPORTS**********
-#python's text encoding, json, clock, file buffers, random names and the one background worker, the env, web requests, the image tools with iphone pics, the shop's timezone, the customer's name and the bot's own state
+#python's text encoding, json, clock, file buffers, random names and the one background worker, the env, web requests, the image tools with iphone pics, the shop's timezone, the customer's name, the bot's own state and who the owner already had
 import base64
 import io
 import json
@@ -18,6 +18,7 @@ from pillow_heif import register_heif_opener
 from helpers.calendar import open_dates
 from helpers.channels import username
 from helpers.state import log
+from helpers.state import owner
 
 
 
@@ -56,6 +57,11 @@ TABS: dict[str, str] = {"blooio": "forms", "ig": "instagram", "messenger": "mess
 #NAMED CHANNELS
 #only instagram and messenger ids need a lookup to read as a name, a text id is already their number
 NAMED_CHANNELS: list[str] = ["ig", "messenger"]
+
+
+#ON ONLY CHANNELS
+#channels that only show the people the bot's actually answering, anyone switched off there (or the whole tab) never even makes the board
+ON_ONLY_CHANNELS: list[str] = ["ig"]
 
 
 #KEPT TIMES
@@ -553,7 +559,7 @@ def media_part(source: dict) -> dict:
 
 
 #**********INCOMING**********
-#every message a customer sends shows up in the dashboard the moment it lands, before the bot batches it
+#every message a customer sends shows up in the dashboard the moment it lands, before the bot batches it, unless the bot will never answer them
 
 
 #ATTACHMENT SOURCE
@@ -604,16 +610,16 @@ def message_sources(message: list) -> tuple[list[str], list[dict]]:
 
 
 #RESTRICTED
-#True while a person has the conversation (the bot's restricted state), when the bot only answers a few things and waits on him for the rest
+#the bot's restricted state, set while a person has the conversation and the bot only answers a few things, or for good when the owner had them before the bot showed up
 #a read that fails counts them as free, so the message still shows
-def is_restricted(id: str) -> bool:
+def restricted_state(id: str) -> dict | str:
     try:
-        return bool(log.read_state(f"restricted_{id}"))
+        return log.read_state(f"restricted_{id}")
 
     except Exception as error:
         print(f"DASHBOARD ERROR: restricted check failed for {id}, {error}")
 
-        return False
+        return {}
 
 
 #WRITE INCOMING
@@ -655,11 +661,23 @@ def write_incoming(id: str, channel: str, texts: list[str], sources: list[dict],
 
 #TAKE IN
 #every message they send shows in the dashboard, True when they and their channel are switched on so it goes on to the bot
+#except anyone the bot will never answer: the owner's from before the bot, or switched off on an ON_ONLY_CHANNELS channel
 def take_in(id: str, channel: str, message: list) -> bool:
     switched: bool = switched_on(id, channel)
 
-    #read the moment it lands, the same as the bot reads it, a person having them is only checked when they're switched on
-    counted: bool = switched and not is_restricted(id)
+    #the bot's not touching this one, so on instagram it stays off the board entirely instead of piling up as off messages
+    if(not switched and channel in ON_ONLY_CHANNELS):
+        return switched
+
+    #read the moment it lands, the same as the bot reads it
+    restricted: dict | str = restricted_state(id)
+
+    #the owner had them before the bot showed up, so the bot never says a word and the board never hears of them either
+    if(restricted == owner.CONVO_STATE):
+        return switched
+
+    #switched off or a person having them keeps it off the numbers
+    counted: bool = switched and not restricted
 
     #read right away, the batch the message joins keeps growing after this
     #a message shaped some way the dashboard doesn't expect still goes on to the bot, it only misses the dashboard
@@ -674,6 +692,92 @@ def take_in(id: str, channel: str, message: list) -> bool:
     in_background(write_incoming, id, channel, texts, sources, now_ms(), switched, counted)
 
     return switched
+
+
+
+#**********FORGET**********
+#someone the bot turns out to never answer comes off the board, the same way deleting them in the dashboard does it (api/thread.ts)
+
+
+#TAKE BACK
+#what their conversation added to the overview comes back off, keep in step with take_back_commands in api/thread.ts
+#upstash gives the ledger back as place, amount, place, amount, and a count hash that already aged out gets skipped so an old day never goes negative
+def take_back_commands(id: str) -> list[list]:
+    ledger, ledger_sets = pipeline([["HGETALL", f"ledger:{id}"], ["SMEMBERS", f"ledger_sets:{id}"]])
+
+    counts: list[tuple[str, str, int]] = []
+
+    #places look like "day:2026-10-29|in@14"
+    for position in range(0, len(ledger or []) - 1, 2):
+        place: str = str(ledger[position])
+
+        cut: int = place.rfind("|")
+
+        amount: int = int(ledger[position + 1])
+
+        if(cut > 0 and amount != 0):
+            counts.append((place[:cut], place[cut + 1:], amount))
+
+    hash_keys: list[str] = list(dict.fromkeys(count[0] for count in counts))
+
+    live: set[str] = set()
+
+    if(len(hash_keys) > 0):
+        found: list = pipeline([["EXISTS", key] for key in hash_keys])
+
+        live = {key for key, exists in zip(hash_keys, found) if int(exists) == 1}
+
+    commands: list[list] = [["HINCRBY", key, field, -amount] for key, field, amount in counts if key in live]
+
+    commands.extend(["SREM", key, id] for key in ledger_sets or [])
+
+    commands.append(["DEL", f"ledger:{id}", f"ledger_sets:{id}"])
+
+    return commands
+
+
+#PIC KEYS
+#the kept copy of every pic in their thread, an entry that can't be read has none
+def pic_keys(entries: list) -> list[str]:
+    keys: list[str] = []
+
+    for entry in entries or []:
+        try:
+            parts: list = json.loads(entry).get("parts") or []
+
+        except (AttributeError, TypeError, ValueError):
+            continue
+
+        for part in parts:
+            media: dict = (part.get("media") or {}) if isinstance(part, dict) else {}
+
+            if(media.get("kind") == "pic" and media.get("id")):
+                keys.append(f"media:{media['id']}")
+
+    return keys
+
+
+#WRITE FORGET
+#their thread, pics, summary and counts all come off, their switch stays as it is
+#only someone the bot never answered gets here, so there's no follow up of theirs to take off
+def write_forget(id: str) -> None:
+    entries: object = command(["LRANGE", f"thread:{id}", 0, -1], WRITE_TIMEOUT)
+
+    commands: list[list] = take_back_commands(id)
+
+    commands.extend([["DEL", f"thread:{id}", f"state:{id}", *pic_keys(entries)], ["HDEL", "summaries", id], ["HDEL", "flagged", id]])
+
+    commands.extend(["ZREM", f"convos:{tab}", id] for tab in sorted(set(TABS.values())))
+
+    commands.append(["INCR", "version"])
+
+    pipeline(commands)
+
+
+#FORGET
+#waits behind the writes that put their messages on the board, so it takes those off too
+def forget(id: str) -> None:
+    in_background(write_forget, id)
 
 
 

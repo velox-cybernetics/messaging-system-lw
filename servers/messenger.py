@@ -460,7 +460,7 @@ async def take_message(id: str, message: list) -> None:
         if(await asyncio.to_thread(spam.is_spam, id, message[0], "messenger")):
             return
 
-        #every message but spam shows in the dashboard, and only one from a customer switched on there gets batched
+        #every message but spam shows in the dashboard, unless the owner had them before the bot, and only one from a customer switched on there gets batched
         if(await asyncio.to_thread(dashboard.take_in, id, "messenger", message)):
             #on file before it waits in the batch, so a restart while it waits never loses it
             journal_entry: str = await asyncio.to_thread(journal.save, "messenger", id, message)

@@ -581,7 +581,7 @@ async def take_message(id: str, text: str | None, attachments: list | None) -> N
         #ghl never sees blooio, so every text a customer sends goes in their conversation there, switched on in the dashboard or not
         ghl.log_received(id, text, attachments)
 
-        #every message but spam shows in the dashboard, and only one from a customer switched on there gets batched
+        #every message but spam shows in the dashboard, unless the owner had them before the bot, and only one from a customer switched on there gets batched
         if(await asyncio.to_thread(dashboard.take_in, id, "blooio", [text, attachments])):
             #on file before it waits in the batch, so a restart while it waits never loses it
             journal_entry: str = await asyncio.to_thread(journal.save, "blooio", id, [text, attachments])

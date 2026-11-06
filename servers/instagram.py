@@ -399,7 +399,7 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
 
 
 #**********TAKING IN**********
-#every message gets its spam check before anything else sees it, then goes to the dashboard and the batch
+#every message gets its spam check before anything else sees it, then goes to the dashboard and the batch, but only when the bot's answering them
 
 
 #TAKE MESSAGE
@@ -411,7 +411,7 @@ async def take_message(id: str, incoming: list) -> None:
         if(await asyncio.to_thread(spam.is_spam, id, incoming[0], "ig")):
             return
 
-        #every message but spam shows in the dashboard, and only one from a customer switched on there gets batched
+        #only someone the bot's answering shows in the dashboard and gets batched, switched off here means they never make the board at all
         if(await asyncio.to_thread(dashboard.take_in, id, "ig", incoming)):
             #on file before it waits in the batch, so a restart while it waits never loses it
             journal_entry: str = await asyncio.to_thread(journal.save, "ig", id, incoming)

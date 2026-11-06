@@ -1,8 +1,9 @@
 #**********IMPORTS**********
-#the decisions model, the typing bubble, who has them, the conversation on file, and the rules for a chat the owner already had going
+#the decisions model, the typing bubble, the dashboard, who has them, the conversation on file, and the rules for a chat the owner already had going
 from helpers.channels import senders
 from helpers.models import models
 from helpers.response import greeting
+from helpers.state import dashboard
 from helpers.state import log
 from helpers.state import owner
 from helpers.state import state_build
@@ -68,7 +69,7 @@ def picks_up_convo(state: dict) -> bool:
 
 
 #PICKS UP
-#a first message picking up with the owner restricts them for good, so nothing goes back and nothing of theirs goes on file, a check that fails lets it through
+#a first message picking up with the owner restricts them for good, so nothing goes back and nothing of theirs goes on file or stays on the board, a check that fails lets it through
 def picks_up(user_message: dict, message_history: dict, id: str, channel: str) -> bool:
     try:
         if(not first_contact(message_history, id, channel)):
@@ -83,6 +84,9 @@ def picks_up(user_message: dict, message_history: dict, id: str, channel: str) -
         print(f"IN CONVERSATION CHECK ERROR: {error}, so {id} goes on as usual")
 
         return False
+
+    #their message already went on the board when it landed, so it comes back off since the bot's never touching them
+    dashboard.forget(id)
 
     #core already put the bubble up, and nobody's replying, so down it comes
     senders.stop_typing(id, channel)
