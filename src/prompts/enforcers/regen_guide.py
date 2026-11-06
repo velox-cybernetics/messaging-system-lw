@@ -64,6 +64,12 @@ def fix_guide() -> str:
     - How to fix it: take the schedule question out and answer what they asked. When it fits, a few words leave the door open ("Totally get it, just reach out whenever you're ready"). No question at the end, and never a line that pushes ("don't wait too long", "spots fill up fast").
     - Example: they said "probably the wrap. im still getting a couple other quotes though, does it come with a warranty?", so "Totally get it! Yeah, the wrap comes with a free 6 month warranty. Did you want to get the Model 3 on the schedule?" becomes "Totally get it! Yeah, the wrap comes with a free 6 month warranty".
 
+    ###QUESTION (wait_chased)
+    - What the check saw: they said they're waiting on something before they go ahead (the vehicle getting delivered or back, other quotes, talking it over, getting paid) and that they'll reach out once it comes, nothing since says it came, and the reply asks about it anyway: whether it came yet, when it's coming, or whether they heard back.
+    - Why it's a rule: they already told the shop when they'll be back. Asking whether it came yet reads like the shop is hovering over them, and a customer who feels watched answers the shop that left them alone.
+    - How to fix it: take that question out, along with any words that only led into it. Keep the rest as written, and when it fits, a few words leave the door open ("Just reach out once it's here"). End the reply with no question in its place.
+    - Example: they said "its still getting shipped from the dealer, should be here in like 2 weeks so ill text you then", then "sorry for all the texts lol", so "Haha no worries at all! Any idea yet what day the 1500 is getting delivered?" becomes "Haha no worries at all! Just reach out once the 1500's here".
+
     ###QUESTION (already_given)
     - What the check saw: the reply asks for something they already gave, in this message or earlier: the vehicle, the color it is now, a pic they sent, the color they want, which service, the coverage or the windows.
     - Why it's a rule: asking for something they already sent tells them nobody read their messages, and it makes them do the same work twice. It's one of the quickest ways a customer decides they're talking to a bot.

@@ -18,6 +18,7 @@ from src.prompts.pricing_confirm import services_extractor
 from src.prompts.extractors import typed_color_extractor
 from src.prompts.extractors import vehicle_extractor
 from src.prompts.extractors import want_extractor
+from src.prompts.followup import event_extractor
 
 
 
@@ -71,6 +72,8 @@ REMOVAL_EXTRACTOR_MODEL: str = "z-ai/glm-5.3-flashx"
 SERVICE_PRICING_EXTRACTOR_MODEL: str = "z-ai/glm-5.3-flashx"
 
 CONTACT_EXTRACTOR_MODEL: str = "z-ai/glm-5.3-flashx"
+
+EVENT_EXTRACTOR_MODEL: str = "z-ai/glm-5.3-flashx"
 
 #flashx pulls every detail out of their message at high
 EXTRACTOR_EFFORT: str = "high"
@@ -374,6 +377,14 @@ def extract_contact(user_text: str, shop_last_reply: str) -> str:
     system_prompt: str = contact_extractor.prompt()
 
     return extract("CONTACT EXTRACTOR", CONTACT_EXTRACTOR_MODEL, system_prompt, contact_text)
+
+
+#EVENT EXTRACTOR
+#what a quiet customer is waiting on and when it lands, out of the whole chat and when they last texted
+def extract_event(event_text: str) -> str:
+    system_prompt: str = event_extractor.prompt()
+
+    return extract("EVENT EXTRACTOR", EVENT_EXTRACTOR_MODEL, system_prompt, event_text)
 
 
 

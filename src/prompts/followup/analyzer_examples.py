@@ -1,5 +1,5 @@
 #**********CHECK EXAMPLES**********
-#what makes a quiet conversation one the shop leaves be for good, with yes and no samples
+#what makes a quiet conversation one the shop leaves be for good, with yes and no samples, and the kind of follow up the rest get
 
 
 #NOT INTERESTED
@@ -64,3 +64,48 @@ state: {"current_user_message":{"user_media":{},"user_text":""},"message_history
 answer: False
 state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_text":"hello my name is Mia Torres, I am interested in your services, the vehicle I have is 2021 Honda Civic."},"system_response_to_user_message_0":"Heyy Mia, this is Hazel at the Lone Wraps team, saw your quote request on the Civic. What are you looking to get done?"}}
 answer: False"""
+
+
+#FOLLOW UP KINDS
+#the three kinds the night's check picks from, once per quiet stretch
+def kind_criteria() -> dict[str, str]:
+    criteria: dict[str, str] = {}
+
+    criteria["quiet"] = """They went quiet without saying anything held them back: they stopped answering what the shop last asked, signed off or reacted ("thanks for the info", "ok sounds good", "👍"), said they'd send a pic or the color and never did, or only asked about the shop, with no push back and no wait they put a day or time frame on."""
+
+    criteria["event"] = """They said they're waiting on something before they can go ahead and said when it comes, a day, a date or a time frame the shop can count to from when they said it: the vehicle getting delivered, bought, picked up or back from somewhere ("getting it delivered in a couple weeks", "I pick it up from the dealer on the 23rd", "it's at the body shop till next week"), getting paid or the money coming in ("I get paid on the 15th", "when I get my tax return"), being away or busy ("out of town till the 12th", "after the holidays", "maybe in the spring"), or any other day they said they'd be ready by. A wait tied to a time of year counts, like a tax return, the holidays or a season. It's event even when they also pushed back, are shopping around or said they'll reach out once it comes. A wait with no time put on it ("waiting on quotes from other shops", "once I talk to my wife", "when I have the money") is never event."""
+
+    criteria["objection"] = """They pushed back on the job or held off on it, with no day or time frame to wait for, then went quiet: the price is more than they wanted or another shop quoted less ("kinda steep", "another place said 2500", "thats more than I wanted to spend right now"), they asked for a deal the shop doesn't have, they're shopping around or getting other quotes, they need to think it over or talk it over with someone first, they're holding off for now ("ill hold off", "nah not right now"), or a worry about the job they never got past (how long it lasts, whether it comes off in the wash, whether it hurts the paint)."""
+
+    return criteria
+
+
+#KIND EXAMPLES
+#the rules and samples for picking a kind, so "getting the car in 2 weeks" never gets a next morning text again
+def kind_examples() -> str:
+    return r"""The conversation went quiet, so `current_user_message` is empty and every message of theirs is in `message_history`, oldest first: user_message_N is theirs and system_response_to_user_message_N is the shop's reply to it, an empty system_response is a message of theirs the shop let be, and a conversation_summary entry holds earlier turns that no longer fit. Follow ups the shop already sent sit on the end of its last system_response, one per line. Go by where the customer stands at the end of it: a later message of theirs takes back an earlier one, like saying the vehicle came in after saying they were waiting on it, or asking to get on the schedule after saying the price was too much. A wait they put a day or time frame on is event even with a push back next to it, since the follow up waits for it. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on a 2024 4runner, all around"},"system_response_to_user_message_0":"Sweet, so sides and rear on the 4Runner would run $450 + tax for our ceramic tint, it blocks 99% of the UV and 90% of the heat. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"I pick it up from the dealer on the 23rd, ill hit you up after"},"system_response_to_user_message_1":"Sounds good, just let me know once you have it."}}
+kind: event
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"thinking a satin black wrap on my 2025 mustang, its white"},"system_response_to_user_message_0":"Sweet, so satin black on the Mustang would run $2950 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty.","user_message_1":{"user_media":{},"user_text":"ok cool. its not even here yet, getting it delivered in a couple weeks. still getting a few other quotes too but ill let you know"},"system_response_to_user_message_1":"For sure, just reach out once it's here."}}
+kind: event
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for a ceramic coating on my 2022 civic"},"system_response_to_user_message_0":"Sweet, so a ceramic coating on the Civic would run $700 + tax, that covers all the painted surfaces and the coating lasts for years.","user_message_1":{"user_media":{},"user_text":"bet, I get paid on the 15th so ill do it then"},"system_response_to_user_message_1":"Sounds good, just let me know when you're ready."}}
+kind: event
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2021 tacoma matte black, its silver"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 + tax for a full wrap. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"probably gonna wait till spring for it"},"system_response_to_user_message_1":"Totally get it, just reach out whenever you're ready."}}
+kind: event
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"colored ppf on my 2023 bmw m3, its white. thinking a grey"},"system_response_to_user_message_0":"Sweet, so colored PPF on the M3 would run $6400 + tax for the full body, and it comes with free side and rear window tint.","user_message_1":{"user_media":{},"user_text":"damn thats kinda steep"},"system_response_to_user_message_1":"It's double the thickness of a wrap and lasts about 10 years, so it's the whole car protected with the color change on top. Did you want to hop on the schedule?"}}
+kind: objection
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Camry would run $1600 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors.","user_message_1":{"user_media":{},"user_text":"Let me talk to my wife first and I'll get back to you"},"system_response_to_user_message_1":"For sure, just let me know what you guys decide."}}
+kind: objection
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"sides and rear tint on a 2020 accord"},"system_response_to_user_message_0":"Sweet, so sides and rear on the Accord would run $450 + tax for our ceramic tint, it blocks 99% of the UV and 90% of the heat. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"gonna get a couple more quotes first, any deals going on?"},"system_response_to_user_message_1":"Totally get it! We don't really run any specials, our prices stay the same all year."}}
+kind: objection
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for full body ppf on a 2024 model y"},"system_response_to_user_message_0":"Full body PPF on the Model Y would be $5900 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"ill reach out once I have the money for it"},"system_response_to_user_message_1":"No worries, just reach out whenever you're ready."}}
+kind: objection
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"2021 tacoma, its grey, want matte black"},"system_response_to_user_message_0":"Sweet, so matte black on the Tacoma would run $3450 + tax for a full wrap. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. Did you want to hop on the schedule?"}}
+kind: quiet
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for a ceramic coating on my 2022 rav4"},"system_response_to_user_message_0":"Sweet, so a ceramic coating on the RAV4 would run $700 + tax, that covers all the painted surfaces and the coating lasts for years.","user_message_1":{"user_media":{},"user_text":"thanks for the info!"},"system_response_to_user_message_1":"For sure, just let me know if you have any questions."}}
+kind: quiet
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"thinking about getting my 2022 bronco wrapped"},"system_response_to_user_message_0":"Sweet, what color are you thinking for the Bronco, and what color is it right now? Send me a pic if you can","user_message_1":{"user_media":{},"user_text":"ill send pics when I get home"},"system_response_to_user_message_1":"Sounds good, just send them over whenever."}}
+kind: quiet
+state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2019 f150 gloss black"},"system_response_to_user_message_0":"Sweet, so gloss black on the F-150 would run $3450 + tax for a full wrap.","user_message_1":{"user_media":{},"user_text":"its at the body shop till next week, ill let you know"},"system_response_to_user_message_1":"Sounds good, just reach out once it's back.","user_message_2":{"user_media":{},"user_text":"its back! what color is it now you need?"},"system_response_to_user_message_2":"Perfect, what color is the F-150 right now? Send me a pic if you can"}}
+kind: quiet"""

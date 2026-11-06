@@ -2,7 +2,7 @@
 #python's clock and patterns, the shop's timezone, the reply writer and its final check, the senders, the form name check, the conversation on file, the dashboard's switch and follow ups page, ghl for the sms ones, the held prints, the early color ask cut, the asked again check, and the follow up and sms prompts
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from helpers.calendar import open_dates
 from helpers.channels import replies
@@ -27,7 +27,7 @@ from src.prompts.followup import sms_generator as sms_prompt
 
 
 #**********GLOBALS**********
-#when the follow ups get picked and sent, how many each channel gets, and how each one gets written
+#when the follow ups get picked and sent, how many each channel gets, what kind each one is, and how each one gets written
 
 
 #FOLLOW UP TIMES
@@ -77,6 +77,43 @@ NOT_INTERESTED_THRESHOLD: float = 0.5
 #SPAM
 #a yes over this means nobody looking to get work done was ever on the other end, like a business texting ads, alerts or links, so they never get one
 SPAM_THRESHOLD: float = 0.5
+
+
+#FOLLOW UP KINDS
+#three flavors of quiet: just went quiet, waiting on something with a date on it, or pushed back then ghosted
+QUIET_KIND: str = "quiet"
+
+EVENT_KIND: str = "event"
+
+OBJECTION_KIND: str = "objection"
+
+
+#EVENT CHANCE
+#even a meh lean towards waiting gets its date read, missing one means texting them the next morning, the one thing they asked us not to do
+EVENT_THRESHOLD: float = 0.25
+
+
+#EVENT TIMING
+#the follow up lands the morning before the big day
+EVENT_DAYS_BEFORE: int = 1
+
+#and never the very next morning, no matter how close the big day is
+EVENT_MIN_DAYS: int = 2
+
+#a date more than a year out is the extractor daydreaming, nobody waits that long out loud
+EVENT_MAX_DAYS: int = 366
+
+
+#EVENT DATES
+#how the extractor writes the day, how the follow up reads it, "Thursday, November 12, 2026", and how the prints show off when it goes out
+EVENT_DATE_FORMAT: str = "%Y-%m-%d"
+
+EVENT_DAY_FORMAT: str = "%A, %B %d, %Y"
+
+EVENT_SEND_FORMAT: str = "%A, %B %d at %I:%M %p"
+
+#the extractor's line, EVENT: <what they're waiting on> | DATE: <YYYY-MM-DD>
+EVENT_EXTRACTOR_FIELDS: list[str] = ["event", "date"]
 
 
 #FOLLOW UP LIMITS
@@ -139,6 +176,14 @@ SMS_FIELD: str = "sms"
 
 #when ghl showed they texted STOP to the shop's sms number, on file till they write in again, and no follow up goes out till then
 STOPPED_FIELD: str = "stopped"
+
+#the kind they got read as and the last message it was read for, so one read covers the whole quiet stretch and a new text gets a fresh look
+KIND_FIELD: str = "kind"
+
+NOTED_FIELD: str = "noted"
+
+#what they're waiting on and when, only kept around while they're an event
+EVENT_FIELDS: list[str] = ["event", "event_date"]
 
 
 
@@ -238,7 +283,7 @@ def name_attached(id: str, channel: str) -> bool:
 
 
 #**********WHO GETS ONE**********
-#the checks that need no model, then the not interested and spam checks the decisions model makes on the whole conversation
+#the checks that need no model, then the not interested and spam checks the decisions model makes on the whole conversation, with the kind of follow up riding along on the same call
 
 
 #WINDOW OPEN
@@ -307,30 +352,191 @@ def quiet_state(id: str) -> dict:
     return state_build.state_formulation(empty_message, state_build.message_history_read(id))
 
 
-#SKIP REASON
-#why the whole conversation rules a follow up out, done with the shop for good or spam that was never a customer at all, asked in one go, empty when it doesn't
-def skip_reason(state: dict) -> str:
+#NIGHT QUESTIONS
+#done for good and spam rule them out, the kind only gets asked when we don't already have it for their last message
+def night_questions(kind_asked: bool) -> dict:
     questions: dict = {}
 
     questions["not_interested"] = {"type": "noul", "instructions": f"Is the customer completely not interested, done with the shop for good going by the whole conversation in `message_history`?\n{followup_examples.not_interested_examples()}"}
 
     questions["spam"] = {"type": "noul", "instructions": f"Is this conversation spam, with nobody looking to get work done on a vehicle ever on the other end, going by every message of theirs in `message_history`?\n{followup_examples.spam_examples()}"}
 
-    answers: dict = models.decision_answers(questions, state)
+    if(kind_asked):
+        questions["kind"] = {"type": "choice", "instructions": f"Which kind of follow up fits where the customer left the conversation, going by every message of theirs in `message_history`?\n{followup_examples.kind_examples()}", "criteria": followup_examples.kind_criteria()}
+
+    return questions
+
+
+#NIGHT READ
+#one call does it all: why they're ruled out, done for good or spam ("" when neither), and the kind's answer ({} when we didn't ask)
+def night_read(state: dict, kind_asked: bool) -> tuple[str, dict]:
+    answers: dict = models.decision_answers(night_questions(kind_asked), state)
 
     not_interested_yes: float = answers["not_interested"]["noul"]
 
     spam_yes: float = answers["spam"]["noul"]
 
-    print(f"NOT INTERESTED: {not_interested_yes:.2f} | SPAM: {spam_yes:.2f}")
+    kind_answer: dict = answers.get("kind", {})
+
+    kind_text: str = ""
+
+    if(kind_answer):
+        kind_text = f" | KIND: {kind_answer['choice']}({kind_answer['confidence']:.2f})"
+
+    print(f"NOT INTERESTED: {not_interested_yes:.2f} | SPAM: {spam_yes:.2f}{kind_text}")
 
     if(spam_yes > SPAM_THRESHOLD):
-        return "is spam, never a customer"
+        return ("is spam, never a customer", kind_answer)
 
     if(not_interested_yes > NOT_INTERESTED_THRESHOLD):
-        return "is done with the shop for good"
+        return ("is done with the shop for good", kind_answer)
 
-    return ""
+    return ("", kind_answer)
+
+
+
+#**********KIND**********
+#which follow up they get, read once per quiet stretch: the regular one, one the morning before what they're waiting on, or a real check in after they pushed back
+
+
+#KIND NOTED
+#already read for their last message, so it stands till they text again
+def kind_noted(record: dict[str, str]) -> bool:
+    return record.get(NOTED_FIELD, "") != "" and record.get(NOTED_FIELD) == record.get("last_message")
+
+
+#NOTED EVENT
+#what they're waiting on and when, dressed up for the follow up to read, empty unless they're an event
+def noted_event(record: dict[str, str]) -> dict[str, str]:
+    if(record.get(KIND_FIELD) != EVENT_KIND or record.get("event", "") == ""):
+        return {}
+
+    day: datetime = datetime.strptime(record["event_date"], EVENT_DATE_FORMAT)
+
+    return {"event": record["event"], "date": day.strftime(EVENT_DAY_FORMAT)}
+
+
+#EVENT INPUT
+#the quiet chat, when their newest message came in, and the day we noted last time, so a date they gave never drifts just because they texted again
+def event_input(state: dict, record: dict[str, str]) -> str:
+    last_message_at: str = datetime.fromtimestamp(float(record.get("last_message", "0")), open_dates.SHOP_TIMEZONE).strftime(state_form.CURRENT_DATE_TIME_FORMAT)
+
+    event_text: str = f"STATE: {state_form.state_to_text(state)}\nLAST_MESSAGE_AT: {last_message_at}"
+
+    noted: dict[str, str] = noted_event(record)
+
+    if(noted):
+        event_text += f"\nNOTED_EVENT: {noted['event']} on {noted['date']}"
+
+    return event_text
+
+
+#EVENT DAY
+#the day the extractor gave, None when it's not a day or couldn't be one they said, before their newest message or way out past EVENT_MAX_DAYS
+def event_day(date_text: str, last_message: float) -> date | None:
+    try:
+        day: date = datetime.strptime(date_text, EVENT_DATE_FORMAT).date()
+
+    except ValueError:
+        return None
+
+    wrote_day: date = datetime.fromtimestamp(last_message, open_dates.SHOP_TIMEZONE).date()
+
+    if(day < wrote_day or day > wrote_day + timedelta(days=EVENT_MAX_DAYS)):
+        return None
+
+    return day
+
+
+#READ EVENT
+#what they're waiting on and when, both empty when there's no date on the wait or the date makes no sense
+def read_event(state: dict, record: dict[str, str]) -> tuple[str, str]:
+    values: list[str] = models.extractor_values(models.extract_event(event_input(state, record)), EVENT_EXTRACTOR_FIELDS)
+
+    if(len(values) < len(EVENT_EXTRACTOR_FIELDS) or values[0] == "" or event_day(values[1], float(record.get("last_message", "0"))) is None):
+        return ("", "")
+
+    return (values[0], values[1])
+
+
+#NOTE KIND
+#the kind goes on file with the message it was read for, an event only counts with a real date, otherwise whichever of the other two came out ahead
+def note_kind(id: str, record: dict[str, str], state: dict, kind_answer: dict) -> dict[str, str]:
+    probabilities: dict[str, float] = kind_answer["probabilities"]
+
+    kind: str = kind_answer["choice"]
+
+    event: tuple[str, str] = ("", "")
+
+    if(kind == EVENT_KIND or probabilities.get(EVENT_KIND, 0.0) > EVENT_THRESHOLD):
+        event = read_event(state, record)
+
+        kind = EVENT_KIND
+
+        if(event[0] == ""):
+            kind = QUIET_KIND
+
+            if(probabilities.get(OBJECTION_KIND, 0.0) > probabilities.get(QUIET_KIND, 0.0)):
+                kind = OBJECTION_KIND
+
+    log.write_info(followup_key(id), [kind, record.get("last_message", "")], [KIND_FIELD, NOTED_FIELD])
+
+    if(kind == EVENT_KIND):
+        log.write_info(followup_key(id), list(event), EVENT_FIELDS)
+
+    else:
+        log.clear_info(followup_key(id), EVENT_FIELDS)
+
+    noted: dict[str, str] = log.read_info(followup_key(id))
+
+    event_noted: dict[str, str] = noted_event(noted)
+
+    if(event_noted):
+        print(f"FOLLOW UP KIND: {id} is waiting on {event_noted['event']} on {event_noted['date']}")
+
+    else:
+        print(f"FOLLOW UP KIND: {id} gets the {kind} follow up")
+
+    return noted
+
+
+#EVENT SEND TIME
+#the morning before the big day, but never sooner than the second morning after they last wrote, the next morning is off the table
+def event_send_time(record: dict[str, str]) -> float:
+    coming: date = datetime.strptime(record["event_date"], EVENT_DATE_FORMAT).date()
+
+    wrote_day: date = datetime.fromtimestamp(float(record.get("last_message", "0")), open_dates.SHOP_TIMEZONE).date()
+
+    send_day: date = max(coming - timedelta(days=EVENT_DAYS_BEFORE), wrote_day + timedelta(days=EVENT_MIN_DAYS))
+
+    return datetime(send_day.year, send_day.month, send_day.day, FOLLOWUP_HOUR, tzinfo=open_dates.SHOP_TIMEZONE).timestamp()
+
+
+#EVENT WAIT
+#True when they're waiting on something and theirs goes out a later morning, said once a night so the logs aren't a mystery
+def event_wait(id: str, record: dict[str, str], booked: bool, restricted: bool, named: bool, send_time: float) -> bool:
+    event: dict[str, str] = noted_event(record)
+
+    if(not event):
+        return False
+
+    event_time: float = event_send_time(record)
+
+    #this is the morning before it, or the server missed that morning and it's late, either way it goes now
+    if(event_time <= send_time):
+        return False
+
+    when: str = datetime.fromtimestamp(event_time, open_dates.SHOP_TIMEZONE).strftime(EVENT_SEND_FORMAT)
+
+    #instagram and messenger close the window a day after their last message, so these can't wait it out
+    if(not followup_allowed(id, record, booked, restricted, named, event_time)):
+        print(f"FOLLOW UP SKIPPED: {id} is waiting on {event['event']} on {event['date']}, and {record.get('channel', '')} takes no follow up by {when}")
+
+        return True
+
+    print(f"FOLLOW UP WAITING: {id} is waiting on {event['event']} on {event['date']}, so theirs goes out {when}")
+
+    return True
 
 
 
@@ -366,7 +572,7 @@ def recheck_time() -> tuple[int, int]:
 
 
 #PICK ONE
-#every pick starts over, so they're only picked while they still get one, and the decisions model only reads the ones nothing on file rules out
+#every pick starts over, the decisions model only reads the ones nothing on file rules out, and anyone waiting on something only gets picked the night before their morning
 def prep_followup(id: str, send_time: float) -> None:
     log.clear_info(followup_key(id), [PICKED_FIELD])
 
@@ -374,26 +580,44 @@ def prep_followup(id: str, send_time: float) -> None:
 
     named: bool = name_attached(id, record.get("channel", ""))
 
-    if(not followup_allowed(id, record, went_to_booking(id), person_has_them(id), named, send_time)):
+    booked: bool = went_to_booking(id)
+
+    restricted: bool = person_has_them(id)
+
+    if(not followup_allowed(id, record, booked, restricted, named, send_time)):
         #a number with no name is the one rule out that gets said, so the night's check shows who it left out for it
         if(not named):
             print(f"FOLLOW UP SKIPPED: {id} has no name on file")
 
         return
 
-    reason: str = skip_reason(quiet_state(id))
+    kind_asked: bool = not kind_noted(record)
 
-    if(reason != ""):
-        print(f"FOLLOW UP SKIPPED: {id} {reason}")
+    #already read and still waiting, so no model calls, just counting sleeps
+    if(not kind_asked and event_wait(id, record, booked, restricted, named, send_time)):
+        return
+
+    state: dict = quiet_state(id)
+
+    night_answer: tuple[str, dict] = night_read(state, kind_asked)
+
+    if(night_answer[0] != ""):
+        print(f"FOLLOW UP SKIPPED: {id} {night_answer[0]}")
 
         return
+
+    if(kind_asked):
+        record = note_kind(id, record, state, night_answer[1])
+
+        if(event_wait(id, record, booked, restricted, named, send_time)):
+            return
 
     log.write_info(followup_key(id), [str(time.time())], [PICKED_FIELD])
 
     #the dashboard's follow ups page shows them getting it at the morning's send
     dashboard.log_followup_picked(id, record["channel"], int(record.get("count", "0")) + 1, send_time)
 
-    print(f"FOLLOW UP PICKED: {id} gets one on {record['channel']} in the morning")
+    print(f"FOLLOW UP PICKED: {id} gets their {record.get(KIND_FIELD, QUIET_KIND)} follow up on {record['channel']} in the morning")
 
 
 #PREP FOLLOW UPS
@@ -474,6 +698,25 @@ def recheck_followups() -> None:
 #the next morning each conversation picked gets one follow up, written from the conversation and checked before it goes out
 
 
+#FOLLOW UP STATE
+#the quiet chat plus which follow up in a row it is, what kind they got read as, and what they're waiting on when that's a thing
+def followup_state(id: str, record: dict[str, str]) -> dict:
+    state: dict = quiet_state(id)
+
+    #which follow up in a row this is, so a later one never says an earlier one again
+    state["followup_number"] = int(record.get("count", "0")) + 1
+
+    #picked before kinds existed, so it's a regular one
+    state["followup_kind"] = record.get(KIND_FIELD, QUIET_KIND)
+
+    event: dict[str, str] = noted_event(record)
+
+    if(event):
+        state["followup_event"] = event
+
+    return state
+
+
 #FOLLOW UP CHAIN
 #the follow up written from the quiet conversation, in the shape run_chain takes so a slow model gets its retries
 def followup_chain(state: dict, id: str) -> str:
@@ -491,11 +734,8 @@ def followup_chain(state: dict, id: str) -> str:
 
 #WRITTEN FOLLOW UP
 #the follow up in the owner's wording, empty when it couldn't be written or the final check stopped it
-def written_followup(id: str, channel: str, count: int) -> str:
-    state: dict = quiet_state(id)
-
-    #which follow up in a row this is, so a later one never says an earlier one again
-    state["followup_number"] = count + 1
+def written_followup(id: str, channel: str, record: dict[str, str]) -> str:
+    state: dict = followup_state(id, record)
 
     followup: str = retry.run_chain(followup_chain, state, id, [], channel, "FOLLOW UP CHAIN ERROR")
 
@@ -560,7 +800,7 @@ def send_followup(id: str) -> None:
 
         return
 
-    followup: str = written_followup(id, channel, count)
+    followup: str = written_followup(id, channel, record)
 
     #they wrote back while it was being written, so the reply to that answers them instead
     if(followup == "" or wrote_back(id, record)):
@@ -722,13 +962,8 @@ def sms_main_chain(state: dict, id: str) -> str:
 
 #WRITTEN SMS MAIN
 #the middle written from the quiet conversation, run the way every chain is so a slow model gets its retries
-def written_sms_main(id: str, channel: str, count: int) -> str:
-    state: dict = quiet_state(id)
-
-    #which follow up in a row this is, so it never says an earlier one again
-    state["followup_number"] = count + 1
-
-    return retry.run_chain(sms_main_chain, state, id, [], channel, "SMS FOLLOW UP CHAIN ERROR")
+def written_sms_main(id: str, channel: str, record: dict[str, str]) -> str:
+    return retry.run_chain(sms_main_chain, followup_state(id, record), id, [], channel, "SMS FOLLOW UP CHAIN ERROR")
 
 
 #SMS NAME
@@ -773,7 +1008,7 @@ def send_sms_followup(id: str, channel: str, count: int, record: dict[str, str])
 
         return
 
-    main: str = written_sms_main(id, channel, count)
+    main: str = written_sms_main(id, channel, record)
 
     if(main == ""):
         print(f"SMS FOLLOW UP NOT SENT: no middle for {id} could go out, so theirs tries again tomorrow")
