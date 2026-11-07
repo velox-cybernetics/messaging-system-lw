@@ -257,6 +257,9 @@ COLOR_JOB_THRESHOLD: float = 0.5
 #a yes over this means they asked to book too, so the reply with the price ends on the schedule question
 BOOKING_INTENT_THRESHOLD: float = 0.5
 
+#a yes over this means they just nodded along to what we told them, so the schedule question finally gets its shot
+ACKS_INFO_THRESHOLD: float = 0.5
+
 #a yes over this lets a price into the shop's first reply, over half since the owner never wants one there they didn't ask for
 PRICE_QUESTION_THRESHOLD: float = 0.6
 
@@ -716,6 +719,14 @@ def last_question_asked(message_history: dict) -> str:
     return ""
 
 
+#ASKED LAST REPLY
+#our last reply asked them something, a pic ask counts, so the next one gets the every other reply breather
+def asked_last_reply(message_history: dict) -> bool:
+    last_reply: str = spacing.last_sent_reply(message_history)
+
+    return len(repeats.question_sentences(last_reply)) > 0 or spacing.asks_for_pic(last_reply)
+
+
 #QUESTION STATE
 #the question enforcer's slice: what we last asked, the chat so far, what they just said, and the draft
 def question_enforcer_state(state: dict, draft_reply: str) -> dict:
@@ -772,6 +783,12 @@ def question_enforcer(state: dict, draft_reply: str) -> tuple[str, float]:
     #a blank rule name only happens when jev's rounding ate every rule, so that counts as a pass
     if(broke_probability <= QUESTION_ENFORCER_THRESHOLD or rule_name == ""):
         print(f"QUESTION ENFORCER: False({broke_probability:.2f})")
+
+        return ("", broke_probability)
+
+    #asked again only counts right after the reply that asked it, so a nod to an answer in between hands the schedule question back
+    if(rule_name == "schedule_asked_again" and not asked_last_reply(state["message_history"]) and acks_info(state)):
+        print(f"QUESTION ENFORCER: False({broke_probability:.2f}) schedule_asked_again waved off, they just nodded along to our answer")
 
         return ("", broke_probability)
 
@@ -1526,6 +1543,18 @@ def booking_intent(state: dict) -> bool:
     print(f"BOOKING INTENT: {probability_yes:.2f}")
 
     return probability_yes > BOOKING_INTENT_THRESHOLD
+
+
+#ACKS INFO
+#"alright sounds good" to what we just told them is a nod, not a dead end, so the booking question is up next
+def acks_info(state: dict) -> bool:
+    ack_question: dict = {"type": "noul", "instructions": f"Is the customer only taking in or agreeing with what the shop's last reply told them in `current_user_message`, with nothing asked, picked, turned down or put off, and nothing in `message_history` saying they're still deciding, waiting on the vehicle or getting back to the shop?\n{pricing_examples.acks_info_examples()}"}
+
+    probability_yes: float = models.decision_answer("acks_info", ack_question, state)["noul"]
+
+    print(f"ACKS INFO: {probability_yes:.2f}")
+
+    return probability_yes > ACKS_INFO_THRESHOLD
 
 
 #PRICING REPLY

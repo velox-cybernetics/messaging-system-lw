@@ -388,7 +388,7 @@ def send_blooio_texts(recipient: str, texts: list[str], attachments: dict[int, l
 
 
 #**********CUSTOMER SENDS**********
-#sends the reply to the customer on the channel they wrote in on, in order and one at a time, and the owner's texts from ghl on the blooio line
+#sends the reply to the customer on the channel they wrote in on, in order and one at a time, and the owner's texts from ghl and the dashboard on the blooio line
 
 
 #SEND ON CHANNEL
@@ -450,6 +450,21 @@ def send_ghl_text(recipient: str, text: str, attachments: list[str]) -> bool:
     sent: bool = send_message("GHL TEXT", recipient, send_url, BLOOIO_API_KEY, payload)
 
     dashboard.log_outgoing(recipient, "blooio", [text], {0: attachments}, sent, False, from_ghl=True)
+
+    return sent
+
+
+#DASHBOARD TEXT
+#the owner typed it in the dashboard, but it leaves from hazel's number and lands in ghl on her channel, so nobody can tell he grabbed the wheel
+def send_dashboard_text(recipient: str, text: str) -> bool:
+    send_url: str = f"{BLOOIO_BASE_URL}/chats/{quote(recipient, safe='')}/messages"
+
+    #no typing bubble, he already did the typing
+    sent: bool = send_message("DASHBOARD TEXT", recipient, send_url, BLOOIO_API_KEY, {"text": text})
+
+    #ghl never sees blooio, so it goes in their conversation there like every text hazel sends
+    if(sent):
+        ghl.log_sent(recipient, [(text, [], time.time())])
 
     return sent
 

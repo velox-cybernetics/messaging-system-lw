@@ -221,6 +221,31 @@ def cut_off_list_asks(system_response: str, id: str) -> str:
 
 
 
+#**********INFO ACKS**********
+#they nodded along to what we told them, so the chat goes to booking instead of fizzling out
+
+
+#ACK BOOKING
+#"alright sounds good" to info ends on the schedule question once it's due, the one they'd have gotten if they'd asked nothing
+def ack_booking_question(state: dict, id: str, system_response: str) -> str:
+    #nothing going out, or it already asks something, so no second question piled on top
+    if(system_response.strip() == "" or len(repeats.question_sentences(system_response)) > 0 or spacing.asks_for_pic(system_response)):
+        return system_response
+
+    #our last reply already asked them something, so this one gets the every other reply breather
+    if(branches.asked_last_reply(state["message_history"])):
+        return system_response
+
+    #cheap checks first, jev only gets bugged when the schedule question could actually go out
+    if(not schedule_due(system_response, id) or not branches.acks_info(state)):
+        return system_response
+
+    print(f"INFO ACKED, SCHEDULE QUESTION ON THE END: {spacing.BOOKING_QUESTION}")
+
+    return f"{spacing.end_sentence(system_response)} {spacing.BOOKING_QUESTION}"
+
+
+
 #**********EARLY COLOR ASKS**********
 #the questions the exact price needs go out first and the color they want only after them, whichever branch wrote the reply
 
@@ -439,6 +464,9 @@ def main_route(state: dict, id: str) -> str:
     #only the shop's own questions end a pricing or small talk reply, so asking what else they want to know comes off, with the schedule question in its place once it's due
     if(route_result in ["service_pricing", "general_text"]):
         system_response = cut_off_list_asks(system_response, id)
+
+        #they just nodded along to what we told them, so it goes to booking instead of a dead end
+        system_response = ack_booking_question(state, id, system_response)
 
     #the color they want only gets asked once the exact price has what it needs, whichever branch wrote the reply
     system_response = cut_early_color_ask(state, id, system_response)

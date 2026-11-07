@@ -520,6 +520,40 @@ answer: False"""
 
 
 
+#**********ACKS INFO**********
+#what nodding along to the shop's answer looks like, so an ok to info gets the booking question instead of a shrug
+
+
+#ACKS INFO
+#read when a reply asks nothing and the schedule question is due, an ok to info counts, an ok to one of our questions never does
+def acks_info_examples() -> str:
+    return r"""Yes: in `current_user_message` they only take in or agree with what the shop's last reply told them, an answer to something they asked or info on the job, in any words ("alright sounds good", "ok cool", "gotcha", "got it", "makes sense", "perfect", "ok that works", "sounds good thanks", "👍"), with nothing else in it. It counts the same when they said yes to the schedule question earlier with a question on it, since the shop answered that question and their ok takes the answer in ("Yes is it possible to do monthly payments" answered with the financing, then "Alright sounds good").
+No: a message that asks something, picks, adds or changes something on the job, or pushes back on it. An ok that answers a question the shop's last reply asked is never taking in info: right after the shop asked whether they want to get on the schedule it's the yes to it, and right after it asked for a pic, the vehicle, the color or which option it's the answer to that ("ok", "sounds good"). So is wrapping up or putting it off ("ok ill think about it", "sounds good, ill let you know", "thanks for the info!"), saying they'll send something the shop asked for ("ok ill send it tonight"), and any ok once `message_history` says they're still deciding, shopping around, waiting on other quotes, waiting on the vehicle or that they'll reach out themselves, with nothing since saying they're ready, since that ok only closes it out till they are. A lead form is never this.
+Read `current_user_message` in light of `message_history`. `current_date_time` never changes the answer.
+Examples:
+state: {"current_user_message":{"user_media":{},"user_text":"Alright sounds good"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for front end ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Tacoma would run $1800 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and it comes with a lifetime warranty. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"Yes is it possible to do monthly payments or is it all at once"},"system_response_to_user_message_1":"Yeah, we do financing through Affirm, so you can split it into monthly payments. The estimate we send over through QuickBooks has Affirm as a way to pay, you'd apply with Affirm there, and once you're approved they handle it from there."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"ok cool"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my 2021 civic, sides and back"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Civic is $450 + tax, it blocks 99% of the UV and 90% of the heat. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"does it come with a warranty?"},"system_response_to_user_message_1":"Yeah, it comes with a lifetime warranty on any bubbling or peeling from the install, so we fix or replace it for free."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"gotcha that makes sense"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Front end PPF on the Camry is $1600 + tax, that covers the full hood, fenders, bumper, headlights and mirrors. Did you want to get the Camry on the schedule?","user_message_1":{"user_media":{},"user_text":"Can I pick it up the same day?"},"system_response_to_user_message_1":"No, the film sits overnight to cure and we do touch ups in the morning before pickup, so we'd need the Camry for about a day and a half."}}
+answer: True
+state: {"current_user_message":{"user_media":{},"user_text":"sounds good"},"message_history":{"user_message_0":{"user_media":{},"user_text":"full body ppf on my 2024 bmw x5"},"system_response_to_user_message_0":"Sweet, so full body PPF on the X5 would run $6900 + tax, which covers all the painted surfaces, and it comes with free side and rear window tint. Did you want to get the X5 on the schedule?"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"ok"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2021 civic"},"system_response_to_user_message_0":"For sure, a wrap on the Civic typically runs $2950 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"ok sounds good, ill let you know once i talk to my wife"},"message_history":{"user_message_0":{"user_media":{},"user_text":"whats a ceramic coating run on a 2022 tahoe"},"system_response_to_user_message_0":"A ceramic coating on the Tahoe would run $700 + tax, and it lasts around 4 years."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"ok thanks!"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2024 ram 1500"},"system_response_to_user_message_0":"A wrap on the 1500 typically runs $3450 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty.","user_message_1":{"user_media":{},"user_text":"its still getting shipped, ill text you once its here"},"system_response_to_user_message_1":"Sounds good, just reach out once it's here."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"got it, thank you"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my 2020 accord, sides and back"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Accord is $450 + tax, it blocks 99% of the UV and 90% of the heat.","user_message_1":{"user_media":{},"user_text":"cool, im waiting on a couple other quotes. how long does it take?"},"system_response_to_user_message_1":"Totally get it, the sides and rear on the Accord take about 3 to 4 hours, so you'd drop it off in the morning and it's ready the same day."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"alright, does it come with a warranty?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Front end PPF on the Camry is $1600 + tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
+answer: False
+state: {"current_user_message":{"user_media":{},"user_text":"sounds good, can we add the windshield too?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my 2021 civic, sides and back"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Civic is $450 + tax, it blocks 99% of the UV and 90% of the heat. Did you want to hop on the schedule?","user_message_1":{"user_media":{},"user_text":"does it come with a warranty?"},"system_response_to_user_message_1":"Yeah, it comes with a lifetime warranty on any bubbling or peeling from the install, so we fix or replace it for free."}}
+answer: False"""
+
+
+
 #**********PRICE QUESTION**********
 #what asking about the price looks like, so the shop's first reply only gives one when they asked for it
 

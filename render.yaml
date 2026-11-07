@@ -52,6 +52,9 @@ services:
         sync: false
       - key: DASH_REDIS_TOKEN
         sync: false
+      #the dashboard's bearer token when it hands the system a text to send as hazel, same value as DASH_SEND_SECRET in vercel
+      - key: DASH_SEND_SECRET
+        sync: false
       - key: GHL_API_KEY
         sync: false
       - key: GHL_LOCATION_ID

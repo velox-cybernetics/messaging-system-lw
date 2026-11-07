@@ -226,6 +226,20 @@ def add_to_last_message(key: str, text: str) -> None:
     REDIS_CLIENT.lset(key, -1, f"{last_messages[0]}\n{text}".strip())
 
 
+#SYSTEM TEXT
+#a text that goes on file as the system's own reply, the answer to their last message if a broken reply left it hanging, else tacked onto our last one
+def add_system_text(id: str, text: str) -> None:
+    system_key: str = f"systemres_{id}"
+
+    #their last message never got its reply on file, so this is it, the folding can wait for the next real reply
+    if(REDIS_CLIENT.llen(f"usermsg_{id}") > REDIS_CLIENT.llen(system_key)):
+        REDIS_CLIENT.rpush(system_key, text)
+
+        return
+
+    add_to_last_message(system_key, text)
+
+
 #REPLACE MESSAGE
 #the newest copy of a message on file becomes its new form, so the turns after this one read what this one read
 def replace_message(key: str, old_value: dict, new_value: dict) -> None:

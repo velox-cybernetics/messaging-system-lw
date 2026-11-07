@@ -47,6 +47,21 @@ def write_color_pic_ask(id: str, system_response: str) -> None:
         print(f"COLOR PIC ASK ERROR: {error}")
 
 
+#DASHBOARD TEXT
+#the owner typed it, but on file it's hazel's own words, so the next reply picks up right where he steered it
+def write_dashboard_text(id: str, text: str) -> None:
+    try:
+        log.add_system_text(id, text)
+
+    except Exception as error:
+        print(f"WRITE ERROR: {error}")
+
+    #a price or a pic ask he sends counts the same as one she sends, no special treatment for the boss
+    write_price_sent(id, text)
+
+    write_color_pic_ask(id, text)
+
+
 
 #**********SENDING**********
 #puts the finished reply on their phone a few sentences at a time, then saves it, once the final check lets it through

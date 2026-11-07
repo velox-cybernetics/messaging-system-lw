@@ -8,13 +8,17 @@ import * as shop from "./_helpers/shop.js";
 
 
 //**********GLOBALS**********
-//blooio and how much of a thread the feed keeps, keep in step with helpers/channels/senders.py and helpers/state/dashboard.py
+//the system and how much of a thread the feed keeps, keep in step with servers/dashboard_texts.py and helpers/state/dashboard.py
 
 
-//BLOOIO
-const BLOOIO_BASE_URL: string = "https://backend.blooio.com/v2/api";
+//SYSTEM
+//the bot on render sends it as hazel, so it's in her memory and in ghl like she wrote it, same secret as DASH_SEND_SECRET on render
+const SYSTEM_URL: string = (process.env.SYSTEM_URL ?? "").replace(/\/$/, "");
 
-const BLOOIO_API_KEY: string = process.env.BLOOIO_API_KEY ?? "";
+const DASH_SEND_SECRET: string = process.env.DASH_SEND_SECRET ?? "";
+
+//one blooio send and a few writes on file, a system taking longer than this is having a day
+const SYSTEM_TIMEOUT_MS: number = 25000;
 
 
 //THREAD LIMITS
@@ -31,36 +35,41 @@ const TEXT_MAX: number = 2000;
 
 
 //**********SEND**********
-//a text typed in the dashboard goes out on the blooio line, so only a forms tab conversation can get one
+//a text typed in the dashboard goes out through the system as hazel on the blooio line, so only a forms tab conversation can get one
 
 
-//SEND TO BLOOIO
-//null when blooio took it, the reason when it didn't
-async function send_to_blooio(id: string, text: string): Promise<string | null> {
+//SEND TO SYSTEM
+//null when the system sent it, the reason when it didn't
+async function send_to_system(id: string, text: string): Promise<string | null> {
     try {
-        const response: Response = await fetch(`${BLOOIO_BASE_URL}/chats/${encodeURIComponent(id)}/messages`, {"method": "POST", "headers": {"Authorization": `Bearer ${BLOOIO_API_KEY}`, "Content-Type": "application/json"}, "body": JSON.stringify({"text": text})});
+        const response: Response = await fetch(`${SYSTEM_URL}/dashboard/text`, {"method": "POST", "headers": {"Authorization": `Bearer ${DASH_SEND_SECRET}`, "Content-Type": "application/json"}, "body": JSON.stringify({"id": id, "text": text}), "signal": AbortSignal.timeout(SYSTEM_TIMEOUT_MS)});
 
         if(response.status >= 400) {
-            const detail: string = (await response.text()).slice(0, 300);
+            const reason: unknown = shop.fields_of(shop.parse_json(await response.text())).error;
 
-            console.error(`[BLOOIO] dashboard send to ${id} failed ${response.status}: ${detail}`);
+            console.error(`[SYSTEM] dashboard send to ${id} failed ${response.status}: ${String(reason)}`);
 
-            return `Blooio refused it (${response.status}).`;
+            //the system says why in its own words, like hazel being mid-reply for them
+            if(typeof reason === "string") {
+                return reason;
+            }
+
+            return `The system refused it (${response.status}).`;
         }
 
         return null;
     }
 
     catch(error: unknown) {
-        console.error(`[BLOOIO] dashboard send to ${id} errored:`, error);
+        console.error(`[SYSTEM] dashboard send to ${id} errored:`, error);
 
-        return "Couldn't reach Blooio.";
+        return "Couldn't reach the system.";
     }
 }
 
 
 //SEND TEXT
-//the text shows in their thread either way, marked failed when blooio didn't take it
+//the text shows in their thread either way, marked failed when the system didn't send it
 async function send_text(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -68,8 +77,8 @@ async function send_text(request: Request): Promise<Response> {
         return refused;
     }
 
-    if(BLOOIO_API_KEY === "") {
-        return http.fail(500, "BLOOIO_API_KEY isn't set on the dashboard.");
+    if(SYSTEM_URL === "" || DASH_SEND_SECRET === "") {
+        return http.fail(500, "SYSTEM_URL or DASH_SEND_SECRET isn't set on the dashboard.");
     }
 
     const body: Record<string, unknown> | null = await http.read_body(request);
@@ -98,7 +107,7 @@ async function send_text(request: Request): Promise<Response> {
         return http.fail(400, "Only texts on the Blooio line can be sent from here.");
     }
 
-    const failure: string | null = await send_to_blooio(id, text);
+    const failure: string | null = await send_to_system(id, text);
 
     const at: number = Date.now();
 
