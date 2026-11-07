@@ -66,7 +66,7 @@
                                 <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
                                 <span id="switch-label">System on</span>
                             </button>
-                            <button type="button" class="icon-button upvote-button" id="upvote" aria-label="Upvote the system's last reply" title="Upvote the system's last reply" data-stage="idle">
+                            <button type="button" class="icon-button upvote-button" id="upvote" aria-label="Up-weight the last response" title="Up-weight the last response" data-stage="idle">
                                 <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                                     <path d="M12 19.5V5m0 0-6 6m6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
@@ -88,7 +88,7 @@
                     </header>
                     <div class="log" id="log"></div>
                     <form class="compose" id="compose" hidden>
-                        <textarea id="compose-text" rows="2" maxlength="2000" placeholder="Text them from the Blooio line" aria-label="Text to send"></textarea>
+                        <textarea id="compose-text" rows="1" maxlength="2000" placeholder="Text them from the Blooio line" aria-label="Text to send"></textarea>
                         <button type="submit" class="button" id="compose-send">Send</button>
                     </form>
                 </section>
@@ -113,16 +113,13 @@
 
 
         <!--UPVOTE DIALOG-->
-        <dialog class="dialog" id="upvote-dialog" aria-labelledby="upvote-title">
+        <dialog class="dialog" id="upvote-dialog" aria-label="Up-weight the last response">
             <form id="upvote-form">
-                <h2 id="upvote-title">Upvote the last reply</h2>
-                <p class="dialog-note">The system's last reply goes in as an example for the generator that wrote it, with why it was good, then the system gets the update. The ring around the arrow fills as it does.</p>
-                <label for="upvote-text">What made it good?</label>
-                <textarea id="upvote-text" rows="4" maxlength="2000"></textarea>
+                <textarea id="upvote-text" rows="3" maxlength="2000" placeholder="Reason for up-weighting?" aria-label="Reason for up-weighting"></textarea>
                 <p class="error" id="upvote-error" role="alert" hidden></p>
                 <div class="dialog-actions">
                     <button type="button" class="button quiet" id="upvote-cancel">Cancel</button>
-                    <button type="submit" class="button" id="upvote-send">Add example</button>
+                    <button type="submit" class="button" id="upvote-send">Up-weight</button>
                 </div>
             </form>
         </dialog>

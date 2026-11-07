@@ -188,10 +188,11 @@ function caption_text(data: OVERVIEW): string {
 
 
 //BAR TITLE
-function bar_title(bar: BAR): string {
+//day bars are the shop's hours, told on the viewer's own clock
+function bar_title(bar: BAR, today: string): string {
     switch(RANGE_PICKED) {
         case "day":
-            return `${shared.hour_text(Number(bar.key))} to ${shared.hour_text((Number(bar.key) + 1) % 24)}`;
+            return `${shared.shop_hour_text(today, Number(bar.key))} to ${shared.shop_hour_text(today, Number(bar.key) + 1)}`;
 
         case "ytd":
             return shared.day_text(bar.key, {"month": "long"});
@@ -216,12 +217,12 @@ function month_label(bar: BAR): string {
 
 
 //BAR LABEL
-//empty when labeling every bar would crowd the axis
-function bar_label(bar: BAR, index: number): string {
+//empty when labeling every bar would crowd the axis, day bars are the shop's hours on the viewer's own clock
+function bar_label(bar: BAR, index: number, today: string): string {
     switch(RANGE_PICKED) {
         case "day":
             if(index % 3 === 0) {
-                return shared.hour_text(index);
+                return shared.shop_hour_text(today, Number(bar.key));
             }
 
             return "";
@@ -397,7 +398,7 @@ function remove_tip(): void {
 
 
 //SHOW TIP
-function show_tip(bar: BAR, series: SERIES[], slot_left: number, slot_width: number, bar_top: number): void {
+function show_tip(bar: BAR, series: SERIES[], today: string, slot_left: number, slot_width: number, bar_top: number): void {
     const rows: HTMLParagraphElement[] = [];
 
     for(const each of series) {
@@ -410,7 +411,7 @@ function show_tip(bar: BAR, series: SERIES[], slot_left: number, slot_width: num
         rows.push(shared.make_element("p", {"class": `tip-row ${each.class_name}-key`}, shared.make_element("strong", {}, String(bar[each.field])), shared.make_element("span", {}, name)));
     }
 
-    const tip: HTMLDivElement = shared.make_element("div", {"class": "tip"}, shared.make_element("p", {"class": "tip-title"}, bar_title(bar)), ...rows);
+    const tip: HTMLDivElement = shared.make_element("div", {"class": "tip"}, shared.make_element("p", {"class": "tip-title"}, bar_title(bar, today)), ...rows);
 
     remove_tip();
 
@@ -454,12 +455,12 @@ function hide_tip(): void {
 
 
 //POINT AT BAR
-function point_at_bar(group: SVGGElement, bar: BAR, series: SERIES[], left: number, slot: number, bar_top: number): void {
+function point_at_bar(group: SVGGElement, bar: BAR, series: SERIES[], today: string, left: number, slot: number, bar_top: number): void {
     hide_tip();
 
     group.classList.add("is-active");
 
-    show_tip(bar, series, left, slot, bar_top);
+    show_tip(bar, series, today, left, slot, bar_top);
 }
 
 
@@ -484,6 +485,9 @@ function render_chart(): void {
     const series: SERIES[] = CHART_SERIES[KIND];
 
     const bars: BAR[] = LATEST.bars;
+
+    //the shop date the day range's hours are on
+    const today: string = LATEST.today;
 
     const values: number[] = [];
 
@@ -566,14 +570,14 @@ function render_chart(): void {
 
             const final_top: number = bar_top;
 
-            group.addEventListener("pointerenter", (): void => { point_at_bar(group, bar, series, left, slot, final_top); });
+            group.addEventListener("pointerenter", (): void => { point_at_bar(group, bar, series, today, left, slot, final_top); });
 
-            group.addEventListener("pointerdown", (): void => { point_at_bar(group, bar, series, left, slot, final_top); });
+            group.addEventListener("pointerdown", (): void => { point_at_bar(group, bar, series, today, left, slot, final_top); });
         }
 
         drawing.append(group);
 
-        const label: string = bar_label(bar, index);
+        const label: string = bar_label(bar, index, today);
 
         const label_x: number = left + slot / 2;
 

@@ -320,7 +320,7 @@ async function send_upvote(request: Request): Promise<Response> {
     const missing: string = missing_settings();
 
     if(missing !== "") {
-        return http.fail(500, `Set ${missing} in Vercel first, an upvote needs them to write the example and push it.`);
+        return http.fail(500, `Set ${missing} in Vercel first, an up-weight needs them to write the example and push it.`);
     }
 
     const body: Record<string, unknown> | null = await http.read_body(request);
@@ -338,7 +338,7 @@ async function send_upvote(request: Request): Promise<Response> {
     }
 
     if(!shop.valid_id(id) || reason === "") {
-        return http.fail(400, "Write what made it good before sending the upvote.");
+        return http.fail(400, "Write a reason before up-weighting.");
     }
 
     if(reason.length > REASON_MAX) {
@@ -350,7 +350,7 @@ async function send_upvote(request: Request): Promise<Response> {
     const writer: WRITER | null = parse_writer(results[0]);
 
     if(writer === null) {
-        return http.fail(404, "No generator is on file for this conversation's last reply. Only replies written since upvotes came in have one, and it's kept 30 days.");
+        return http.fail(404, "No generator is on file for this conversation's last reply. Only replies written since up-weighting came in have one, and it's kept 30 days.");
     }
 
     if(writer.generator === "") {
@@ -362,7 +362,7 @@ async function send_upvote(request: Request): Promise<Response> {
     }
 
     if(!went_out(shop.parse_entries(results[1]), writer.at)) {
-        return http.fail(409, "The system's newest reply never went out, so there's nothing to upvote till one does.");
+        return http.fail(409, "The system's newest reply never went out, so there's nothing to up-weight till one does.");
     }
 
     //read off the newest commit, so the push only lands if nothing else did first

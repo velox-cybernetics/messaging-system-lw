@@ -65,8 +65,8 @@ type UPVOTE_STAGE = "idle" | "writing" | "deploying" | "done" | "failed";
 
 
 //UPVOTE
-//the convo it's for, how far it got, the commit it went out in and when it got pushed
-type UPVOTE = {id: string; stage: UPVOTE_STAGE; commit: string; pushed_at: number};
+//the convo it's for and who's on it, how far it got, when it was sent, the commit it went out in and when it got pushed, the thread's newest entry when it was sent, and whether its line is in the log yet
+type UPVOTE = {id: string; name: string; stage: UPVOTE_STAGE; sent_at: number; commit: string; pushed_at: number; after: number; logged: boolean};
 
 
 //TAB PARTS
@@ -103,13 +103,48 @@ const UPVOTE_CHECK_MS: number = 15 * 1000;
 
 const UPVOTE_WAIT_MS: number = 15 * 60 * 1000;
 
+//the ring takes 600ms to close all the way (messages.css), its line goes in the log right after
+const UPVOTE_FILL_MS: number = 700;
+
+//a full ring stays a moment after its line goes in, then the arrow goes back to how it was
+const UPVOTE_HOLD_MS: number = 2500;
+
 //a failed one stays red as long as its toast shows, then clears
 const UPVOTE_RED_MS: number = 5000;
 
 
+//UPVOTE FILL
+//the ring creeps toward 40% while the example gets written and toward 92% while render deploys, slowing as it goes so it never sits still or looks done early, then closes all the way once the system runs it
+const WRITING_FILL: number = 0.4;
+
+const WRITING_PACE_MS: number = 12 * 1000;
+
+const DEPLOYING_FILL: number = 0.92;
+
+const DEPLOYING_PACE_MS: number = 75 * 1000;
+
+//it moves on every second, the css glides it between
+const UPVOTE_TICK_MS: number = 1000;
+
+
+//UPVOTE KEY
+//a deploying upvote is kept in the tab's storage, so a reload picks its ring back up
+const UPVOTE_KEY: string = "upvote";
+
+
+//COMMIT SHA
+//the only commit a kept upvote can carry
+const COMMIT_SHA: RegExp = /^[0-9a-f]{40}$/;
+
+
+//UPWEIGHTED
+//the line an upvote leaves in the conversation once its ring fills
+const UPWEIGHTED: string = "Response up-weighted!";
+
+
 //UPVOTE TITLES
 //what the arrow says at each stage when you hover it
-const UPVOTE_TITLES: Record<UPVOTE_STAGE, string> = {"idle": "Upvote the system's last reply", "writing": "Writing the example and pushing it…", "deploying": "Pushed, waiting on the system to run it…", "done": "Updated, the system is running with this example", "failed": "The upvote didn't go through"};
+const UPVOTE_TITLES: Record<UPVOTE_STAGE, string> = {"idle": "Up-weight the last response", "writing": "Up-weighting…", "deploying": "Up-weighting, the system is updating…", "done": UPWEIGHTED, "failed": "The up-weight didn't go through"};
 
 
 //LIST PARTS
@@ -247,6 +282,12 @@ let OFF_TABS: Set<TAB> = new Set<TAB>();
 
 //the one upvote going, null till there's one
 let CURRENT_UPVOTE: UPVOTE | null = null;
+
+//moves the ring on every second while the open convo's upvote is going, 0 when it isn't
+let UPVOTE_TICKER: number = 0;
+
+//the open thread's newest entry, an upvote's own line is anything newer than it was when the upvote went
+let NEWEST_AT: number = 0;
 
 
 
@@ -400,9 +441,16 @@ function sender_note(from_ghl: boolean | undefined, sms: boolean | undefined): H
 
 
 
+//EVENT NODE
+//a note from the system between the messages, its words then its time
+function event_node(class_name: string, text: string, time: HTMLTimeElement | false): HTMLParagraphElement {
+    return shared.make_element("p", {"class": class_name}, shared.make_element("span", {"class": "event-text"}, text), time);
+}
+
+
 //ENTRY NODE
 function entry_node(entry: ENTRY): HTMLElement {
-    const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(entry.at).toISOString()}, shared.shop_parts(entry.at).time);
+    const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(entry.at).toISOString()}, shared.local_time(entry.at));
 
     if(entry.kind === "in") {
         const footer: HTMLElement = shared.make_element("footer", {}, time, message_note(entry.off, "System was off, not answered"));
@@ -424,47 +472,55 @@ function entry_node(entry: ENTRY): HTMLElement {
     }
 
     if(entry.kind === "hil") {
-        return shared.make_element("p", {"class": "event is-hil"}, `HIL: ${entry.reason}`, time);
+        return event_node("event is-hil", `HIL: ${entry.reason}`, time);
     }
 
     if(entry.kind === "booked") {
-        return shared.make_element("p", {"class": "event is-booked"}, `Booked HIL: ${entry.reason}`, time);
+        return event_node("event is-booked", `Booked HIL: ${entry.reason}`, time);
     }
 
     if(entry.kind === "switch") {
         if(entry.on) {
-            return shared.make_element("p", {"class": "event"}, "System switched back on from the dashboard.", time);
+            return event_node("event", "System switched back on from the dashboard.", time);
         }
 
         //the owner texting them from ghl switches them off on its own
         if(entry.by === "ghl") {
-            return shared.make_element("p", {"class": "event is-off"}, "System switched off: the owner texted them from GHL.", time);
+            return event_node("event is-off", "System switched off: the owner texted them from GHL.", time);
         }
 
-        return shared.make_element("p", {"class": "event is-off"}, "System switched off from the dashboard.", time);
+        return event_node("event is-off", "System switched off from the dashboard.", time);
     }
 
     if(entry.kind === "flag") {
-        return shared.make_element("p", {"class": "event is-hil"}, `Flagged: ${entry.feedback}`, time);
+        return event_node("event is-hil", `Flagged: ${entry.feedback}`, time);
     }
 
     if(entry.kind === "upvote") {
-        return shared.make_element("p", {"class": "event is-upvote"}, `Upvoted, Ex ${entry.example} in ${entry.generator}: ${entry.reason}`, time);
+        return event_node("event is-upvote", UPWEIGHTED, time);
     }
 
-    return shared.make_element("p", {"class": "event"}, "An entry this dashboard doesn't know how to show.");
+    return event_node("event", "An entry this dashboard doesn't know how to show.", false);
 }
 
 
 //RENDER LOG
-//a day heading every time the shop date changes
+//a day heading every time the viewer's date changes, and an upvote's own line waits on its ring
 function render_log(entries: ENTRY[]): void {
     const nodes: HTMLElement[] = [];
 
     let last_date: string = "";
 
+    NEWEST_AT = 0;
+
     for(const entry of entries) {
-        const date: string = shared.shop_parts(entry.at).date;
+        NEWEST_AT = Math.max(NEWEST_AT, entry.at);
+
+        if(is_waiting(entry)) {
+            continue;
+        }
+
+        const date: string = shared.local_date(entry.at);
 
         if(date !== last_date) {
             nodes.push(shared.make_element("h3", {"class": "day"}, shared.day_label(date)));
@@ -1176,21 +1232,65 @@ async function send_flag(event: SubmitEvent): Promise<void> {
 
 
 //**********UPVOTE**********
-//the system's last reply was good, so it goes in as an example for the generator that wrote it, and the ring around the arrow fills as the system gets the update
+//the system's last reply was good, so it goes in as an example for the generator that wrote it, the ring around the arrow fills all the way as the system gets the update, then the conversation logs it
+
+
+//UPVOTE FILL
+//how much of the ring is filled, from how long the stage it's on has been going
+function upvote_fill(upvote: UPVOTE, now: number): number {
+    if(upvote.stage === "writing") {
+        return WRITING_FILL * (1 - Math.exp((upvote.sent_at - now) / WRITING_PACE_MS));
+    }
+
+    if(upvote.stage === "deploying") {
+        return WRITING_FILL + (DEPLOYING_FILL - WRITING_FILL) * (1 - Math.exp((upvote.pushed_at - now) / DEPLOYING_PACE_MS));
+    }
+
+    return 1;
+}
 
 
 //RENDER UPVOTE
-//the ring only shows on the convo the upvote is for
+//the ring only shows on the convo the upvote is for, filled by how long it's been going, so a reload or coming back to the convo picks it up where it should be
 function render_upvote(): void {
     let stage: UPVOTE_STAGE = "idle";
 
+    let fill: number = 0;
+
     if(CURRENT_UPVOTE !== null && CURRENT_UPVOTE.id === CURRENT_ID) {
         stage = CURRENT_UPVOTE.stage;
+
+        fill = upvote_fill(CURRENT_UPVOTE, Date.now());
     }
 
     UPVOTE_BUTTON.dataset.stage = stage;
 
+    UPVOTE_BUTTON.style.setProperty("--fill", String(fill));
+
     UPVOTE_BUTTON.title = UPVOTE_TITLES[stage];
+
+    const going: boolean = stage === "writing" || stage === "deploying";
+
+    if(going && UPVOTE_TICKER === 0) {
+        UPVOTE_TICKER = window.setInterval(render_upvote, UPVOTE_TICK_MS);
+    }
+
+    else if(!going && UPVOTE_TICKER !== 0) {
+        window.clearInterval(UPVOTE_TICKER);
+
+        UPVOTE_TICKER = 0;
+    }
+}
+
+
+//IS WAITING
+//the upvote's own line is anything newer than the thread's newest entry when it went, kept out of the log till the ring fills
+function is_waiting(entry: ENTRY): boolean {
+    if(entry.kind !== "upvote" || CURRENT_UPVOTE === null || CURRENT_UPVOTE.logged) {
+        return false;
+    }
+
+    return CURRENT_UPVOTE.id === CURRENT_ID && entry.at > CURRENT_UPVOTE.after;
 }
 
 
@@ -1202,7 +1302,7 @@ function open_upvote(): void {
 
     //one at a time, a second push would land while render is still deploying the first
     if(CURRENT_UPVOTE !== null && (CURRENT_UPVOTE.stage === "writing" || CURRENT_UPVOTE.stage === "deploying")) {
-        shared.toast("The last upvote is still updating the system. This one can go once its ring fills.");
+        shared.toast("Still up-weighting the last one. This one can go once its ring fills.");
 
         return;
     }
@@ -1233,14 +1333,14 @@ async function send_upvote(event: SubmitEvent): Promise<void> {
     const reason: string = UPVOTE_TEXT.value.trim();
 
     if(reason === "") {
-        UPVOTE_ERROR.textContent = "Write what made it good first.";
+        UPVOTE_ERROR.textContent = "Write a reason first.";
 
         UPVOTE_ERROR.hidden = false;
 
         return;
     }
 
-    const upvote: UPVOTE = {"id": CURRENT_CONVO.id, "stage": "writing", "commit": "", "pushed_at": 0};
+    const upvote: UPVOTE = {"id": CURRENT_CONVO.id, "name": convo_title(CURRENT_CONVO), "stage": "writing", "sent_at": Date.now(), "commit": "", "pushed_at": 0, "after": NEWEST_AT, "logged": false};
 
     CURRENT_UPVOTE = upvote;
 
@@ -1257,17 +1357,15 @@ async function send_upvote(event: SubmitEvent): Promise<void> {
 
         upvote.pushed_at = Date.now();
 
+        save_upvote(upvote);
+
         render_upvote();
-
-        shared.toast(`Ex ${result.example} went in ${result.generator} and got pushed. The ring fills once the system is running it.`);
-
-        load_thread(false);
 
         check_upvote(upvote);
     }
 
     catch(error: unknown) {
-        let message: string = "The upvote didn't go through. Check your connection.";
+        let message: string = "The up-weight didn't go through. Check your connection.";
 
         if(error instanceof shared.ServerError) {
             message = error.message;
@@ -1285,11 +1383,7 @@ async function check_upvote(upvote: UPVOTE): Promise<void> {
         const live: LIVE_RESULT = await shared.ask_server<LIVE_RESULT>(`/api/upvote?commit=${upvote.commit}`);
 
         if(live.live) {
-            upvote.stage = "done";
-
-            render_upvote();
-
-            shared.toast("Updated. The system is running with the new example.");
+            fill_upvote(upvote);
 
             return;
         }
@@ -1309,21 +1403,63 @@ async function check_upvote(upvote: UPVOTE): Promise<void> {
 }
 
 
+//FILL UPVOTE
+//the system runs it, so the ring closes all the way, and only then does the conversation log it
+function fill_upvote(upvote: UPVOTE): void {
+    upvote.stage = "done";
+
+    forget_upvote();
+
+    render_upvote();
+
+    window.setTimeout((): void => { log_upvote(upvote); }, UPVOTE_FILL_MS);
+}
+
+
+//LOG UPVOTE
+//its line goes in the open thread, or a toast says so from anywhere else, then the arrow goes back to how it was
+async function log_upvote(upvote: UPVOTE): Promise<void> {
+    upvote.logged = true;
+
+    window.setTimeout((): void => { clear_upvote(upvote); }, UPVOTE_HOLD_MS);
+
+    if(upvote.id !== CURRENT_ID) {
+        shared.toast(`Response up-weighted for ${upvote.name}.`);
+
+        return;
+    }
+
+    await load_thread(false);
+
+    //another convo got picked while it loaded
+    if(upvote.id !== CURRENT_ID) {
+        return;
+    }
+
+    const lines: NodeListOf<HTMLElement> = LOG.querySelectorAll<HTMLElement>(".event.is-upvote");
+
+    lines[lines.length - 1]?.classList.add("is-arriving");
+}
+
+
 //FAIL UPVOTE
-//the ring goes red with what broke, then clears and says to try again once that's fixed
+//the ring goes red while the toast says what broke, then clears
 function fail_upvote(upvote: UPVOTE, message: string): void {
     upvote.stage = "failed";
+
+    forget_upvote();
 
     render_upvote();
 
     shared.toast(message, true);
 
-    window.setTimeout((): void => { clear_upvote(upvote, message); }, UPVOTE_RED_MS);
+    window.setTimeout((): void => { clear_upvote(upvote); }, UPVOTE_RED_MS);
 }
 
 
 //CLEAR UPVOTE
-function clear_upvote(upvote: UPVOTE, message: string): void {
+//the arrow goes back to how it was
+function clear_upvote(upvote: UPVOTE): void {
     //a newer upvote already took its place
     if(CURRENT_UPVOTE !== upvote) {
         return;
@@ -1333,9 +1469,79 @@ function clear_upvote(upvote: UPVOTE, message: string): void {
 
     render_upvote();
 
-    shared.toast(`Try again after fixing: ${message}`, true);
+    //a push that went out but never went live still gets its line
+    if(!upvote.logged && upvote.id === CURRENT_ID) {
+        load_thread(false);
+    }
 }
 
+
+//SAVE UPVOTE
+function save_upvote(upvote: UPVOTE): void {
+    try {
+        sessionStorage.setItem(UPVOTE_KEY, JSON.stringify(upvote));
+    }
+
+    catch {
+        //storage is off, the ring just won't make it through a reload
+    }
+}
+
+
+//FORGET UPVOTE
+function forget_upvote(): void {
+    try {
+        sessionStorage.removeItem(UPVOTE_KEY);
+    }
+
+    catch {
+        //storage is off, so nothing was kept
+    }
+}
+
+
+//SAVED UPVOTE
+//null when nothing's kept or it isn't a deploying upvote this page wrote
+function saved_upvote(): UPVOTE | null {
+    let saved: unknown = null;
+
+    try {
+        saved = JSON.parse(sessionStorage.getItem(UPVOTE_KEY) ?? "null");
+    }
+
+    catch {
+        return null;
+    }
+
+    if(saved === null || typeof saved !== "object") {
+        return null;
+    }
+
+    const fields: Record<string, unknown> = saved as Record<string, unknown>;
+
+    if(typeof fields.id !== "string" || typeof fields.name !== "string" || fields.stage !== "deploying" || typeof fields.sent_at !== "number" || typeof fields.commit !== "string" || !COMMIT_SHA.test(fields.commit) || typeof fields.pushed_at !== "number" || typeof fields.after !== "number") {
+        return null;
+    }
+
+    return {"id": fields.id, "name": fields.name, "stage": "deploying", "sent_at": fields.sent_at, "commit": fields.commit, "pushed_at": fields.pushed_at, "after": fields.after, "logged": false};
+}
+
+
+//RESUME UPVOTE
+//a reload mid deploy picks the checks back up, so the ring still fills and its line still waits for it
+function resume_upvote(): void {
+    const upvote: UPVOTE | null = saved_upvote();
+
+    if(upvote === null) {
+        forget_upvote();
+
+        return;
+    }
+
+    CURRENT_UPVOTE = upvote;
+
+    check_upvote(upvote);
+}
 
 
 
@@ -1361,6 +1567,8 @@ async function send_text(event: SubmitEvent): Promise<void> {
         await shared.ask_server("/api/send", "POST", {"id": CURRENT_CONVO.id, "text": text});
 
         COMPOSE_TEXT.value = "";
+
+        fit_compose();
     }
 
     catch(error: unknown) {
@@ -1395,6 +1603,15 @@ function send_on_enter(event: KeyboardEvent): void {
 
         COMPOSE_FORM.requestSubmit();
     }
+}
+
+
+//FIT COMPOSE
+//the box grows with what's typed till it hits its max height, then scrolls
+function fit_compose(): void {
+    COMPOSE_TEXT.style.height = "auto";
+
+    COMPOSE_TEXT.style.height = `${COMPOSE_TEXT.scrollHeight + COMPOSE_TEXT.offsetHeight - COMPOSE_TEXT.clientHeight}px`;
 }
 
 
@@ -1486,8 +1703,13 @@ COMPOSE_FORM.addEventListener("submit", send_text);
 
 COMPOSE_TEXT.addEventListener("keydown", send_on_enter);
 
+COMPOSE_TEXT.addEventListener("input", fit_compose);
+
 
 //FIRST LOAD
+//a reload mid upvote picks its ring back up first, so its line keeps waiting in the first draw
+resume_upvote();
+
 remember_place();
 
 load_list();

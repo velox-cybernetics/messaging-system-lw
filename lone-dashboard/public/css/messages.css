@@ -389,6 +389,11 @@ time {
     color: var(--paint);
 }
 
+/*a tap shows where it landed, since fingers don't hover*/
+.icon-button:active {
+    background: var(--smoke);
+}
+
 .flag-button.is-flagged {
     border-color: var(--hazard);
     color: var(--hazard);
@@ -399,7 +404,7 @@ time {
 }
 
 /*UPVOTE RING*/
-/*the ring around the up arrow fills green as the example gets written and pushed, then once the system runs it, and goes red when something broke*/
+/*the ring around the up arrow keeps filling green while the example gets written and pushed and the system updates, closes all the way once the system runs it, and goes red when something broke*/
 .upvote-button {
     position: relative;
 }
@@ -413,31 +418,29 @@ time {
     transform: rotate(-90deg);
 }
 
-/*the circle is 2 x pi x 24, about 150.8 around, so each stage's offset is the part of it still empty*/
+/*the circle is 2 x pi x 24, about 150.8 around, --fill (render_upvote in messages.ts) is how much of it shows*/
 .upvote-ring circle {
     fill: none;
     stroke: var(--go);
     stroke-width: 2.5;
     stroke-linecap: round;
     stroke-dasharray: 150.8;
-    stroke-dashoffset: 150.8;
+    stroke-dashoffset: calc(150.8px * (1 - var(--fill, 0)));
     opacity: 0;
     transition: stroke-dashoffset 600ms var(--ease), stroke var(--quick) var(--ease), opacity var(--quick) var(--ease);
 }
 
-.upvote-button[data-stage="writing"] circle {
-    stroke-dashoffset: 100.5;
-    opacity: 1;
-}
-
+/*while it's going the fill moves on every second, so it glides between at an even pace*/
+.upvote-button[data-stage="writing"] circle,
 .upvote-button[data-stage="deploying"] circle {
-    stroke-dashoffset: 50.3;
     opacity: 1;
+    transition-duration: 1s, var(--quick), var(--quick);
+    transition-timing-function: linear, var(--ease), var(--ease);
 }
 
+/*full closes the rest of the way in 600ms, the conversation logs it right after (UPVOTE_FILL_MS in messages.ts)*/
 .upvote-button[data-stage="done"] circle,
 .upvote-button[data-stage="failed"] circle {
-    stroke-dashoffset: 0;
     opacity: 1;
 }
 
@@ -485,15 +488,18 @@ time {
     border-top: 1px solid var(--seam);
 }
 
+/*starts one line tall and grows with what's typed (fit_compose in messages.ts), so no drag handle*/
 .compose textarea {
     flex: 1;
     min-width: 0;
+    min-height: 40px;
     max-height: 160px;
-    padding: 10px 12px;
+    padding: 8px 16px;
     border: 1px solid var(--seam);
-    border-radius: 12px;
+    border-radius: 20px;
     background: var(--smoke);
-    resize: vertical;
+    line-height: 1.4;
+    resize: none;
 }
 
 .log-note {
@@ -503,12 +509,23 @@ time {
     text-align: center;
 }
 
+/*a day's heading sits between two hairlines*/
 .day {
-    align-self: center;
-    margin: 12px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0 0;
     color: var(--haze);
     font-size: var(--size-xs);
     font-weight: 500;
+}
+
+.day::before,
+.day::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--seam);
 }
 
 .msg {
@@ -587,16 +604,23 @@ time {
     color: var(--paint);
 }
 
+/*notes from the system sit centered between the messages, the words balanced over their lines, the time trailing them or centered under once they wrap*/
 .event {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
     align-self: center;
-    max-width: 60ch;
+    justify-content: center;
+    gap: 2px 8px;
+    max-width: min(60ch, 92%);
     color: var(--haze);
     font-size: var(--size-s);
+    line-height: 1.35;
     text-align: center;
+    text-wrap: balance;
 }
 
 .event time {
-    margin-left: 8px;
     color: var(--haze);
     font-size: var(--size-xs);
 }
@@ -612,6 +636,11 @@ time {
 
 .event.is-off {
     color: var(--stop);
+}
+
+/*an upvote's line rises in once its ring has filled*/
+.event.is-arriving {
+    animation: rise 420ms var(--ease) both;
 }
 
 
@@ -658,6 +687,11 @@ time {
     background: var(--limo);
     line-height: 1.45;
     resize: vertical;
+}
+
+/*a box that's only a text field opens straight onto it*/
+.dialog textarea:first-child {
+    margin-top: 0;
 }
 
 .dialog .error {
@@ -728,7 +762,7 @@ time {
     }
 
     .thread-head {
-        gap: 10px;
+        gap: 8px;
         padding: 8px var(--edge-right) 8px var(--edge-left);
     }
 
@@ -748,12 +782,19 @@ time {
     }
 
     .thread-controls {
-        gap: 6px;
+        gap: 2px;
     }
 
+    /*the round buttons drop their outlines, less to look at, and each keeps a 40px tap*/
     .icon-button {
-        width: 36px;
-        height: 36px;
+        border: 0;
+    }
+
+    /*without an outline to sit around, the ring hugs the arrow instead*/
+    .upvote-ring {
+        inset: 0;
+        width: 100%;
+        height: 100%;
     }
 
     .switch {
@@ -764,7 +805,30 @@ time {
 
     .log {
         gap: 12px;
-        padding: 16px var(--edge-right) 32px var(--edge-left);
+        padding: 16px var(--edge-right) 24px var(--edge-left);
+    }
+
+    .compose {
+        gap: 8px;
+        padding: 8px var(--edge-right) 8px var(--edge-left);
+    }
+
+    /*a box with a text field sits up top, clear of the keyboard, and its buttons split the width for an easy tap*/
+    .dialog {
+        width: calc(100% - 24px);
+        max-width: none;
+        margin: max(12px, env(safe-area-inset-top)) auto auto;
+        padding: 20px;
+    }
+
+    /*no drag handle for a finger to fight with*/
+    .dialog textarea {
+        resize: none;
+    }
+
+    .dialog-actions .button {
+        flex: 1;
+        min-height: 44px;
     }
 
     .msg {
@@ -776,7 +840,7 @@ time {
     }
 }
 
-/*phones under 420px: the switch keeps its color and drops its words so the name still fits next to the three round buttons*/
+/*phones under 420px: the switch keeps its color and drops its words so the name still fits next to the three buttons*/
 @media (max-width: 419px) {
     #switch-label {
         display: none;

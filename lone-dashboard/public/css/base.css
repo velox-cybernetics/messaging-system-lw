@@ -383,11 +383,13 @@ button,
     font-size: var(--size-s);
 }
 
+/*sized to its words up to the screen's width, not squeezed into the half right of center*/
 .toast {
     position: fixed;
     bottom: calc(var(--nav-height) + 24px);
     left: 50%;
     z-index: 20;
+    width: max-content;
     max-width: calc(100vw - 32px);
     padding: 12px 18px;
     border: 1px solid var(--seam);

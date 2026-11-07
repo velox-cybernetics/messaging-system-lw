@@ -1,5 +1,5 @@
 //**********IMPORTS**********
-//the api call, page helpers and shop clock every page shares
+//the api call, page helpers and the shop's and viewer's clocks every page shares
 import * as shared from "./shared.js";
 
 
@@ -60,9 +60,10 @@ const SUFFIXES: Record<string, string> = {"one": "st", "two": "nd", "few": "rd",
 
 
 //FORMATS
-//"Thu, Oct 29, 10:02 AM"
-const MOMENT_FORMAT: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": shared.SHOP_TIME_ZONE, "weekday": "short", "month": "short", "day": "numeric", "hour": "numeric", "minute": "2-digit"});
+//"Thu, Oct 29, 10:02 AM" on the viewer's own clock
+const MOMENT_FORMAT: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"weekday": "short", "month": "short", "day": "numeric", "hour": "numeric", "minute": "2-digit"});
 
+//the bot picks, rechecks and sends on the shop's clock, so whether one already ran today goes by it
 const SHOP_CLOCK: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": shared.SHOP_TIME_ZONE, "hour": "numeric", "minute": "numeric", "hourCycle": "h23"});
 
 
@@ -77,7 +78,7 @@ let LAST_LOAD: number = 0;
 
 let RELOAD_TIMER: number = 0;
 
-//shop day the track was drawn for, midnight moves every column
+//viewer's day the track was drawn for, their midnight moves every column
 let DRAWN_FOR: string = "";
 
 //every send already drawn, so a new one fills in, null before the first draw
@@ -86,7 +87,7 @@ let DRAWN_SENT: Set<string> | null = null;
 
 
 //**********DATES**********
-//ordinals, shop day math and the words for when
+//ordinals, day math and the words for when
 
 
 //NTH
@@ -123,29 +124,43 @@ function add_days(date: string, days: number): string {
 }
 
 
+//DAY WORD
+//"today", "tomorrow", "yesterday", or the day spelled out, next to the viewer's today
+function day_word(date: string, today: string): string {
+    if(date === today) {
+        return "today";
+    }
+
+    if(date === add_days(today, 1)) {
+        return "tomorrow";
+    }
+
+    if(date === add_days(today, -1)) {
+        return "yesterday";
+    }
+
+    return shared.day_text(date, {"weekday": "long", "month": "short", "day": "numeric"});
+}
+
+
 //WHEN WORDS
-//"today at 10 AM", "tomorrow at 10 AM", or the day spelled out
+//"today at 10 AM", "tomorrow at 10 AM", or the day spelled out, on the viewer's own clock
 function when_words(at: number): string {
-    const today: string = shared.shop_parts(Date.now()).date;
+    const moment: shared.MOMENT = shared.local_parts(at);
 
-    const moment: shared.MOMENT = shared.shop_parts(at);
-
-    let day: string = shared.day_text(moment.date, {"weekday": "long", "month": "short", "day": "numeric"});
-
-    if(moment.date === today) {
-        day = "today";
-    }
-
-    else if(moment.date === add_days(today, 1)) {
-        day = "tomorrow";
-    }
-
-    else if(moment.date === add_days(today, -1)) {
-        day = "yesterday";
-    }
+    const day: string = day_word(moment.date, shared.local_date(Date.now()));
 
     //"10:00 AM" reads as "10 AM"
     return `${day} at ${moment.time.replace(/:00(?=\s)/, "")}`;
+}
+
+
+//SEND WORDS
+//"today at 10 AM" for the send on that shop date, told on the viewer's own clock
+function send_words(data: FOLLOW_UPS, date: string): string {
+    const at: number = shared.shop_instant(date, data.send_hour);
+
+    return `${day_word(shared.local_date(at), shared.local_date(Date.now()))} at ${shared.shop_hour_text(date, data.send_hour)}`;
 }
 
 
@@ -178,11 +193,11 @@ function minutes_since(now: number, minute_of_day: number): number {
 
 
 //RECHECK TEXT
-//"9:50 AM", the morning's check recheck_minutes before the send
-function recheck_text(data: FOLLOW_UPS): string {
+//"9:50 AM", the morning's check recheck_minutes before the send on that shop date, on the viewer's own clock
+function recheck_text(data: FOLLOW_UPS, date: string): string {
     const minutes: number = data.send_hour * 60 - data.recheck_minutes;
 
-    return shared.hour_text(Math.floor(minutes / 60), minutes % 60);
+    return shared.shop_hour_text(date, Math.floor(minutes / 60), minutes % 60);
 }
 
 
@@ -221,24 +236,24 @@ function lineup_text(data: FOLLOW_UPS): string {
     //where the shop's clock is since the last send, the night's pick and the morning's check
     const now: number = shop_minute(Date.now());
 
-    const since_send: number = minutes_since(now, data.send_hour * 60);
+    const shop_today: string = shared.shop_date(Date.now());
 
-    const send_text: string = shared.hour_text(data.send_hour);
+    const since_send: number = minutes_since(now, data.send_hour * 60);
 
     //the morning's check ran after the last send and lined nobody up either
     if(minutes_since(now, data.send_hour * 60 - data.recheck_minutes) < since_send) {
-        return `Nobody gets a follow up today at ${send_text}.`;
+        return `Nobody gets a follow up ${send_words(data, shop_today)}.`;
     }
 
     //the night's pick lined nobody up, and the morning's check can still add anyone who texts overnight
     if(minutes_since(now, data.pick_hour * 60) < since_send) {
-        let which_day: string = "tomorrow";
+        let send_date: string = add_days(shop_today, 1);
 
         if(now < data.send_hour * 60) {
-            which_day = "today";
+            send_date = shop_today;
         }
 
-        return `Nobody is lined up for ${which_day} at ${send_text} yet, the ${recheck_text(data)} check can still add anyone who texts overnight.`;
+        return `Nobody is lined up for ${send_words(data, send_date)} yet, the ${recheck_text(data, send_date)} check can still add anyone who texts overnight.`;
     }
 
     return "Nobody is lined up for a follow up yet.";
@@ -248,12 +263,12 @@ function lineup_text(data: FOLLOW_UPS): string {
 //HELD TEXT
 //how many on the track blooio holds till they text back or react, empty when nobody
 function held_text(data: FOLLOW_UPS): string {
-    const first_day: string = add_days(shared.shop_parts(Date.now()).date, -DAYS_BACK);
+    const first_day: string = add_days(shared.local_date(Date.now()), -DAYS_BACK);
 
     let held: number = 0;
 
     for(const customer of data.customers) {
-        if(customer.held !== null && shared.shop_parts(customer.held).date >= first_day) {
+        if(customer.held !== null && shared.local_date(customer.held) >= first_day) {
             held++;
         }
     }
@@ -369,9 +384,9 @@ function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HT
 
 
 //DAY OF
-//the day a moment falls on, made empty the first time
+//the viewer's day a moment falls on, made empty the first time
 function day_of(by_date: Map<string, DAY>, at: number): DAY {
-    const date: string = shared.shop_parts(at).date;
+    const date: string = shared.local_date(at);
 
     const day: DAY = by_date.get(date) ?? {"sent": [], "due": null, "held": null};
 
@@ -470,9 +485,12 @@ function render(): void {
 
     LINEUP.textContent = headline(LATEST);
 
-    SCHEDULE.textContent = `Picked every night at ${shared.hour_text(LATEST.pick_hour)}, checked again at ${recheck_text(LATEST)} for anyone who texted overnight, sent at ${shared.hour_text(LATEST.send_hour)}.`;
+    //the bot's hours are on the shop's clock, today's shop date gives them the right daylight saving
+    const shop_today: string = shared.shop_date(Date.now());
 
-    const today: string = shared.shop_parts(Date.now()).date;
+    SCHEDULE.textContent = `Picked every night at ${shared.shop_hour_text(shop_today, LATEST.pick_hour)}, checked again at ${recheck_text(LATEST, shop_today)} for anyone who texted overnight, sent at ${shared.shop_hour_text(shop_today, LATEST.send_hour)}.`;
+
+    const today: string = shared.local_date(Date.now());
 
     const days: string[] = [];
 
@@ -593,13 +611,13 @@ function reload_soon(): void {
 
 
 //TICK
-//sentence moves with the clock, midnight moves every column
+//sentence moves with the clock, the viewer's midnight moves every column
 function tick(): void {
     if(!LATEST) {
         return;
     }
 
-    if(shared.shop_parts(Date.now()).date !== DRAWN_FOR) {
+    if(shared.local_date(Date.now()) !== DRAWN_FOR) {
         render();
     }
 

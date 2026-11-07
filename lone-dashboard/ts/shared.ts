@@ -3,7 +3,7 @@
 
 
 //SHOP TIME ZONE
-//same as api/_helpers/shop.ts
+//same as api/_helpers/shop.ts, only for logic that follows the shop's clock, never for what's shown
 export const SHOP_TIME_ZONE: string = "America/Denver";
 
 
@@ -29,6 +29,27 @@ const TOAST_MS: number = 5000;
 //DAY
 const DAY_MS: number = 86400 * 1000;
 
+const DAY_MINUTES: number = 24 * 60;
+
+
+//TIME FORMATS
+//no time zone means the viewer's own clock, wherever they're looking from
+const LOCAL_DATE: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-CA", {"year": "numeric", "month": "2-digit", "day": "2-digit"});
+
+const LOCAL_TIME: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"hour": "numeric", "minute": "2-digit"});
+
+const LOCAL_WEEKDAY: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"weekday": "short"});
+
+const LOCAL_MONTH_DAY: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"month": "short", "day": "numeric"});
+
+//the shop's clock, for when the bot runs and which shop day a moment counts toward
+const SHOP_DATE: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-CA", {"timeZone": SHOP_TIME_ZONE, "year": "numeric", "month": "2-digit", "day": "2-digit"});
+
+const SHOP_WALL: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": SHOP_TIME_ZONE, "year": "numeric", "month": "numeric", "day": "numeric", "hour": "numeric", "minute": "numeric", "hourCycle": "h23"});
+
+//day_text's formats, made once per set of options since render loops ask for the same few every row
+const DAY_FORMATS: Map<string, Intl.DateTimeFormat> = new Map<string, Intl.DateTimeFormat>();
+
 
 //NUMBER FORMATS
 const COMPACT: Intl.NumberFormat = new Intl.NumberFormat("en-US", {"notation": "compact", "maximumFractionDigits": 1});
@@ -49,7 +70,7 @@ export type PULSE = {version: number; up_last: number};
 
 
 //MOMENT
-//a moment's shop date (YYYY-MM-DD) and time ("3:41 PM")
+//a moment's date (YYYY-MM-DD) and time ("3:41 PM") on the viewer's own clock
 export type MOMENT = {date: string; time: string};
 
 
@@ -325,38 +346,9 @@ export function big_number(value: number): BIG_NUMBER {
 }
 
 
-//SHOP PARTS
-export function shop_parts(at: number): MOMENT {
-    const date: string = new Intl.DateTimeFormat("en-CA", {"timeZone": SHOP_TIME_ZONE, "year": "numeric", "month": "2-digit", "day": "2-digit"}).format(at);
-
-    const time: string = new Intl.DateTimeFormat("en-US", {"timeZone": SHOP_TIME_ZONE, "hour": "numeric", "minute": "2-digit"}).format(at);
-
-    return {"date": date, "time": time};
-}
-
-
-//WHEN SHORT
-//"3:41 PM" today, "Tue" this week, "Oct 12" before that
-export function when_short(at: number): string {
-    const moment: MOMENT = shop_parts(at);
-
-    const today: string = shop_parts(Date.now()).date;
-
-    if(moment.date === today) {
-        return moment.time;
-    }
-
-    if(Date.now() - at < 6 * DAY_MS) {
-        return new Intl.DateTimeFormat("en-US", {"timeZone": SHOP_TIME_ZONE, "weekday": "short"}).format(at);
-    }
-
-    return new Intl.DateTimeFormat("en-US", {"timeZone": SHOP_TIME_ZONE, "month": "short", "day": "numeric"}).format(at);
-}
-
-
-//DAY TEXT
-//shop days come as YYYY-MM-DD or YYYY-MM, formatting in utc keeps the day from shifting
-export function day_text(date: string, options: Intl.DateTimeFormatOptions): string {
+//UTC DAY
+//a YYYY-MM-DD or YYYY-MM read as that day and time in utc, hours past 23 roll into the next day
+function utc_day(date: string, hour: number = 0, minute: number = 0): number {
     const pieces: string[] = date.split("-");
 
     const year: number = Number(pieces[0] ?? 1970);
@@ -365,18 +357,145 @@ export function day_text(date: string, options: Intl.DateTimeFormatOptions): str
 
     const day: number = Number(pieces[2] ?? 1);
 
-    const utc_options: Intl.DateTimeFormatOptions = Object.assign({"timeZone": "UTC"}, options);
+    return Date.UTC(year, month - 1, day, hour, minute);
+}
 
-    return new Intl.DateTimeFormat("en-US", utc_options).format(Date.UTC(year, month - 1, day));
+
+//LOCAL DATE
+//the viewer's own date for a moment, YYYY-MM-DD
+export function local_date(at: number): string {
+    return LOCAL_DATE.format(at);
+}
+
+
+//LOCAL TIME
+//the viewer's own clock time for a moment, "3:41 PM"
+export function local_time(at: number): string {
+    return LOCAL_TIME.format(at);
+}
+
+
+//LOCAL PARTS
+export function local_parts(at: number): MOMENT {
+    return {"date": local_date(at), "time": local_time(at)};
+}
+
+
+//SHOP DATE
+//the shop's date for a moment, YYYY-MM-DD, what the server's days are keyed by
+export function shop_date(at: number): string {
+    return SHOP_DATE.format(at);
+}
+
+
+//SHOP OFFSET
+//how far the shop's clock runs ahead of utc at a moment, daylight saving included
+function shop_offset(at: number): number {
+    let year: number = 1970;
+
+    let month: number = 1;
+
+    let day: number = 1;
+
+    let hour: number = 0;
+
+    let minute: number = 0;
+
+    for(const part of SHOP_WALL.formatToParts(at)) {
+        if(part.type === "year") {
+            year = Number(part.value);
+        }
+
+        else if(part.type === "month") {
+            month = Number(part.value);
+        }
+
+        else if(part.type === "day") {
+            day = Number(part.value);
+        }
+
+        else if(part.type === "hour") {
+            hour = Number(part.value);
+        }
+
+        else if(part.type === "minute") {
+            minute = Number(part.value);
+        }
+    }
+
+    //the clock only shows whole minutes, so seconds can't count toward the offset
+    return Date.UTC(year, month - 1, day, hour, minute) - Math.floor(at / 60000) * 60000;
+}
+
+
+//SHOP INSTANT
+//the moment the shop's clock reads that time on that shop date, minutes past 59 or below 0 roll over
+export function shop_instant(date: string, hour: number, minute: number = 0): number {
+    const wall: number = utc_day(date, hour, minute);
+
+    //the offset at the first guess is only off near a daylight saving switch, a second look settles it
+    const guess: number = wall - shop_offset(wall);
+
+    return wall - shop_offset(guess);
+}
+
+
+//SHOP HOUR TEXT
+//what the viewer's clock reads when the shop's clock reads that time on that shop date, written like hour_text
+export function shop_hour_text(date: string, hour: number, minute: number = 0): string {
+    const at: number = shop_instant(date, hour, minute);
+
+    //shifting by the gap between the two clocks keeps a shop hour that daylight saving skips readable
+    const shift: number = Math.round((-new Date(at).getTimezoneOffset() * 60000 - shop_offset(at)) / 60000);
+
+    const local: number = (((hour * 60 + minute + shift) % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
+
+    return hour_text(Math.floor(local / 60), local % 60);
+}
+
+
+//WHEN SHORT
+//"3:41 PM" today, "Tue" this week, "Oct 12" before that, all on the viewer's own clock
+export function when_short(at: number): string {
+    const moment: MOMENT = local_parts(at);
+
+    const today: string = local_date(Date.now());
+
+    if(moment.date === today) {
+        return moment.time;
+    }
+
+    if(Date.now() - at < 6 * DAY_MS) {
+        return LOCAL_WEEKDAY.format(at);
+    }
+
+    return LOCAL_MONTH_DAY.format(at);
+}
+
+
+//DAY TEXT
+//days come as YYYY-MM-DD or YYYY-MM, formatting in utc keeps the day from shifting
+export function day_text(date: string, options: Intl.DateTimeFormatOptions): string {
+    const key: string = JSON.stringify(options);
+
+    let format: Intl.DateTimeFormat | undefined = DAY_FORMATS.get(key);
+
+    if(format === undefined) {
+        format = new Intl.DateTimeFormat("en-US", Object.assign({"timeZone": "UTC"}, options));
+
+        DAY_FORMATS.set(key, format);
+    }
+
+    return format.format(utc_day(date));
 }
 
 
 //DAY LABEL
-//"Today", "Yesterday", or "Tuesday, Oct 27"
+//"Today", "Yesterday", or "Tuesday, Oct 27", for a date on the viewer's own clock
 export function day_label(date: string): string {
-    const today: string = shop_parts(Date.now()).date;
+    const today: string = local_date(Date.now());
 
-    const yesterday: string = shop_parts(Date.now() - DAY_MS).date;
+    const yesterday: string = local_date(Date.now() - DAY_MS);
 
     if(date === today) {
         return "Today";
