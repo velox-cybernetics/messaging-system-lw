@@ -67,6 +67,14 @@ def fixes() -> dict[str, str]:
     return fix_lines
 
 
+#KEEP COLOR ASK
+#rides on what to fix whenever the flagged draft asks for a color the job still waits on, so no regen ever takes that ask out
+def keep_color_ask(color_asks: list[str]) -> str:
+    color_ask_text: str = " ".join(color_asks)
+
+    return f"COLOR ASK: \"{color_ask_text}\" asks for a color the job still waits on, so it stays in the reply word for word. Fix only what the other lines name."
+
+
 #EXAMPLES
 #samples for every pick, follows ones included so a fine question never gets flagged
 def examples() -> str:

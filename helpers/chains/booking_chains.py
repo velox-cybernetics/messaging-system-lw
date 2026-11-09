@@ -39,7 +39,7 @@ def branch_answer(state: dict, id: str, branch: str) -> str:
         branch_return = branches.pricing_reply(state, critical_info, id)
 
     else:
-        branch_return = branches.business_reply(state)
+        branch_return = branches.business_reply(state, id)
 
     #something small goes to the developer on the side, a flag or anything bigger goes to the owner
     answer: str = branches.hand_off(branch_return, state, id, branch)

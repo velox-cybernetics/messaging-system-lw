@@ -368,7 +368,7 @@ def main_route(state: dict, id: str) -> str:
     if(owner.side_ask_open(id) and branches.side_ask_persists(state)):
         print("SIDE ASK PERSISTED: they asked about the small thing again, so the owner takes it from here")
 
-        system_response = branches.business_lack_info(state)
+        system_response = branches.business_lack_info(state, id)
 
         owner.close_side_ask(id)
 
@@ -423,7 +423,7 @@ def main_route(state: dict, id: str) -> str:
         system_response = branches.hand_off(service_return, state, id, route_result)
 
     elif(route_result == "business_operations"):
-        business_return: tuple = branches.business_reply(state)
+        business_return: tuple = branches.business_reply(state, id)
 
         system_response = branches.hand_off(business_return, state, id, route_result)
 
@@ -440,13 +440,13 @@ def main_route(state: dict, id: str) -> str:
 
     #a problem with the shop, a deal they saw, a job at the shop or someone selling to it goes to a person after the ack
     elif(route_result == "escalation"):
-        escalation_return: tuple = branches.escalation_reply(state)
+        escalation_return: tuple = branches.escalation_reply(state, id)
 
         system_response = branches.hand_off(escalation_return, state, id, route_result)
 
     #small talk gets answered and brought back to what they need
     elif(route_result == "general_text"):
-        system_response = branches.general_text_reply(state)
+        system_response = branches.general_text_reply(state, id)
 
     #they want to talk on the phone, so the ack gives them the number and a person takes it from here
     elif(route_result == "phone_call"):
@@ -521,7 +521,7 @@ def restricted_route(state: dict, id: str, color_swapped: bool, held: bool) -> s
         system_response = branches.hand_off(service_return, state, id, route_result)
 
     elif(route_result == "business_operations"):
-        business_return: tuple = branches.business_reply(state)
+        business_return: tuple = branches.business_reply(state, id)
 
         system_response = branches.hand_off(business_return, state, id, route_result)
 
@@ -590,7 +590,7 @@ def material_pick_route(state: dict, id: str, held: bool) -> str:
     material: dict[str, str] = materials[material_number - 1]
 
     #the reply gets written before the pick goes on file, so a timeout runs this again with nothing changed yet
-    reply: str = branches.color_picked_reply(state, answer, material.get("name", ""))
+    reply: str = branches.color_picked_reply(state, id, answer, material.get("name", ""))
 
     #a drop off day it made up comes off, and the schedule question it was asked with goes back on the end
     kept_reply: str = spacing.drop_day_offers(reply)

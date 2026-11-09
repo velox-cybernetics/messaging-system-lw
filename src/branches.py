@@ -189,6 +189,9 @@ ROUTE_NEED: str = "route"
 
 COLOR_NOW_NEED: str = "color_now"
 
+#the exact color they want comes after every price need, so it's never one, but the job still waits on it all the same
+COLOR_WANT_NEED: str = "color_want"
+
 
 #PRICE ASKS
 #the owner's first ask for each, then the ways he asks it again, so an ask the shop already sent goes out in new words
@@ -727,6 +730,61 @@ def asked_last_reply(message_history: dict) -> bool:
     return len(repeats.question_sentences(last_reply)) > 0 or spacing.asks_for_pic(last_reply)
 
 
+#COLOR NEEDS
+#the colors the job still waits on from them, read off file the same way the color ask logic reads them, empty off a wrap or colored PPF
+def color_needs(id: str) -> list[str]:
+    needs: list[str] = []
+
+    if(len(color_job_on_file(id)) == 0):
+        return needs
+
+    critical_info: dict[str, str] = log.read_info(f"criticalInfo_{id}")
+
+    #only a pic or link of it puts the color they want on file, a color they typed is just the idea
+    if(critical_info.get("want") is None):
+        needs.append(COLOR_WANT_NEED)
+
+    #the color it is now stops being needed once a pic of it came in or the asks for one ran out
+    if(COLOR_NOW_NEED in price_needs(critical_info, id)):
+        needs.append(COLOR_NOW_NEED)
+
+    return needs
+
+
+#NEEDED COLOR ASKS
+#the draft's asks for a color the job still waits on, only the color ask logic ever takes these out, never an enforcer
+def needed_color_asks(draft_reply: str, needs: list[str]) -> list[str]:
+    asks: list[str] = []
+
+    if(COLOR_WANT_NEED in needs):
+        for sentence in spacing.color_want_asks(draft_reply):
+            asks.append(sentence)
+
+    #color_now_asks already leaves the exact color ask out, so no sentence goes in twice
+    if(COLOR_NOW_NEED in needs):
+        for sentence in spacing.color_now_asks(draft_reply):
+            asks.append(sentence)
+
+    return asks
+
+
+#ASKS BESIDES
+#whether the draft still asks a question once its color asks come out, jev only ever judges questions and the words that finish them
+def asks_besides(draft_reply: str, color_asks: list[str]) -> bool:
+    rest: str = repeats.drop_questions(draft_reply, color_asks)
+
+    return len(repeats.question_sentences(rest)) > 0
+
+
+#COLOR ASK DROPPED
+#the draft asked for a color the job still waits on and the regen asks for none, so that regen never goes out
+def color_ask_dropped(draft_reply: str, regen_reply: str, needs: list[str]) -> bool:
+    if(len(needed_color_asks(draft_reply, needs)) == 0):
+        return False
+
+    return len(needed_color_asks(regen_reply, needs)) == 0
+
+
 #QUESTION STATE
 #the question enforcer's slice: what we last asked, the chat so far, what they just said, and the draft
 def question_enforcer_state(state: dict, draft_reply: str) -> dict:
@@ -766,8 +824,16 @@ def broken_rule(answer: dict, follows_pick: str) -> tuple[str, float]:
 
 
 #QUESTION ENFORCER
-#jev eyeballs the draft's questions, what to fix comes back "" when they're fine
-def question_enforcer(state: dict, draft_reply: str) -> tuple[str, float]:
+#jev eyeballs the draft's questions, what to fix comes back "" when they're fine, color_asks are the ones it never gets a say on
+def question_enforcer(state: dict, draft_reply: str, color_asks: list[str]) -> tuple[str, float]:
+    #all it asks is a color the job still waits on, that's the color ask logic's call, so jev sits this one out
+    if(len(color_asks) > 0 and not asks_besides(draft_reply, color_asks)):
+        color_ask_text: str = " ".join(color_asks)
+
+        print(f"QUESTION ENFORCER: SKIPPED, it only asks for a color the job still waits on: {color_ask_text}")
+
+        return ("", 0.0)
+
     question: dict = {"type": "choice", "instructions": f"{question_enforcer_prompt.question()}\n{question_enforcer_prompt.examples()}", "criteria": question_enforcer_prompt.criteria()}
 
     enforcer_state: dict = question_enforcer_state(state, draft_reply)
@@ -846,7 +912,10 @@ def leak_check(draft_reply: str) -> tuple[str, float]:
 
 #ENFORCE
 #runs every check on the draft, what to fix comes back "" when it's clean, plus how worried the most worried check was
-def enforce(state: dict, draft_reply: str, held: bool) -> tuple[str, float]:
+def enforce(state: dict, draft_reply: str, held: bool, needs: list[str]) -> tuple[str, float]:
+    #the draft's asks for a color the job still waits on, no check ever gets to take these out
+    color_asks: list[str] = needed_color_asks(draft_reply, needs)
+
     checks: list[tuple[str, float]] = []
 
     #a $ on a first reply that holds every price is busted, no model needed for that one
@@ -855,7 +924,7 @@ def enforce(state: dict, draft_reply: str, held: bool) -> tuple[str, float]:
 
         checks.append((price_hold_check_prompt.fix(), 1.0))
 
-    checks.append(question_enforcer(state, draft_reply))
+    checks.append(question_enforcer(state, draft_reply, color_asks))
 
     checks.append(tone_enforcer(state, draft_reply))
 
@@ -878,6 +947,10 @@ def enforce(state: dict, draft_reply: str, held: bool) -> tuple[str, float]:
         if(probability > worst_probability):
             worst_probability = probability
 
+    #whatever broke, the regen hears the color ask stays put while it fixes the rest
+    if(what_to_fix != "" and len(color_asks) > 0):
+        what_to_fix = f"{what_to_fix}{question_enforcer_prompt.keep_color_ask(color_asks)}\n"
+
     return (what_to_fix.strip(), worst_probability)
 
 
@@ -892,7 +965,10 @@ def regen_text(text: str, response: str, what_to_fix: str, shop_last_reply: str 
 
 #ENFORCED REPLY
 #checks the draft, rewrites it around what broke, and the least flagged one goes out if every rewrite flunks too
-def enforced_reply(state: dict, text: str, response: str, regen_label: str, regen_prompt: str, regen_generator: Callable[..., str], max_tokens: int, effort: str, line_breaks: bool, shop_last_reply: str | None, held: bool = False) -> str:
+def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: str, regen_prompt: str, regen_generator: Callable[..., str], max_tokens: int, effort: str, line_breaks: bool, shop_last_reply: str | None, held: bool = False) -> str:
+    #the colors the job still waits on, nothing in here changes them so they're read once
+    needs: list[str] = color_needs(id)
+
     #plan b, the draft the checks were least worried about
     least_flagged_reply: str = response
 
@@ -918,9 +994,15 @@ def enforced_reply(state: dict, text: str, response: str, regen_label: str, rege
 
                 break
 
+            #the regen tossed the color ask the job still waits on, so the regen gets tossed instead and the next try fixes the same draft
+            if(color_ask_dropped(response, regen_response, needs)):
+                print(f"{regen_label} DROPPED THE COLOR ASK: {regen_response}")
+
+                continue
+
             response = regen_response
 
-        checked: tuple[str, float] = enforce(state, response, held)
+        checked: tuple[str, float] = enforce(state, response, held, needs)
 
         what_to_fix = checked[0]
 
@@ -1455,7 +1537,7 @@ def pricing_services(state: dict, id: str) -> tuple[list[str], list[str]]:
 
 #PRICING LACK INFO
 #the details have nothing on it, so she owns up and says she'll ask the owner
-def pricing_lack_info(state: dict) -> str:
+def pricing_lack_info(state: dict, id: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
     #nothing to answer from, so no details go in
@@ -1467,7 +1549,7 @@ def pricing_lack_info(state: dict) -> str:
 
     regen_prompt: str = pricing_lack_info_regenerator.prompt()
 
-    return enforced_reply(state, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
+    return enforced_reply(state, id, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
 
 #INTERROGATOR PROMPT
@@ -1521,7 +1603,7 @@ def pricing_interrogator(color_job_on: bool, critical_info: dict[str, str], colo
 
 #PRICING INTERROGATE
 #flashx writes the ask, held is True on a first reply that holds every price
-def pricing_interrogate(state: dict, user_text: str, interrogator_prompt: str, held: bool) -> str:
+def pricing_interrogate(state: dict, id: str, user_text: str, interrogator_prompt: str, held: bool) -> str:
     response: str = models.generator("INTERROGATOR", interrogator_prompt, user_text, PRICING_MAX_TOKENS, PRICING_INTERROGATOR_EFFORT, line_breaks=True)
 
     #the regen reads the shop's last reply on its own, so nothing from it goes out twice
@@ -1530,7 +1612,7 @@ def pricing_interrogate(state: dict, user_text: str, interrogator_prompt: str, h
     #the regen gets the whole interrogator prompt, so it fixes the draft with the same what's missing
     regen_prompt: str = interrogator_regenerator.prompt(interrogator_prompt)
 
-    return enforced_reply(state, user_text, response, "INTERROGATOR REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_INTERROGATOR_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply, held=held)
+    return enforced_reply(state, id, user_text, response, "INTERROGATOR REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_INTERROGATOR_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply, held=held)
 
 
 #BOOKING INTENT
@@ -1602,7 +1684,7 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
     service_check: bool = models.checker(check_question, state, "SERVICE_DETAILS", details, CHECKER_THRESHOLD)
 
     if(service_check):
-        return (pricing_lack_info(state), service_check)
+        return (pricing_lack_info(state, id), service_check)
 
     #the first reply holds every price unless they asked what something costs
     held: bool = price_held(state)
@@ -1619,7 +1701,7 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
 
     #something's still missing, so the reply answers what it can and asks for the rest
     if(interrogator_prompt is not None):
-        interrogated: str = pricing_interrogate(state, user_text, interrogator_prompt, held)
+        interrogated: str = pricing_interrogate(state, id, user_text, interrogator_prompt, held)
 
         return (held_price_cut(interrogated, held, id), service_check)
 
@@ -1632,7 +1714,7 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
 
     regen_prompt: str = pricing_regenerator.prompt()
 
-    reply: str = enforced_reply(state, user_text, response, "MAIN REGEN", regen_prompt, models.s_p_generator, PRICING_REGEN_MAX_TOKENS, PRICING_MAIN_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply, held=held)
+    reply: str = enforced_reply(state, id, user_text, response, "MAIN REGEN", regen_prompt, models.s_p_generator, PRICING_REGEN_MAX_TOKENS, PRICING_MAIN_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply, held=held)
 
     #a price that slipped past the hold never makes it out on the first reply
     return (held_price_cut(reply, held, id), service_check)
@@ -1683,7 +1765,7 @@ def business_analyzer_questions() -> dict[str, dict]:
 
 #BUSINESS LACK INFO
 #the business details have nothing on it, so she says she'll ask the owner
-def business_lack_info(state: dict) -> str:
+def business_lack_info(state: dict, id: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
     #nothing to answer from, so no details go in
@@ -1695,12 +1777,12 @@ def business_lack_info(state: dict) -> str:
 
     regen_prompt: str = business_lack_info_regenerator.prompt()
 
-    return enforced_reply(state, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, BUSINESS_REGEN_MAX_TOKENS, BUSINESS_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
+    return enforced_reply(state, id, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, BUSINESS_REGEN_MAX_TOKENS, BUSINESS_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
 
 #BUSINESS REPLY
 #the reply, plus whether the details came up empty (the lack info reply goes out then)
-def business_reply(state: dict) -> tuple:
+def business_reply(state: dict, id: str) -> tuple:
     business_details: dict[str, dict] = models.analyzer(business_analyzer_questions(), state, BUSINESS_DETAILS, BUSINESS_GENERAL_CODE, ANALYZER_THRESHOLD)
 
     state_as_text: str = state_form.state_to_text(state)
@@ -1716,7 +1798,7 @@ def business_reply(state: dict) -> tuple:
     business_check: bool = models.checker(check_question, state, "BUSINESS_DETAILS", details, CHECKER_THRESHOLD)
 
     if(business_check):
-        return (business_lack_info(state), business_check)
+        return (business_lack_info(state, id), business_check)
 
     system_prompt: str = business_generator.prompt()
 
@@ -1724,7 +1806,7 @@ def business_reply(state: dict) -> tuple:
 
     regen_prompt: str = business_regenerator.prompt()
 
-    reply: str = enforced_reply(state, user_text, response, "MAIN REGEN", regen_prompt, models.generator, BUSINESS_REGEN_MAX_TOKENS, BUSINESS_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
+    reply: str = enforced_reply(state, id, user_text, response, "MAIN REGEN", regen_prompt, models.generator, BUSINESS_REGEN_MAX_TOKENS, BUSINESS_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
     return (reply, business_check)
 
@@ -2226,7 +2308,7 @@ def commercial_ask(state: dict, id: str, missing: list[COMMERCIAL_ASK], info_bef
 
 #COMMERCIAL INTERROGATE
 #asks for the next commercial wrap detail, held is True on a first reply that holds every price
-def commercial_interrogate(state: dict, user_text: str, ask: COMMERCIAL_ASK, already_asked: str, skipped_group: str, held: bool) -> str:
+def commercial_interrogate(state: dict, id: str, user_text: str, ask: COMMERCIAL_ASK, already_asked: str, skipped_group: str, held: bool) -> str:
     interrogator_prompt: str = ask[1]()
 
     interrogator_text: str = f"{user_text}\n INFO_NEEDED: {ask[2]}"
@@ -2239,7 +2321,7 @@ def commercial_interrogate(state: dict, user_text: str, ask: COMMERCIAL_ASK, alr
 
     regen_prompt: str = commercial_regenerator.prompt(interrogator_prompt)
 
-    response = enforced_reply(state, interrogator_text, response, "INTERROGATOR REGEN", regen_prompt, models.generator, CUSTOM_REGEN_MAX_TOKENS, CUSTOM_COMMERCIAL_REGEN_EFFORT, line_breaks=False, shop_last_reply=None, held=held)
+    response = enforced_reply(state, id, interrogator_text, response, "INTERROGATOR REGEN", regen_prompt, models.generator, CUSTOM_REGEN_MAX_TOKENS, CUSTOM_COMMERCIAL_REGEN_EFFORT, line_breaks=False, shop_last_reply=None, held=held)
 
     #the enforcers can miss a question asked twice in a row, so the code double checks
     return unrepeated_reply(state, interrogator_text, response, regen_prompt, ask[0], skipped_group)
@@ -2258,7 +2340,7 @@ def commercial_wrap_reply(state: dict, id: str, user_text: str, services: str, i
 
     ask: tuple[COMMERCIAL_ASK, str, str] = commercial_ask(state, id, missing, info_before, custom_service_info)
 
-    response: str = commercial_interrogate(state, user_text, ask[0], ask[1], ask[2], held)
+    response: str = commercial_interrogate(state, id, user_text, ask[0], ask[1], ask[2], held)
 
     save_asked(id, ask[0][0], response)
 
@@ -3036,7 +3118,7 @@ def no_contact_ack_reply(state: dict, case: str, drop_off_date: str) -> str:
 
 #ESCALATION
 #problems and person-only asks get a quick ack, then True hands them to a person
-def escalation_reply(state: dict) -> tuple:
+def escalation_reply(state: dict, id: str) -> tuple:
     state_as_text: str = state_form.state_to_text(state)
 
     #it only acknowledges, so no details needed
@@ -3048,7 +3130,7 @@ def escalation_reply(state: dict) -> tuple:
 
     regen_prompt: str = escalation_regenerator.prompt()
 
-    reply: str = enforced_reply(state, escalation_text, response, "ESCALATION REGEN", regen_prompt, models.generator, ESCALATION_REGEN_MAX_TOKENS, ESCALATION_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
+    reply: str = enforced_reply(state, id, escalation_text, response, "ESCALATION REGEN", regen_prompt, models.generator, ESCALATION_REGEN_MAX_TOKENS, ESCALATION_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
     #never the bot's call, so a person takes it from here
     return (reply, True)
@@ -3056,7 +3138,7 @@ def escalation_reply(state: dict) -> tuple:
 
 #GENERAL TEXT
 #small talk gets answered and nudged back to what they need
-def general_text_reply(state: dict) -> str:
+def general_text_reply(state: dict, id: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
     #small talk needs no lookups, anything shop related is already in its prompt
@@ -3069,7 +3151,7 @@ def general_text_reply(state: dict) -> str:
     regen_prompt: str = general_text_regenerator.prompt()
 
     #small talk loved sneaking in a schedule ask, so it goes through the enforcers now too
-    return enforced_reply(state, general_text, response, "GENERAL TEXT REGEN", regen_prompt, models.generator, GENERAL_TEXT_REGEN_MAX_TOKENS, GENERAL_TEXT_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
+    return enforced_reply(state, id, general_text, response, "GENERAL TEXT REGEN", regen_prompt, models.generator, GENERAL_TEXT_REGEN_MAX_TOKENS, GENERAL_TEXT_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
 
 #HOLD
@@ -3221,7 +3303,7 @@ def material_pick(state: dict, materials: list[dict[str, str]]) -> tuple[str, bo
 
 #COLOR PICKED
 #takes in their material pick, reply is what else they asked ("" when the pick is all), picked is the material's color
-def color_picked_reply(state: dict, reply: str, picked: str) -> str:
+def color_picked_reply(state: dict, id: str, reply: str, picked: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
     #comes back with the pick taken in and the schedule question for the job
@@ -3237,4 +3319,4 @@ def color_picked_reply(state: dict, reply: str, picked: str) -> str:
 
     regen_prompt: str = color_picked_regenerator.prompt()
 
-    return enforced_reply(state, color_picked_text, response, "COLOR PICKED REGEN", regen_prompt, models.generator, COLOR_PICKED_REGEN_MAX_TOKENS, COLOR_PICKED_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply)
+    return enforced_reply(state, id, color_picked_text, response, "COLOR PICKED REGEN", regen_prompt, models.generator, COLOR_PICKED_REGEN_MAX_TOKENS, COLOR_PICKED_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply)

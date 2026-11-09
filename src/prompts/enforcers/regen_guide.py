@@ -19,7 +19,7 @@ def inputs() -> str:
     #WHAT YOU GET
     - The same input FLAGGED_RESPONSE was written from, everything above FLAGGED_RESPONSE in it.
     - FLAGGED_RESPONSE: the reply that got caught.
-    - WHAT_TO_FIX: one line for each check that caught it. Each line starts with the check, and for the question and tone checks the rule it broke in parentheses, like "QUESTION (schedule_asked_again): ..." or "TONE (ai_wording): ...", then says what's wrong and what to do about it. #FIX GUIDE below has an entry for every one of them, with what the check saw, why it's a rule and how to fix it."""
+    - WHAT_TO_FIX: one line for each check that caught it. Each line starts with the check, and for the question and tone checks the rule it broke in parentheses, like "QUESTION (schedule_asked_again): ..." or "TONE (ai_wording): ...", then says what's wrong and what to do about it. A "COLOR ASK: ..." line can come last, naming an ask that stays in the reply word for word. #FIX GUIDE below has an entry for every one of them, with what the check saw, why it's a rule and how to fix it."""
 
 
 #HOW TO FIX
@@ -132,6 +132,12 @@ def fix_guide() -> str:
     - Why it's a rule: the owner never puts a price in his first reply unless they asked for one. A number before they've said anything back loses people before the conversation starts, while getting them talking first lets the price land once they know what they're getting.
     - How to fix it: take out every dollar amount and every number said as a price, a total, a range or an upcharge, and any line saying the price is held or coming later. A sentence that only gave a price comes out whole, and one that says something else too keeps that part, worded so it still reads right. What the job is and what sells it stays, and the reply still ends on its question.
     - Example: "A wrap on the SRT typically runs $3450 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can" becomes "Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can".
+
+    ##COLOR ASK
+    - What it means: FLAGGED_RESPONSE asks for the color they want or for the color their vehicle is right now with a pic of it, and the job still waits on that color. It's the one line in WHAT_TO_FIX that keeps something instead of fixing it, the ask it names in quotes.
+    - Why it's a rule: a wrap or colored PPF can't get its exact price or get on the schedule without that color, so taking the ask out stalls the job right where it was about to move, like a price going out with nothing asked after it.
+    - How to fix it: leave that ask in the reply word for word, where FLAGGED_RESPONSE has it, and fix only what the other lines name. A QUESTION line is never about this ask: when one says to take a question out or keep only one, it's the other question that goes.
+    - Example: WHAT_TO_FIX has "QUESTION (more_than_one): ..." and "COLOR ASK: "Do you have an exact color in mind? If you do, can you shoot a pic of it over" ...", so "Sweet, so a wrap on the LS 500 would run $2950 + tax. Did you want to hop on the schedule? Do you have an exact color in mind? If you do, can you shoot a pic of it over" becomes "Sweet, so a wrap on the LS 500 would run $2950 + tax. Do you have an exact color in mind? If you do, can you shoot a pic of it over".
 """
 
 

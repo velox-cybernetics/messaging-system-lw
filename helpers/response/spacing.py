@@ -83,6 +83,11 @@ NAMED_WANT_PATTERN: re.Pattern = re.compile(rf"(?<!\bany\s)\b(?:colou?rs?|{COLOR
 
 EXACT_ASK_PATTERN: re.Pattern = re.compile(r"\b(?:pics?|photos?|pictures?|screenshots?|links?)\s+(?:or\s+(?:a\s+)?(?:pics?|photos?|pictures?|screenshots?|links?)\s+)?of\s+(?:the|an?|that|your)\s+exact\b", re.IGNORECASE)
 
+#the shop only ever sends them online to find the exact color, so a question about one they like online asks for it ("Did you find one you like online?")
+ONLINE_PATTERN: re.Pattern = re.compile(r"\bonline\b", re.IGNORECASE)
+
+LIKING_PATTERN: re.Pattern = re.compile(r"\byou(?:'re|'ve been|'ve| are| were| have been)?\s+(?:(?:still|really)\s+)?(?:want|wanting|wanted|like|liking|love|loving|eyeing)\b", re.IGNORECASE)
+
 #a question asking two things splits into its parts here ("What color is it now, and what color are you wanting to go?")
 CLAUSE_BREAK_PATTERN: re.Pattern = re.compile(r"[,;:]|\b(?:and|or|but|so|plus)\b", re.IGNORECASE)
 
@@ -728,6 +733,11 @@ def asks_color_wanted(sentence: str, sentence_before: str) -> bool:
     if(not asking):
         return False
 
+    #"Have you found a green online you're liking yet?", the online hunt is always for the exact color, never a tint shade
+    if(ONLINE_PATTERN.search(text) is not None and LIKING_PATTERN.search(text) is not None):
+        if(COLOR_NOW_PATTERN.search(text) is None and SHADE_PATTERN.search(text) is None):
+            return True
+
     about_color: bool = COLOR_WORD_PATTERN.search(text) is not None
 
     for part in CLAUSE_BREAK_PATTERN.split(text):
@@ -767,6 +777,48 @@ def color_want_asks(reply: str) -> list[str]:
             asks.append(text)
 
         sentence_before = text
+
+    return asks
+
+
+
+#**********COLOR NOW ASKS**********
+#spots an ask for the color their vehicle is right now or a pic of it, so one the job still waits on stays the color ask logic's call
+
+
+#ASKS COLOR NOW
+#whether the sentence asks what color their vehicle is right now or for a pic of it, any pic ask counts the same way the asks for one get counted
+def asks_color_now(sentence: str) -> bool:
+    text: str = sentence.replace("’", "'").strip()
+
+    #"Send me a pic if you can" or "Did you get a chance to snap a pic of the Tahoe?"
+    if(asks_for_pic(text)):
+        return True
+
+    if(not text.endswith("?")):
+        return False
+
+    #"What color is it right now?", one part with the word color and what makes it the color it is now
+    for part in CLAUSE_BREAK_PATTERN.split(text):
+        if(COLOR_WORD_PATTERN.search(part) is not None and COLOR_NOW_PATTERN.search(part) is not None):
+            return True
+
+    return False
+
+
+#COLOR NOW ASKS
+#the sentences of the reply asking for the color it is now or a pic of it, never the exact color ask or the pic ask that finishes it
+def color_now_asks(reply: str) -> list[str]:
+    #"If you do, can you shoot a pic of it over" goes after the color they want, so the whole exact color ask stays out of here
+    want_asks: list[str] = color_want_asks(reply)
+
+    asks: list[str] = []
+
+    for sentence in split_sentences(reply):
+        text: str = sentence.strip()
+
+        if(text != "" and text not in want_asks and asks_color_now(text)):
+            asks.append(text)
 
     return asks
 
