@@ -1,9 +1,6 @@
-#**********EXAMPLES**********
-#sample commercial wrap chats with what should be pulled out of them, so the model copies them
+#EXAMPLES
 
-
-#EXTRACT EXAMPLES
-#hands back the sample chats and what gets pulled out of them, pasted at the end of the system prompt below
+#sample chats and what gets pulled out of them, pasted at the end of the system prompt
 def examples() -> str:
     return r"""
     Ex 1:
@@ -284,13 +281,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#pulls out the job, how many vehicles, their make and model, and the logo file from the chat
-
-
-#SYSTEM PROMPT
-#hands back the system prompt the commercial wrap extractor uses to fill in the job's details
+#system prompt the commercial wrap extractor uses to fill in the jobs details
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = """

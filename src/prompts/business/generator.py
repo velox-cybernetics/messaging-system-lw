@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shop details, booking info and texting habits that every reply prompt shares
+#IMPORTS
+
 from src.prompts import shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample customer questions about the shop with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
 #hands back the sample shop questions and replies, pasted at the end of the system prompt below
 def examples() -> str:
     return r"""
@@ -302,13 +298,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together everything the model reads before it answers a question about the shop itself
-
-
-#SYSTEM PROMPT
-#hands back the system prompt for a reply about the shop, with the shop details and texting habits added on
+#system prompt for a reply about the shop, shop details and texting habits tacked on
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = """

@@ -1,9 +1,6 @@
-#**********SERVICE EXAMPLES**********
-#what asking about a wrap, PPF, colored PPF or tint looks like, so the analyzer finds what they want
+#SERVICE EXAMPLES
 
-
-#WINDOW TINT
-#what asking about window tint looks like, read with the analyzer's tint question
+#what asking about window tint looks like, read with the analyzers tint question
 def window_tint_examples() -> str:
     return r"""Yes: film on the vehicle's glass. "tint", "window tint", "ceramic tint", "tinting", "tint the windows", a shade or percentage ("20%", "5% on the back", "limo", "as dark as legal"), the front two, the sides and rear, the back glass, the windshield, a visor, sun strip, brow or eyebrow, a sunroof or moonroof, matching the factory privacy glass, taking old tint off or redoing it, stacking darker tint, tint laws, blocking heat or UV through the windows, a question about tint's price, brand, film type (ceramic, carbon, dyed, mirror, smart tint), shades, warranty, how long it takes or lasts, bubbles or haze after a tint install, coming by to see tint shade samples, or a follow up to a tint quote. Headlight, taillight and home window tint are Yes too, the tint details answer them. Tint asked for together with a wrap, PPF or colored PPF ("full wrap and window tinting", "front end PPF and tint the front two", "full, colored, and window tint") is still Yes. Customers text fast, so a misspelled tint is still tint ("timt", "tibt", "tnit", "tinr"), and so is one tacked onto the job the shop just priced: "how much we talking for this and some timt" right after a PPF quote asks what the PPF and some tint cost.
 No: a wrap, PPF or colored PPF with no tint in `current_user_message` and none asked about with it earlier (a follow up that names no service after they asked about the tint with it is the whole job, see below), a windshield skin or any clear film to protect the windshield from rock chips (that's PPF, not tint), ceramic coating on its own ("ceramic" meaning a coating on the paint), paint or body work, any other service, business questions like hours, address or phone number, how much time a job with no tint takes ("how much time", "how much timt does the full body take"), or a message that names no service ("Could I get a quote on my car?").
@@ -64,9 +61,7 @@ answer: False
 state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
 answer: False"""
 
-
-#COLOR CHANGE
-#what asking about a vinyl wrap or a color change looks like, read with the analyzer's wrap question
+#what asking about a vinyl wrap or a color change looks like, read with the analyzers wrap question
 def color_change_examples() -> str:
     return r"""Yes: vinyl film that changes the color or look of the vehicle's body. "wrap", "vinyl", "color change", "full wrap", "partial wrap", matte, satin, gloss, chrome, color shift, camo or two tone film, a roof, hood, mirror, pillar, bumper or stripe wrap, chrome delete, blacked out emblems, a question about a wrap's price, colors, finishes, material, warranty, how long it takes or lasts, deposit, prep or a paint correction before it, PPF that's on the vehicle now going under it (whether the shop can wrap over it, whether it has to come off first or costs more), or bringing their own vinyl, coming by the shop to see wrap colors, samples or the color books (even when it also asks when the shop is open or where it is), or a follow up to a wrap quote. Window tint asked for together with a wrap, or asked about while a wrap quote is being discussed, is still Yes (full ceramic tint with a wrap is a wrap add on).
 A color change with no film named ("wanna change the color", "thinking about changing the color", "want it a different color", "how much to change the color on my civic") is Yes, including when it answers the shop asking which service they want after a website form, and so is a follow up naming the colors they're thinking about after the shop asked.
@@ -167,9 +162,7 @@ answer: False
 state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
 answer: True"""
 
-
-#PPF
-#what asking about clear PPF looks like, read with the analyzer's PPF question
+#what asking about clear PPF looks like, read with the analyzers PPF question
 def ppf_examples() -> str:
     return r"""Yes: clear film installed over the paint to protect it. "PPF", "paint protection film", "paint protection", "clear bra", "clear wrap", "clear film", "clear protection", "protect the paint", "rock chip protection", "stealth" or "matte clear" film, satin or matte PPF, a front end, full body, high impact or windshield (windshield skin) install, PPF on the headlights, hood, bumper, doors or any other panel, a question about PPF's options ("what are the options for ppf?"), price, coverage, the free side and rear tint with a full body, film brand, thickness, finish, warranty, how long it takes or lasts, prep or paint correction before it, rock chips or scratches under it, whether it's self healing, PPF over a wrap or a ceramic coating, bringing their own film, taking old PPF off, or a follow up to a PPF quote. The coating mixed up with the film ("the ceramic coating protective film", "ceramic coating film") is Yes too, the reply clears up that they're two different things.
 No: a vinyl wrap or color change on its own, PPF that's already on their vehicle named only as what the wrap goes over ("it has clear bra on the front, can you still wrap it?", "does the ppf have to come off before the wrap?"), which is the wrap's question since that PPF is treated just like the paint, colored PPF on its own ("colored ppf", "PPF in a color", "color change PPF", "satin black PPF" on a white car, or a follow up to a colored PPF quote), which has its own question, window tint on its own, ceramic coating on its own, paint or body work, any other service, the shop's services in general ("What are all the services you offer?"), which has its own question too, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?"). A message about both PPF and a wrap ("stealth ppf or a nardo grey wrap", a wrap with PPF on the bumper) is Yes, as is a "full wrap" that could be either a color change or PPF with nothing in the conversation saying which, and a "clear", "transparent" or "same color, just protection" reply to a question about the wrap color. A message that compares clear and colored PPF ("stealth or colored", "how much more for color ppf" after a clear quote, "what the difference to colored ppf is") is Yes, and so is a matte or satin color that could be a clear finish or colored PPF ("full ppf matte white").
@@ -255,9 +248,7 @@ answer: True
 state: {"current_user_message":{"user_media":{},"user_text":"does the full body come with tint?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for full body ppf on my 2022 audi q5"},"system_response_to_user_message_0":"Full body PPF on the Q5 is $6900 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand"}}
 answer: True"""
 
-
-#COLORED PPF
-#what asking about colored PPF looks like, read with the analyzer's colored PPF question
+#what asking about colored PPF looks like, read with the analyzers colored PPF question
 def color_ppf_examples() -> str:
     return r"""Yes: PPF that changes the color of the vehicle. "colored PPF", "color PPF", "colored paint protection film", "color change PPF", "PPF color change", PPF in a named color or a finish over a different paint color ("matte black PPF" on a white truck, "PPF in a midnight purple"), something that both protects the paint and changes the color, a question about colored PPF's price, colors, color book or samples, finishes, brand, thickness, how it looks, how long it lasts, self healing, car washes, coverage (roof, pillars, door jambs, taking parts off), the free window tint with it, warranty, turnaround, prep, taking an old wrap or film off before it, colored PPF on just the front end or one panel, doing some panels in vinyl instead, bringing their own colored PPF kit, coming by the shop to see the colored PPF colors, or a follow up to a colored PPF quote. A message that compares colored PPF with clear PPF, stealth, a vinyl wrap or a factory paint color ("stealth or colored", "colored ppf or just a vinyl wrap?") is Yes, and so is PPF named with a color, with a finish or without one, when nothing says it keeps the paint color, even when the paint color isn't known yet ("full ppf matte white", "ppf wrap matte black"), since that could be colored PPF or a clear finish. A "PPF wrap" or "PPF full wrap" is PPF, never a vinyl wrap. Customers text fast, so a misspelled PPF named with a color is still colored PPF ("pff wrap matte black", "ppg in satin blue"), and small talk or just looking around before it ("whats up bro", "just looking around right now tbh") never changes the answer.
 No: clear PPF on its own (clear bra, clear wrap, "stealth", satin or matte PPF that keeps the paint color, front end, high impact or windshield PPF), a vinyl wrap or color change wrap on its own (a color or finish with no PPF named and no colored PPF being discussed, like "full matte black" or "a matte black wrap", is a vinyl wrap), window tint on its own, ceramic coating on its own, paint or body work, any other service, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?").
@@ -333,13 +324,9 @@ state: {"current_user_message":{"user_media":{},"user_text":"full body sounds go
 answer: False"""
 
 
-
-#**********COLOR JOB**********
-#how to tell the job is a wrap or colored PPF, and which of the two films they're going with
-
-
 #COLOR JOB
-#read when the message names no service, or only other services while a color job is on file, so a job named earlier still waits on the pic
+
+#no service named, or only others with a color job on file, so the old job still waits on the pic
 def color_job_examples() -> str:
     return r"""Yes: the job the customer wants in this conversation is a vinyl wrap, a color change or colored PPF, the services whose price needs the color the vehicle is now. It was asked about in `current_user_message` or earlier in `message_history` and is still the job, like a short reply that answers the shop ("2024 tahoe", "yes", "no pics on this phone", "sounds good") after they asked about one of them, even when the shop's reply in between didn't answer it. A question about another service on top of it, like tint, a ceramic coating or clear PPF on the front ("how much to tint the windows too?", "also for window tint I can do any shade right?"), keeps it the job even when that message never names the wrap or colored PPF, since only moving off it or turning it down ends it.
 No: the conversation has no wrap, color change or colored PPF in it (only clear PPF, tint, a ceramic coating, the shop's hours or address, or no service named yet, like a website lead form on its own), the wrap in it is a business wrap a person at the shop prices (a logo, lettering or company graphics, a full or half wrap on their work vans or trucks, a fleet), the wrap in it is a custom design the owner prices himself (a graphic wrap, graphics, a printed design, a livery or a fade on their car, "Im looking to do a graphic wrap on my car"), or they moved off it to a different service or turned it down ("Actually just the clear on the front end", "nah not the wrap, just tint"). A plain "wrap", "full wrap" or "color change" with no design named is still a wrap. Colored PPF the shop only brought up in passing as one more option, in a reply about the clear PPF options with no colored PPF price, isn't a job they want.
@@ -372,27 +359,19 @@ answer: False
 state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
 answer: True"""
 
-
-#WRAP ROUTE
-#read on every message while the job is a wrap or colored PPF, so the route goes on file the moment they pick one
+#read on every message while the job is a wrap or colored PPF, so the route lands on file right away
 def wrap_route_criteria() -> str:
     return """The customer picked or named the vinyl wrap as the film for the color change, in `current_user_message` or earlier in `message_history`, and hasn't moved off it since: "wrap", "vinyl", "vinyl wrap", "full wrap", "wrap it", a wrap named with the color ("satin black wrap", "how much to wrap my ram", "looking for a quote to wrap a 2024 ram 1500"), a Meta lead form naming vinyl wraps, a lead form reply that only names the job with the wrap in it ("Full wrap", "full wrap matte black"), a pic or post of a wrap they point to for the look they want ("can you do this on mine?"), or picking the wrap out of the two routes the shop laid out ("the wrap", "ill go with the vinyl", "think ill just stick with the wrap", "the cheaper one"). A wrap weighed against clear PPF or a ceramic coating is the wrap too: PPF with nothing about a color, named for protection or on its own ("a wrap or ppf?", "whats better for protecting it, a wrap or ppf?", "torn between a wrap and ppf, which would you go with?", "a vinyl wrap or the ceramic coating protective film", "what would a wrap and ppf each run?") is clear PPF, which doesn't change the color, so the wrap is the only route in that pair and there's nothing left to pick between the two routes. Only PPF set against the wrap for a color change ("color change, whats more, vinyl or ppf?") or named as colored is colored PPF. A wrap partial, a roof or a chrome delete is the wrap. A graphic wrap, graphics, a printed or custom design, a livery or a fade on their car ("Im looking to do a graphic wrap on my car") is a custom wrap the owner prices himself, never the wrap route, while a plain "wrap", "full wrap" or "wrap my car" with no design named is. Once picked, it stays the route through every later message that doesn't pick colored PPF instead, like the color they want, a pic of the vehicle, a question about the price, turnaround or warranty, or an objection to something else."""
 
-
-#COLORED PPF ROUTE
 #read next to the wrap route, so picking colored PPF as the film goes on file the moment they say it
 def colored_ppf_route_criteria() -> str:
     return """The customer picked or named colored PPF as the film for the color change, in `current_user_message` or earlier in `message_history`, and hasn't moved off it since: "colored ppf", "color ppf", "colored paint protection film", "color change ppf", "ppf in a color", PPF named with a color or a finish over a different paint color ("matte black ppf", "pff wrap matte black", "ppf in a midnight purple"), something that both protects the paint and changes the color, or picking colored PPF out of the two routes the shop laid out ("colored ppf", "the ppf one", "colored ppf sounds sick, ill go that route", "the one that protects the paint", "the thicker one"). Colored PPF asked about against clear PPF ("stealth or colored", "how much more for color ppf" after a clear quote) is colored PPF, the only way to change the color in that pair. Once picked, it stays the route through every later message that doesn't pick the wrap instead."""
 
-
-#UNDECIDED ROUTE
 #read next to the wrap and colored PPF routes, for a color change with neither film picked yet
 def undecided_route_criteria() -> str:
     return """The customer wants the color changed but hasn't picked or named either film, or is weighing the wrap against colored PPF: a color change with no film named ("wanna change the color", "color change", "thinking about changing the color", "want it a different color", "black out my whole truck", "how much to change the color on my civic", "thinking matte black on it", "getting tired of the silver, want something different"), a color they want with no film named ("satin black prob", "thinking a gloss white"), asking about the two routes without picking ("whats the difference between colored ppf and a vinyl wrap?", "which one is better?" after the shop laid out the two routes, "colored ppf or vinyl, depending on the price", "how long does each one take?", "dang why is the ppf so much more", or vinyl against PPF asked about a color change, "Color change, whats more, vinyl or ppf?"), or a follow up that names no film after the shop laid out both routes (a pic of the vehicle, "how much is it", "cant send a pic rn", the color it is now typed). A wrap against clear PPF or a coating, PPF with nothing about a color, isn't the two routes, that's the wrap. A conversation that never had a color change in it at all (only clear PPF, tint, a coating or the shop itself) is undecided too, since there's no film to pick, and so is one with only a custom design in it (a graphic wrap, a printed design, a livery or a fade the owner prices himself)."""
 
-
-#ROUTE EXAMPLES
-#sample conversations with the route each one is on, so a color or a pic never gets read as picking a film
+#sample chats with there routes, so a color or a pic never gets read as picking a film
 def color_route_examples() -> str:
     return r"""The route is the film, never the color: a color they name or a pic of a color never picks a film, and neither does the shop's reply naming one. Only the customer's own words pick it, in `current_user_message` or earlier in `message_history`, and the latest pick wins ("actually lets do the colored ppf instead" after the wrap is colored_ppf). Customers text fast, so a typo is the closest film ("wrao" is a wrap, "pff" or "ppd" is PPF).
 Examples:
@@ -455,20 +434,14 @@ route: undecided
 state: {"current_user_message":{"user_media":{},"user_text":"Im looking to do a wrap on my car"},"message_history":{"user_message_0":{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}
 route: wrap"""
 
-
-#ROUTE QUESTION
 #the question the decisions model answers about which film they're going with for the color change
 def color_route_instructions() -> str:
     return "The shop changes a vehicle's color two ways, a vinyl wrap or colored PPF, and calls the one the customer is going with the route. Which route is the customer on in this conversation, going by `current_user_message` read in light of `message_history`: the vinyl wrap (they named or picked it, or it's the only one of the two that came up, like a wrap weighed against clear PPF or a coating), colored PPF (they named or picked it), or undecided (they want the color changed with neither named, or they're weighing the wrap against colored PPF)?"
 
 
-
-#**********BOOKING INTENT**********
-#what asking to get on the schedule looks like, so a booking ask with a job question gets answered
-
-
 #BOOKING INTENT
-#read on messages the router sent here, so a booking ask with a job question still ends on the schedule question
+
+#booking asks from the router, so one with a job question still ends on the schedule question
 def booking_intent_examples() -> str:
     return r"""Yes: in `current_user_message` they ask to get on the schedule or the books, to book it or make an appointment, when they can get in or bring it in, whether there's an opening on a day, this week or next week, what the shop's schedule or availability looks like ("Ok what’s your schedule look like"), or how far out the shop is booked, or they say they want to get it done or go ahead with it, or they say yes in any wording to the shop's last reply asking whether they want to get on the schedule ("Did you want to hop on the schedule?", "are you interested in getting on the schedule for that wrap?" answered with "yeah", "yessir", "Yes, I would!"), since that yes is them asking to get on it, even when the same message also asks about a service, its price, a deal or anything else ("Window tint, can I get on the books?", "how much for front end ppf? can I get in this week?", "Yes, I would! Are you guys offering any deals right now?"). A "yeah", "yep" or "ya" that opens their message right after the schedule question is the yes to it, never a filler in front of what they ask next ("yeah! any specials going on rn?"). A maybe to the shop's schedule question that asks what the schedule looks like or what's open ("Maybe. What is your schedule like right now?") counts too: the maybe hangs on the open days, so they're asking what's open to get on it, unlike saying they're still thinking it over.
 No: they only ask about a service, its price, how long it takes, the warranty, the shop's hours or where it is, they want to come by to look at colors or samples, they ask how to get the vehicle ready for a day already set, or they say they're still thinking it over or deciding and only ask what's open, or they answer the shop's ask for a pic or something else it needs, saying they'll take, snap, grab or send one, or when they will ("Yes I can later today", "ok ill send it tonight"): "when" there is about the pic, never about bringing the vehicle in. A yes only counts when the shop's last reply asked whether they want to get on the schedule, so a yes to anything else it asked (a pic, the color they want, whether they want a price on something) never does, and a question sent right after the schedule question with no yes in it ("any deals going on right now?") never does either, unless it asks what the schedule looks like or what's open, which is asking to get on it. A lead form ("hello my name is <name>, I am looking to get the service of <service> the vehicle I have is <vehicle>" or "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>.") is only a quote request, never a booking ask. A booking ask from an earlier message in `message_history` never counts, only `current_user_message`.
@@ -519,13 +492,9 @@ state: {"current_user_message":{"user_media":{},"user_text":"yep can do, ill sen
 answer: False"""
 
 
-
-#**********ACKS INFO**********
-#what nodding along to the shop's answer looks like, so an ok to info gets the booking question instead of a shrug
-
-
 #ACKS INFO
-#read when a reply asks nothing and the schedule question is due, an ok to info counts, an ok to one of our questions never does
+
+#an ok to info counts, an ok to one of our questions never does, read when the schedule ask is due
 def acks_info_examples() -> str:
     return r"""Yes: in `current_user_message` they only take in or agree with what the shop's last reply told them, an answer to something they asked or info on the job, in any words ("alright sounds good", "ok cool", "gotcha", "got it", "makes sense", "perfect", "ok that works", "sounds good thanks", "👍"), with nothing else in it. It counts the same when they said yes to the schedule question earlier with a question on it, since the shop answered that question and their ok takes the answer in ("Yes is it possible to do monthly payments" answered with the financing, then "Alright sounds good").
 No: a message that asks something, picks, adds or changes something on the job, or pushes back on it. An ok that answers a question the shop's last reply asked is never taking in info: right after the shop asked whether they want to get on the schedule it's the yes to it, and right after it asked for a pic, the vehicle, the color or which option it's the answer to that ("ok", "sounds good"). So is wrapping up or putting it off ("ok ill think about it", "sounds good, ill let you know", "thanks for the info!"), saying they'll send something the shop asked for ("ok ill send it tonight"), and any ok once `message_history` says they're still deciding, shopping around, waiting on other quotes, waiting on the vehicle or that they'll reach out themselves, with nothing since saying they're ready, since that ok only closes it out till they are. A lead form is never this.
@@ -553,13 +522,9 @@ state: {"current_user_message":{"user_media":{},"user_text":"sounds good, can we
 answer: False"""
 
 
-
-#**********PRICE QUESTION**********
-#what asking about the price looks like, so the shop's first reply only gives one when they asked for it
-
-
 #PRICE QUESTION
-#read on the shop's first reply, the one reply a price only goes out in when they asked for one
+
+#read on the shops first reply, the one reply a price only goes out in when they asked for one
 def price_question_examples() -> str:
     return r"""Yes: in `current_user_message` they ask what something costs or runs, in any words: how much, the price, pricing, the cost, rates, a quote, an estimate, a ballpark or a rough idea ("how much to wrap my 2021 civic?", "what do you charge for tint?", "Looking for a quote to wrap a 2024 ram 1500", "pricing on full body ppf?", "how much would this be?" about a pic), how the prices compare or which one is cheaper ("what's more, vinyl or ppf?", "what would each one run?"), whether something costs extra, a discount or a deal, or a price they saw ("is the $2500 wrap special still going?"), and a budget or a number they want it to come in at ("trying to stay under 4k", "we'd like to keep it around $800"), even when the same message also asks about anything else or names the job.
 No: they only name the job or say they want it done, with nothing asking what it costs ("want to wrap my 2020 mustang", "Front end ppf on my 2023 camry", "Full tint on my 2022 suburban"), ask whether the shop does a service ("do you guys do tint?", "can you put a ceramic coating on my sierra?"), ask anything else about it (colors, finishes, how long it takes, the warranty, the film, the law, a deposit, financing), ask to get on the schedule, ask about the shop's hours or where it is, send a pic of their vehicle or a look they want with no price question, or just say hi. A lead form ("hello my name is <name>, I am looking to get the service of <service> the vehicle I have is <vehicle>" or "hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>.") is never asking the price, even though the shop calls it a quote request. Only `current_user_message` counts.
@@ -600,13 +565,9 @@ state: {"current_user_message":{"user_media":{"media_element_0":{"media_descript
 answer: False"""
 
 
+#COLOR CHECK
 
-#**********COLOR CHECK ASKS**********
-#what asking about the exact color they sent looks like, so the line saying the color books are still getting checked only goes out again when they ask
-
-
-#COLOR CHECK ASKED
-#read on a reply saying the color books are still getting checked after one already told them, so the line only stays when they asked about the color
+#a repeat color books line only stays when they actually asked about the color
 def color_check_asked_examples() -> str:
     return r"""Yes: in `current_user_message` they ask about the exact color they sent over for their wrap or colored PPF, the one a system_response in `message_history` said the color books are getting checked for, in any words: whether the shop found it or can get it ("did you guys find that satin black yet?", "were you able to get that green?"), where the check on it stands ("any update on the color?", "any word on the color yet?"), or when they'll hear back on it ("when will you know if you can get it?"), even when the same message also asks about something else.
 No: anything else while the color books are getting checked, even about the job or the pic they sent: a few words about that pic ("( not my car model, just an example )", "thats the exact one"), pushing back on the price or asking for a cheaper way to get the look ("Ok. Is there a more affordable way to get the look I want?"), how long the job takes, the warranty, tint or another service, booking or when they can bring it in, where the shop is or its hours, a thanks, an ok or an emoji.
@@ -634,13 +595,9 @@ state: {"current_user_message":{"user_media":{},"user_text":"thanks!"},"message_
 answer: False"""
 
 
+#MORE SERVICES
 
-#**********MORE SERVICES**********
-#what asking about a ceramic coating or the shop's services in general looks like
-
-
-#CERAMIC COATING
-#what asking about a ceramic coating looks like, read with the analyzer's coating question
+#what asking about a ceramic coating looks like, read with the analyzers coating question
 def ceramic_coating_examples() -> str:
     return r"""Yes: a ceramic coating on the paint, a wrap or PPF. "ceramic coating", "ceramic coat", "coating", "ceramic the car", "ceramic over the wrap", "ceramic on top of the PPF", a 2, 3, 4, 5 or 8 year coating, the coating deal or special, a protective coating, sealant or "something to make the wrap last longer or keep it cleaner", a question about the coating's price (on its own or on top of a wrap, PPF or colored PPF), whether it's included or free with a wrap or PPF, its brand or product, how long it lasts, what it does or protects against, rock chips or scratches, whether it hides scratches or blemishes, whether it changes the look or finish of the wrap, what it covers (the headlights, taillights, trim, fender flares, a hardtop, the glass, the wheels), warranty, how long it takes, cure time, washing or aftercare, prep or a paint correction before it, doing the coating themselves, a coating already on their paint before a wrap or PPF, undercoating, or a follow up to a coating quote. "Ceramic" on its own with nothing saying tint ("How much for ceramic on my 2021 camry?") is Yes, the reply asks which one they mean. A coating asked for together with a wrap, PPF, colored PPF or tint ("full wrap and ceramic coat", "front end ppf plus ceramic", "colored ppf + ceramic coating + window tint") is still Yes. A paint correction, buffing or polishing asked about on its own ("do you do paint correction?", "how much to buff out my truck?") is Yes too, it's part of the prep before a coating and the coating details answer it. The coating mixed up with PPF ("the ceramic coating protective film", "ceramic coating film") is Yes too, the reply clears up that they're two different things.
 No: ceramic window tint ("ceramic tint", "nano ceramic", "is that ceramic?" about the tint, a shade or percentage on the windows, "ceramic film"), a wrap, PPF, colored PPF or tint with no coating in `current_user_message` and none asked about with it earlier (a follow up that names no service after they asked about the coating with it is the whole job, see below), PPF or a wrap described as protection with no coating named ("protect the paint", "clear wrap"), a tint that blocks heat or UV, paint or body work, powder coating, bedliners, any other service, business questions like hours, address or phone number, or a message that names no service ("Could I get a quote on my car?").
@@ -713,9 +670,7 @@ answer: False
 state: {"current_user_message":{"user_media":{},"user_text":"Could I get a quote on my car ?"},"message_history":{}}
 answer: False"""
 
-
-#GENERAL SERVICES
-#what asking about the shop's services in general looks like, read with the analyzer's general services question
+#what asking about the shops services in general looks like, for the general services question
 def general_services_examples() -> str:
     return r"""Yes: the shop's services in general, not one service in particular. What services the shop offers or what it does ("what services yall offer", "what do you guys do", "what kind of work do you do", "what all do you offer"), whether it does anything besides a service ("do you only do wraps?", "what else do you do?"), the services as a whole with no service named (prices, specials, warranty or turnaround, "what are your prices like?"), or wanting a quote or some work done with no service named ("Could I get a quote on my car?", "how much would you guys charge for my 2022 silverado?", "I'm interested in your services"). A message that asks about the services in general along with one service ("what else do you do besides tint? and how much is tint on my civic") is still Yes.
 No: one or more services named with nothing asked about the services in general (a wrap, PPF, colored PPF, window tint or a ceramic coating, "do you guys do tint", "looking for a full wrap and window tinting"), a follow up to a service already being discussed, a job the services don't list ("do you do powder coating?"), or business questions like hours, address or phone number.

@@ -1,15 +1,11 @@
-#**********IMPORTS**********
-#the shop reply prompt the rewrite starts from, and the shared regen playbook
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 from src.prompts.business import generator as business_generator
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the shop reply prompt plus the playbook for fixing a flagged reply, with the shop details kept spotless
-
-
-#FIX NOTES
 #replies about the shop live and die by the details, so these never get touched
 def fix_notes() -> str:
     return """
@@ -21,8 +17,6 @@ def fix_notes() -> str:
         - Rule: a reply about the shop answers and stops, so when a fix takes out a question, nothing goes in its place.
         - Why: they asked about the shop, not about booking, so a closing question only reads like a sales push (CONVERSATION rule 3 above)."""
 
-
-#REGEN PROMPT
 #same rules and examples as the shop reply generator, then the playbook for fixing what got flagged
 def prompt() -> str:
     #no extra inputs here, just the flagged reply and what to fix

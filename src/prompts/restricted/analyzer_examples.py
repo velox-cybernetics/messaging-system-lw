@@ -1,15 +1,10 @@
-#**********CHECK EXAMPLES**********
-#what the bot can still answer once a person at the shop took the chat over, with yes and no samples
+#CHECK EXAMPLES
 
-
-#CONTEXT NOTE
-#why the bot only answers some things for a restricted customer, added into both checks' samples
+#why the system only answers some things for a restricted customer, both checks get this
 def context_note() -> str:
     return r"""Every customer this reaches is restricted: a person at the shop took the conversation over, for something the shop's details had no answer for, a custom job getting priced by hand, a refund, a complaint or something else only a person answers (a deal they saw, a job at the shop, a sales pitch), a booking a person has to sort out, the owner checking the color books for the exact color they sent for a wrap or colored PPF, or them picking from the closest materials the shop can order when it can't get that exact color. The bot only answers what it can answer on its own while they wait. Read `current_user_message` in light of `message_history`, never on its own: a short reply or follow up ("2021 civic", "the front end", "and how long does that take?", "and on saturday?") keeps going on whatever the shop's last reply or the earlier turns point it at. A message that asks for an update on what the shop is looking into or pricing by hand ("any update?", "did you find out about the wheels?", "did you get a price yet?"), or that says something only a person can handle along with its question, is never Yes, and neither is one that asks nothing, like "ok", "thanks" or "sounds good". A plain question about a regular service or the shop is still Yes when what they're waiting on is something else, a complaint included, since answering it gives nothing away about what a person is handling. `current_date_time` never changes the answer."""
 
-
-#SERVICE PRICING
-#the yes and no rules and samples for whether a restricted customer asks about a regular service or its price
+#yes and no rules plus samples for whether a restricted customer asks about a service or price
 def service_pricing_examples() -> str:
     return rf"""Yes: a question about one of the shop's regular services or what it costs: window tint, a vinyl wrap or color change in one gloss, satin or matte color, PPF on the front end, full body or windshield, colored PPF or a ceramic coating. That is a price, what's included, the colors, finishes or shades, the material, how long it takes or lasts, the warranty, the prep or aftercare, how it works, what services the shop offers, whether the shop gives a discount or a deal for a post, a review or a referral (the service details answer it), giving what the shop's last reply asked for to price one of them (the vehicle, its colors, the windows, the coverage, a pic of the vehicle), a pic, screenshot or link of a different exact color they want while the shop makes sure it can get the one they sent for their wrap or colored PPF (that's the color it checks next), or a follow up to the shop's answer about one of them, a reply to a question it asked about one included ("Not sure yet, can I just pick there?" after it asked how dark they're wanting to go), even when the closest materials to pick from went out right after that question. One that also asks something about the shop itself is still Yes.
 No: going ahead or getting on the schedule (a yes to the shop asking whether they want to get on the schedule, "lets do it", "how do I book?", what days are open, dropping it off), turning a service down or calling it off, a job a person prices (a commercial wrap, a partial, two tone, specialty film or custom design, a chrome delete, PPF or a wrap that's on the vehicle now coming off, PPF on just one piece the front end doesn't cover or on just a piece it covers that they still want after the shop offered them the front end, body work, wheels, a motorcycle, boat or RV, or any other job the services don't list), a refund, a complaint, trouble with financing or a payment or being upset with the shop, a specific deal, promo or discount they saw or heard about or someone at the shop offered them ("is the $500 off from your post still going?"), a job at the shop, someone selling something to the shop or proposing a business deal, a question about only the shop itself (the hours, where it is, payments), or anything else.
@@ -56,9 +51,7 @@ answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"nevermind, going with someone else"}},"message_history":{{"user_message_0":{{"user_media":{{}},"user_text":"here it is"}},"system_response_to_user_message_0":"Perfect, that's everything we need. We'll look it over and get a price back to you in about 30 minutes."}}}}
 answer: False"""
 
-
-#BUSINESS OPERATIONS
-#the yes and no rules and samples for whether a restricted customer asks about the shop itself
+#yes and no rules plus samples for whether a restricted customer asks about the shop itself
 def business_operations_examples() -> str:
     return rf"""Yes: a question about the shop itself: the hours or whether it's open, where it is or how to get there, the phone number, email, website or social media, who owns it, how long it's been around, how many people work there, whether it's licensed or insured, which payments it takes, how financing works, or who they're talking to and whether this is a bot. One that also asks about a regular service is still Yes.
 No: a question about a service or a job on their vehicle with nothing about the shop, trouble with financing or a payment they already tried ("Affirm denied me", "I got charged twice"), a refund, a complaint or being upset with the shop, whether the shop is hiring or wanting to work there, someone selling something to the shop or proposing a business deal, getting on the schedule or a day to drop it off, or anything else.
@@ -89,9 +82,7 @@ answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"I want my deposit back, whats your email?"}},"message_history":{{"user_message_0":{{"user_media":{{}},"user_text":"The wrap you guys did on my tacoma is already peeling on the hood and its only been 3 weeks"}},"system_response_to_user_message_0":"Sorry to hear about the hood on the Tacoma, let me look into that for you."}}}}
 answer: False"""
 
-
-#AT THE SHOP
-#the yes and no rules and samples for whether a restricted customer says they're at the shop right now, so they always hear to come on in
+#yes and no rules plus samples for a restricted customer at the shop, they always hear come in
 def at_shop_examples() -> str:
     return r"""Yes: they say they're at the shop right now or pulling in, in any words: "I'm here", "here now", "at the shop", "I'm out front", "just pulled up", "pulling in now", "which door do I go to, I'm outside". It's still Yes when they say more with it, ask something, are upset or say nobody's there, and when they say how long they've been at the shop ("been at the shop for 20 minutes").
 No: they're coming but aren't there yet ("on my way", "ill bring it over right now", "be there in 10", "leaving now"), asking whether or when they can come by or drop it off, saying they were at the shop some other time, or anything else.

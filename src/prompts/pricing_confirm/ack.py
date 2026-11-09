@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shop's shared details, booking info and notes that go into the reply
+#IMPORTS
+
 from src.prompts import shared
 
 
-
-#**********EXAMPLES**********
-#sample replies for when they call off getting on the books for now
-
-
 #EXAMPLES
+
 #go in last in the prompt, after the shop details and notes
 def examples() -> str:
     return r"""
@@ -83,12 +79,8 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together the prompt that takes in them holding off and leaves the door open
-
-
-#SYSTEM PROMPT
 #static on purpose, this prompt is the cached prefix of its requests
 def prompt() -> str:
     prompt_text: str = """

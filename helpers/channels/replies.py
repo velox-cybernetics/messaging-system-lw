@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#the sender that texts the customer, the owner's texts, the reply splitter and its final check, the conversation on file, the lead form channels, and the color job a pic ask counts toward
+#IMPORTS
+
 from helpers.channels import notify
 from helpers.channels import senders
 from helpers.response import final_check
@@ -9,66 +9,48 @@ from helpers.state import state_form
 from src import branches
 
 
+#SAVING
 
-#**********SAVING**********
-#saves what came in and what went out to the conversation on file
-
-
-#SAVE MESSAGE
-#adds a message to the conversation on file under its key, a failed save is only printed so it never stops a reply
+#saves a message under its key, a failed save only gets printed, the reply still goes out
 def write_message(key: str, message: dict | str) -> None:
     try:
         log.save_message(key, message)
-
     except Exception as error:
         print(f"WRITE ERROR: {error}")
 
-
-#PRICE SENT
-#a reply with a $ in it is a price they've seen, the booking branch only books them once one went out
+#a dollar sign means they've seen a price, the booking branch waits for that
 def write_price_sent(id: str, system_response: str) -> None:
     if("$" not in system_response):
         return
 
     try:
         log.write_info(f"price_sent_{id}", ["sent"], ["status"])
-
     except Exception as error:
         print(f"PRICE SENT ERROR: {error}")
 
-
-#COLOR PIC ASK
-#a reply asking for a pic while the color it is now isn't on file counts toward the asks before a color they type stands in for one
+#a pic ask while there current color isn't on file counts toward giving up on the pic
 def write_color_pic_ask(id: str, system_response: str) -> None:
     try:
         branches.note_color_pic_ask(id, system_response)
-
     except Exception as error:
         print(f"COLOR PIC ASK ERROR: {error}")
 
-
-#DASHBOARD TEXT
-#the owner typed it, but on file it's hazel's own words, so the next reply picks up right where he steered it
+#the owner typed it, but on file its the systems words, so the next reply picks up from their
 def write_dashboard_text(id: str, text: str) -> None:
     try:
         log.add_system_text(id, text)
-
     except Exception as error:
         print(f"WRITE ERROR: {error}")
 
-    #a price or a pic ask he sends counts the same as one she sends, no special treatment for the boss
+    #a price or pic ask from the boss counts the same as one from the system
     write_price_sent(id, text)
 
     write_color_pic_ask(id, text)
 
 
+#SENDING
 
-#**********SENDING**********
-#puts the finished reply on their phone a few sentences at a time, then saves it, once the final check lets it through
-
-
-#FINAL CHECK
-#the reply as it goes out, or empty when the final check stops it, then the owner gets it to answer them himself
+#the reply as it goes out, or empty when the final check stops it and the owner takes over
 def cleared_reply(id: str, channel: str, system_response: str) -> str:
     reason: str = final_check.blocked_reason(system_response)
 
@@ -81,25 +63,22 @@ def cleared_reply(id: str, channel: str, system_response: str) -> str:
 
     return ""
 
-
-#SEND REPLY
-#texts the reply to them, an empty one sends nothing but is still saved, then notes a price or a pic ask in it
+#texts the reply out, an empty one sends nothing but still gets saved
 def send_response(id: str, system_response: str, channel: str) -> None:
     #core is done with the reply, so its typing bubble comes down before the texts put up their own
     senders.stop_typing(id, channel)
 
-    #a reply the final check stops is saved empty, the same as a message the shop let be, so no reply after it thinks they read it
+    #a blocked reply is saved empty like one the shop let be, so later replies know it never went
     system_response = cleared_reply(id, channel, system_response)
 
     if(system_response != ""):
         #at most 3 sentences a text, and a question always starts its own text
         texts: list[str] = spacing.split_texts(system_response)
 
-        #a form lead hasn't texted the shop back yet, and blooio only takes 3 texts to someone till they answer, so the reply goes out as one and leaves the rest for the follow ups
+        #blooio only takes 3 texts before a form lead answers, so it all goes out as one
         if(channel in state_form.FORM_CHANNELS):
             texts = [spacing.one_text(texts)]
 
-        #it goes out on the channel they wrote in on
         senders.send_texts(id, channel, texts)
 
         print()

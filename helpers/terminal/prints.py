@@ -1,113 +1,43 @@
-#**********IMPORTS**********
-#the terminal, thread locks, and the memory that keeps each message batch's prints together
+#IMPORTS
+
 import io
 import sys
-import threading
-from collections.abc import Iterator
-from contextlib import contextmanager
-from contextvars import Context, ContextVar, Token, copy_context
-from typing import TextIO
+from contextvars import copy_context
 
-
-
-#**********GLOBALS**********
-#the real terminal, the lines a batch holds back, and the print lock
-
-
-#TERMINAL
-#the real terminal, kept before the held stdout goes in, every line ends up here
-TERMINAL: TextIO = sys.stdout
-
-
-#HELD LINES
-#what the message batch being answered printed so far, None outside a batch so those prints go straight out
-HELD_LINES: ContextVar[list[str] | None] = ContextVar("held_lines", default=None)
-
-
-#PRINT LOCK
-#two batches finishing at once never mix their lines, one block prints at a time
-PRINT_LOCK: threading.Lock = threading.Lock()
-
-
-
-#**********HELD PRINTS**********
-#holds back what a message batch prints and lets it out in one block, so batches never mix
-
-
-#HELD STDOUT
-#every print goes through here, a batch's lines wait for the batch to finish and everything else prints right away
-class HeldStdout:
-    #WRITE
-    #a batch's text waits in its held lines, anything printed outside a batch goes straight to the terminal
-    def write(self, text: str) -> int:
-        lines: list[str] | None = HELD_LINES.get()
-
-        if(lines is None):
-            with PRINT_LOCK:
-                return TERMINAL.write(text)
-
-        lines.append(text)
-
-        return len(text)
-
-    #FLUSH
-    #held lines wait for their batch, so only the real terminal gets flushed
-    def flush(self) -> None:
-        TERMINAL.flush()
-
-    #EVERYTHING ELSE
-    #anything else a stream gets asked for (isatty, fileno, encoding) comes from the real terminal
-    def __getattr__(self, name: str) -> object:
-        return getattr(TERMINAL, name)
-
-
-
-#**********INSTALL**********
-#sets up printing once when first imported, every print from then on goes through the held stdout
-
-
-#LINE BY LINE
-#a line printed outside a batch goes out the moment it ends, even when the terminal is a pipe like render's logs
-#anything printed before this file got imported goes out here too
-if(isinstance(TERMINAL, io.TextIOWrapper)):
-    TERMINAL.reconfigure(line_buffering=True)
+from helpers.terminal import held_stdout
 
 
 #INSTALL
-#put in only once even if the file gets imported again
-if(not isinstance(sys.stdout, HeldStdout)):
-    sys.stdout = HeldStdout()
 
+#a line printed outside a batch goes out the moment it ends, even into renders piped logs
+if(isinstance(held_stdout.TERMINAL, io.TextIOWrapper)):
+    held_stdout.TERMINAL.reconfigure(line_buffering=True)
 
-
-#**********HOLD**********
-#everything a message batch prints comes out together once it's done
+#held_stdouts write and flush become stdout, once, even if this file gets imported again
+if(sys.stdout is not held_stdout):
+    sys.stdout = held_stdout
 
 
 #HOLD
-#a batch's prints, its worker threads included, come out in one block once its reply went out or it failed
-@contextmanager
-def held() -> Iterator[None]:
-    token: Token = HELD_LINES.set([])
 
-    try:
-        yield
+#a batchs prints wait in a fresh list from here until release, worker threads included
+def hold():
+    return held_stdout.HELD_LINES.set([])
 
-    finally:
-        lines: list[str] | None = HELD_LINES.get()
+#lets everything the batch printed out in one block, reply sent or not
+def release(token) -> None:
+    lines: list[str] | None = held_stdout.HELD_LINES.get()
 
-        if(not lines):
-            lines = []
+    if(not lines):
+        lines = []
 
-        HELD_LINES.reset(token)
+    held_stdout.HELD_LINES.reset(token)
 
-        with PRINT_LOCK:
-            TERMINAL.write("".join(lines))
+    with held_stdout.PRINT_LOCK:
+        held_stdout.TERMINAL.write("".join(lines))
 
-            TERMINAL.flush()
+        held_stdout.TERMINAL.flush()
 
-
-#BATCH CONTEXT
-#a new worker thread starts without the batch's held lines, so it runs in a copy to print into the same block
-def batch_context() -> Context:
+#new worker threads miss the batchs held lines, so they run in a copy of this context
+def batch_context():
     return copy_context()

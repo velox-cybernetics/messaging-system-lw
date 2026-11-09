@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample messages and the exact color pulled out of each one
+#EXAMPLES
 
-
-#EXTRACT EXAMPLES
 #the sample messages added to the end of the prompt, with what gets pulled out of each
 def examples() -> str:
     return r"""
@@ -155,12 +152,8 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for pulling out the exact color they want, with the samples added on the end
-
-
-#SYSTEM PROMPT
 #the system prompt for pulling the exact color they want out of a message
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of every want extractor request

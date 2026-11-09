@@ -1,15 +1,11 @@
-#**********IMPORTS**********
-#the shop details, booking info and typo notes that get added to the check
+#IMPORTS
+
 from src.prompts import shared
 
 
-
-#**********EXAMPLES**********
-#sample messages that show when the shop's service info can answer them and when it can't
-
-
 #EXAMPLES
-#go in last, after the shop details, so the checker sees which messages its info can and can't answer
+
+#go in last, after the shop details, so the checker sees what its info can and can't answer
 def examples() -> str:
     return r"""
     #Examples
@@ -451,13 +447,9 @@ def examples() -> str:
 """
 
 
+#CHECK PROMPT
 
-#**********CHECK PROMPT**********
-#puts together the check that spots messages the shop's service info can't answer at all
-
-
-#INSTRUCTIONS
-#the shop's details and typo notes go in with the rules, so the check knows everything the shop can answer
+#shop details and typo notes ride along, so the check knows everything the shop can answer
 def instructions() -> str:
     instructions_text: str = """
     #How To Answer

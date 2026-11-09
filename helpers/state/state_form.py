@@ -1,10 +1,8 @@
-#**********IMPORTS**********
-#python's json, link matching and side by side work, the media readers and the saved chat history
+#IMPORTS
+
 import json
 import re
-from concurrent.futures import Future
 from concurrent.futures import ThreadPoolExecutor
-from contextvars import Context
 
 from helpers.media.media_prep import prepare_media
 from helpers.media.media_process import process_media
@@ -12,38 +10,24 @@ from helpers.state.log import read_messages
 from helpers.terminal import prints
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#fixed values for reading links, stories, lead forms and the time written into the state
-
-
-#URL PATTERN
 #a link they typed, up to the first space
 URL_PATTERN: str = r"https?://\S+"
 
-
-#STORY TYPES
 #the attachment types instagram sends for a story, one they posted or one they were tagged in
 STORY_TYPES: list[str] = ["ig_story", "story", "story_mention"]
 
-
-#MEDIA WORKERS
-#how many pics or videos of one batch get described at the same time, so a batch takes about as long as one
+#pics or videos of one batch get described at once, so ten pics don't take ten times as long
 MAX_MEDIA_WORKERS: int = 8
 
-
-#DATE FORMAT
-#how the shop's local time is written into the state, so whatever reads it back parses the same text
+#how the shops local time is written into the state, so whatever reads it back parses the same text
 CURRENT_DATE_TIME_FORMAT: str = "%A, %B %d, %Y at %I:%M %p"
 
-
-#FORM CHANNELS
 #a lead form carries no media, and only the first reply to one greets
 FORM_CHANNELS: list[str] = ["meta-form", "website-form"]
 
-
-#FORM LABELS
-#each form's labels lowercased with the ":" or "?" that ends them, and the field the value after it fills
+#form labels lowercased with their colon or question mark, and the field each one fills
 FORM_LABELS: dict[str, str] = {}
 
 #meta form
@@ -70,19 +54,13 @@ FORM_LABELS["vehicle year/make/model:"] = "vehicle"
 FORM_LABELS["email:"] = "email"
 
 
+#STATE HISTORY
 
-#**********STATE AND HISTORY**********
-#writes the state as text for the prompts and lays out the chat so far, one turn after the other
-
-
-#STATE TEXT
 #the state as one compact line, accents and emojis kept as they are
 def state_to_text(state: dict) -> str:
     return json.dumps(state, ensure_ascii=False, separators=(",", ":"))
 
-
-#HISTORY FORM
-#the saved chat laid out turn by turn, each message of theirs next to the shop's reply to it
+#the saved chat laid out turn by turn, each message of theirs next to the shops reply to it
 def message_history_form(id: str) -> dict:
     user_messages: list = read_messages(f"usermsg_{id}")
 
@@ -90,7 +68,7 @@ def message_history_form(id: str) -> dict:
 
     history: dict = {}
 
-    #the longer side sets the turns, a turn missing its user message or system response just leaves that key out
+    #the longer side sets the turns, a missing message or response just leaves its key out
     turns: int = max(len(user_messages), len(system_responses))
 
     for turn in range(turns):
@@ -103,12 +81,8 @@ def message_history_form(id: str) -> dict:
     return history
 
 
+#LINKS
 
-#**********LINKS**********
-#collects where their pics and videos live and every link they typed, to pass on to the owner
-
-
-#MEDIA URLS
 #where each pic or video in the batch lives, so the ones that matter can be sent on to the owner
 def media_urls(current_message_batch: list) -> list[str]:
     urls: list[str] = []
@@ -140,8 +114,6 @@ def media_urls(current_message_batch: list) -> list[str]:
 
     return urls
 
-
-#TEXT LINKS
 #every link typed in the batch, with the punctuation that ends a sentence left off
 def text_links(current_message_batch: list) -> list[str]:
     links: list[str] = []
@@ -154,18 +126,12 @@ def text_links(current_message_batch: list) -> list[str]:
     return links
 
 
+#COLOR PICS
 
-#**********COLOR PICS**********
-#a pic read as a color is only about its color, so nothing else it shows reads as a service they asked about
-
-
-#SERVICE QUES LABEL
 #the line of a media description that names the service its pic shows or points to
 SERVICE_QUES_LABEL: str = "service_ques:"
 
-
-#WITHOUT SERVICE QUES
-#the same message with the service_ques line off every media description in it, everything else kept as is
+#the same message minus the service_ques line in every media description, the rest untouched
 def without_service_ques(user_message: dict) -> dict:
     color_media: dict = {}
 
@@ -175,7 +141,7 @@ def without_service_ques(user_message: dict) -> dict:
         for field_name, field_value in element.items():
             kept_value: object = field_value
 
-            #blooio calls it media_description, instagram and messenger media_description(if applicable)
+            #blooio says media_description, instagram and messenger tack if applicable on the end
             if(field_name.startswith("media_description") and isinstance(field_value, str)):
                 kept_lines: list[str] = []
 
@@ -189,16 +155,19 @@ def without_service_ques(user_message: dict) -> dict:
 
         color_media[element_name] = color_element
 
-    return {**user_message, "user_media": color_media}
+    color_message: dict = {}
+
+    for key, value in user_message.items():
+        color_message[key] = value
+
+    color_message["user_media"] = color_media
+
+    return color_message
 
 
+#DESCRIBING MEDIA
 
-#**********DESCRIBING MEDIA**********
-#describes every pic or video side by side and keeps them in the order they were sent
-
-
-#DESCRIBE MEDIA
-#the descriptions come back in the order the media came, so media_element_N stays the Nth thing they sent
+#descriptions come back in the order the media came, so media_element_N stays the Nth one sent
 def describe_media(data_urls_types: list[tuple]) -> list[str]:
     if(len(data_urls_types) == 0):
         return []
@@ -208,13 +177,13 @@ def describe_media(data_urls_types: list[tuple]) -> list[str]:
     descriptions: list[str] = []
 
     with ThreadPoolExecutor(max_workers=worker_count) as executor:
-        futures: list[Future] = []
+        futures: list = []
 
         for data_url_type in data_urls_types:
             #each worker prints into the same block as the message batch the media came with
-            batch_context: Context = prints.batch_context()
+            batch_context = prints.batch_context()
 
-            submitted: Future = executor.submit(batch_context.run, process_media, data_url_type[0], data_url_type[1])
+            submitted = executor.submit(batch_context.run, process_media, data_url_type[0], data_url_type[1])
 
             futures.append(submitted)
 
@@ -224,23 +193,16 @@ def describe_media(data_urls_types: list[tuple]) -> list[str]:
 
     return descriptions
 
-
-#ATTACHMENT ITEMS
 #a group of attachments is read item by item, a lone attachment is read from its first item
 def attachment_items(attachment: list) -> list:
     if(len(attachment) > 1):
         return attachment
-
     else:
         return [attachment[0]]
 
 
+#META CHANNELS
 
-#**********INSTAGRAM AND MESSENGER**********
-#picks the link and caption out of each instagram or messenger post, story, reel or ad
-
-
-#STORY URL
 #meta sends the story link in url, fall back to story_media_url if it is missing
 def story_url(payload: dict) -> str | None:
     url: str | None = payload.get("url")
@@ -250,9 +212,7 @@ def story_url(payload: dict) -> str | None:
 
     return url
 
-
-#INSTAGRAM ATTACHMENT
-#[the prepared media or "" when it isn't downloaded, its caption] for one instagram attachment
+#prepared media or empty string if it wasn't downloaded, and its caption, for one instagram item
 def instagram_attachment(item: dict, in_group: bool) -> list:
     media_type: str | None = item.get("type")
 
@@ -260,45 +220,34 @@ def instagram_attachment(item: dict, in_group: bool) -> list:
 
     if(media_type == "ig_post"):
         return [prepare_media(payload.get("url")), payload.get("title")]
-
     elif(media_type in STORY_TYPES):
         data_url_and_type: tuple = prepare_media(story_url(payload))
 
         #a story inside a group of attachments gets no caption, a lone story keeps its title
         if(in_group):
             return [data_url_and_type, ""]
-
         else:
             return [data_url_and_type, payload.get("title")]
-
     elif(media_type in ["image", "video"]):
         return [prepare_media(payload.get("url")), ""]
-
-    #reels are not downloaded, their title is the caption
     elif(media_type == "ig_reel"):
+        #reels are not downloaded, there title is the caption
         return ["", payload.get("title")]
-
     else:
         return ["", ""]
 
-
-#INSTAGRAM REFERRAL
-#the ad they wrote in from, its photo or video prepared with the ad's title as its caption
+#the ad they wrote in from, its photo or video prepared with the ads title as its caption
 def instagram_referral(referral: dict) -> list:
     data: dict = referral.get("ads_context_data", {})
 
     if(data.get("photo_url")):
         return [prepare_media(data.get("photo_url")), data.get("ad_title")]
-
     elif(data.get("video_url")):
         return [prepare_media(data.get("video_url")), data.get("ad_title")]
-
     else:
         return ["", ""]
 
-
-#MESSENGER ATTACHMENT
-#[the prepared media or "" when it isn't downloaded, its caption] for one messenger attachment
+#prepared media or empty string if it wasn't downloaded, and its caption, for one messenger item
 def messenger_attachment(item: dict) -> list:
     media_type: str | None = item.get("type")
 
@@ -315,17 +264,13 @@ def messenger_attachment(item: dict) -> list:
     #photos, videos, and shared posts are downloaded, a shared post keeps its caption
     if(media_type in ["image", "video", "post", "ig_post"]):
         return [prepare_media(payload.get("url")), title]
-
-    #shared links and reels are not downloaded, their title is the caption
     elif(media_type in ["fallback", "reel", "ig_reel"]):
+        #shared links and reels are not downloaded, there title is the caption
         return ["", title]
-
-    #audio, files, and anything else cannot be described
     else:
+        #audio, files, and anything else cannot be described
         return ["", ""]
 
-
-#MESSENGER REFERRAL
 #video_url is the thumbnail of the ad video, so both are images
 def messenger_referral(referral: dict) -> list:
     data: dict | None = referral.get("ads_context_data")
@@ -348,18 +293,13 @@ def messenger_referral(referral: dict) -> list:
 
     if(ad_url):
         return [prepare_media(ad_url), ad_title]
-
     else:
         return ["", ad_title]
 
 
+#MEDIA ELEMENTS
 
-#**********MEDIA ELEMENTS**********
-#gets every pic, video, post or ad they sent described in words, in the order they sent them
-
-
-#POST MEDIA
-#instagram and messenger share these two fields, so the prompts read a shop post or ad the same way on both
+#instagram and messenger share these two fields, so prompts read a post or ad the same on both
 def post_media_elements(media_processed: list[list]) -> list[dict]:
     #only prepared media is described, anything not downloaded keeps an empty description
     prepared: list[tuple] = []
@@ -382,8 +322,6 @@ def post_media_elements(media_processed: list[list]) -> list[dict]:
 
     return media_elements
 
-
-#BLOOIO MEDIA
 #every pic or video they sent on blooio, described
 def blooio_media_elements(attachments: list) -> list[dict]:
     data_urls_types: list[tuple] = []
@@ -399,8 +337,6 @@ def blooio_media_elements(attachments: list) -> list[dict]:
 
     return media_elements
 
-
-#INSTAGRAM MEDIA
 #every attachment and ad they sent on instagram, prepared and then described
 def instagram_media_elements(attachments: list, referrals: list) -> list[dict]:
     media_processed: list[list] = []
@@ -416,8 +352,6 @@ def instagram_media_elements(attachments: list, referrals: list) -> list[dict]:
 
     return post_media_elements(media_processed)
 
-
-#MESSENGER MEDIA
 #every attachment and ad they sent on messenger, prepared and then described
 def messenger_media_elements(attachments: list, referrals: list) -> list[dict]:
     media_processed: list[list] = []
@@ -431,30 +365,21 @@ def messenger_media_elements(attachments: list, referrals: list) -> list[dict]:
 
     return post_media_elements(media_processed)
 
-
-#MEDIA ELEMENTS
 #the media of the batch described the way its channel sends it, None for any other channel
 def media_element_form(attachments: list, referrals: list, channel: str) -> list[dict] | None:
     if(channel == "blooio"):
         return blooio_media_elements(attachments)
-
     elif(channel == "ig"):
         return instagram_media_elements(attachments, referrals)
-
     elif(channel == "messenger"):
         return messenger_media_elements(attachments, referrals)
-
     else:
         return None
 
 
+#LEAD FORMS
 
-#**********LEAD FORMS**********
-#reads the labeled lines of a meta or website lead form into a short message in their words
-
-
-#FORM FIELDS
-#every field the form's labeled lines fill, empty when the form doesn't have it
+#every field the forms labeled lines fill, empty when the form doesn't have it
 def form_fields(current_message_batch: list) -> dict[str, str]:
     form: dict[str, str] = {"name": "", "first_name": "", "last_name": "", "service": "", "time": "", "pricing": "", "vehicle": "", "phone": "", "email": ""}
 
@@ -469,8 +394,6 @@ def form_fields(current_message_batch: list) -> dict[str, str]:
 
     return form
 
-
-#FORM NAME
 #the full name they typed on the form, the website form splits it in two
 def form_name(form: dict[str, str]) -> str:
     name: str = form["name"]
@@ -480,31 +403,24 @@ def form_name(form: dict[str, str]) -> str:
 
     return name
 
-
-#FORM MESSAGE
 #a lead form written as the message they'd have typed, so it reads like any other first message
 def form_message(current_message_batch: list, channel: str) -> dict:
     form: dict[str, str] = form_fields(current_message_batch)
 
     name: str = form_name(form)
 
-    #the meta form carries the full quote, the website form only name and vehicle, phone and email stay out
+    #meta form gets the full quote, website form just name and vehicle, phone and email stay out
     if(channel == "meta-form"):
-        #the time and the price range they picked stay out of the text for now, only the service and the vehicle go in
+        #time and price range sit out for now, only the service and the vehicle go in
         text: str = f"hello my name is {name}, I am looking to get the service of {form['service']} the vehicle I have is {form['vehicle']}"
-
     else:
         text = f"hello my name is {name}, I am interested in your services, the vehicle I have is {form['vehicle']}."
 
     return {"user_text": text}
 
 
+#MESSAGE FORM
 
-#**********MESSAGE FORM**********
-#turns the batch they just sent, a chat or a lead form, into the text and media the bot reads
-
-
-#CHAT MEDIA
 #each pic, video, post or ad of the batch as media_element_N, empty when they sent none
 def chat_media(current_attachments: list, current_referrals: list, channel: str) -> dict:
     media: dict = {}
@@ -517,8 +433,6 @@ def chat_media(current_attachments: list, current_referrals: list, channel: str)
 
     return media
 
-
-#CHAT MESSAGE
 #their texts joined line by line and their media described
 def chat_message(current_message_batch: list, channel: str) -> dict:
     current_text: list = []
@@ -531,10 +445,8 @@ def chat_message(current_message_batch: list, channel: str) -> dict:
     for message in current_message_batch:
         if(isinstance(message, list) and message != []):
             current_attachments.append(message)
-
         elif(isinstance(message, str)):
             current_text.append(message)
-
         elif(isinstance(message, dict) and message != {}):
             current_referrals.append(message)
 
@@ -546,17 +458,14 @@ def chat_message(current_message_batch: list, channel: str) -> dict:
         if(sent_text.strip() != ""):
             text_lines.append(sent_text.strip())
 
-    #each text stays on its own line, so "Color change probably" then "Gray" never reads as one sentence
+    #each text keeps its own line, so color change probably then gray never reads as one sentence
     text: str = "\n".join(text_lines)
 
     return {"user_media": media, "user_text": text}
 
-
-#MESSAGE FORM
-#the batch as the message the bot reads, a chat's text and media or a lead form's fields in words
+#the batch as the message the system reads, chat text and media or a lead form put into words
 def message_form(current_message_batch: list, channel: str) -> dict:
     if(channel not in FORM_CHANNELS):
         return chat_message(current_message_batch, channel)
-
     else:
         return form_message(current_message_batch, channel)

@@ -1,8 +1,6 @@
-//**********REPLIES**********
-//every answer goes back as json, never cached
+//REPLIES
 
-
-//JSON
+//json the browser never caches, extra headers ride along on top
 export function json(data: unknown, status: number = 200, headers: Record<string, string> = {}): Response {
     const all_headers: Record<string, string> = {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"};
 
@@ -14,20 +12,15 @@ export function json(data: unknown, status: number = 200, headers: Record<string
     return new Response(JSON.stringify(data), {"status": status, "headers": all_headers});
 }
 
-
-//FAIL
+//an error reply, just the status and a line saying what broke
 export function fail(status: number, error: string): Response {
     return json({"error": error}, status);
 }
 
 
+//REQUESTS
 
-//**********REQUESTS**********
-//reading what the browser sent
-
-
-//READ BODY
-//null when there's no body or it isn't json
+//null when theres no body or it isn't json
 export async function read_body(request: Request): Promise<Record<string, unknown> | null> {
     try {
         const data: unknown = await request.json();
@@ -38,25 +31,19 @@ export async function read_body(request: Request): Promise<Record<string, unknow
 
         return null;
     }
-
     catch {
         return null;
     }
 }
 
 
+//GUARD
 
-//**********GUARD**********
-//a handler that breaks still answers with something readable
-
-
-//GUARDED
 //no bare 500s, the page gets told what broke
 export async function guarded(work: (request: Request) => Promise<Response>, request: Request): Promise<Response> {
     try {
         return await work(request);
     }
-
     catch(error: unknown) {
         console.error(error);
 

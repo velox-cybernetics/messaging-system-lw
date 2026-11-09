@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#python's tools, the web server, the dashboard, the journal that keeps every waiting message, the spam check every message gets first, and the core that answers each messenger message
+#IMPORTS
+
 import asyncio
 import hashlib
 import hmac
@@ -24,80 +24,53 @@ from helpers.channels import username
 from helpers.terminal import prints
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#the web server, the messenger keys, and the memory that holds each customer's waiting messages
-
-
-#LOAD ENV
 load_dotenv()
 
+#no docs, redoc or openapi pages, nobody gets a free map of the webhook
+APP = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-#APP
-#no docs pages, app.py serves this router and they would come along with it
-APP: FastAPI = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-
-
-#VERIFY TOKEN
 #the verify token typed into the meta app dashboard when the webhook is subscribed
 MESSENGER_VERIFY_TOKEN: str = os.environ["MESSENGER_VERIFY_TOKEN"]
 
-
-#MESSENGER SECRET
-#the app secret (app settings > basic in the meta app dashboard), meta signs every page event with it
-#getenv so the other webhooks still start before it is in .env, every event is refused until it is
+#the app secret from basic app settings, getenv so missing it only refuses events
 MESSENGER_APP_SECRET: str | None = os.getenv("MESSENGER_APP_SECRET")
 
-
-#MESSAGE BATCHES
-#each id's countdown till their batch gets answered
-BATCH_COUNTDOWNS: dict[str, asyncio.Task] = {}
+#each ids countdown till their batch gets answered
+BATCH_COUNTDOWNS: dict = {}
 
 #the messages each id sent that wait on that countdown
 MESSAGE_BATCHES: dict[str, list] = {}
 
-#each of those messages' entries in the journal, cleared once their batch is answered
+#where each of those messages sits in the journal, cleared once there batch is answered
 BATCH_ENTRIES: dict[str, list[str]] = {}
 
-
-#CUSTOMER LOCKS
 #one lock per id, so only one of their batches gets answered at a time
-CUSTOMER_LOCKS: dict[str, asyncio.Lock] = {}
+CUSTOMER_LOCKS: dict = {}
+
+#each customers few second wait before the owners news goes out on its own
+NEWS_TIMERS: dict = {}
 
 
-#NEWS TIMERS
-#what the owner found for each customer, waiting a few seconds on anything they're still sending before it goes out on its own
-NEWS_TIMERS: dict[str, asyncio.Task] = {}
+#TIMINGS
 
-
-
-#**********TIMINGS**********
-#how long each wait lasts and how big a webhook may be before it gets refused
-
-
-#BATCH TIMES
 MESSENGER_BATCH_TIME: int = 20
 
-#they can take a while to find the pic and send it, so a batch still waiting on an asked-for pic gets this much longer
+#they can take a while to dig up the pic, so a batch waiting on one gets this much longer
 MESSENGER_PIC_WAIT_TIME: int = 75
 
-
-#WEBHOOK LIMITS
-#a real webhook is a few kilobytes, so a bigger body is refused before it can fill the instance's memory
+#a real webhook is a few kilobytes, so a bigger body is refused before it can eat the memory
 MAX_BODY_BYTES: int = 1024 * 1024
 
 #meta retries a delivery it thinks failed for up to 36 hours, so an id is kept for 48 hours
 SEEN_TTL_SECONDS: int = 172800
 
 
+#WEBHOOK SAFETY
 
-#**********WEBHOOK SAFETY**********
-#keeps out giant, forged and repeated deliveries so each real message gets answered once
-
-
-#READ BODY
-#nothing comes back when the body is over the size cap, the signature is checked against these exact bytes
-async def read_body(request: Request) -> bytes | None:
+#the raw body for the signature check, None once its over the size cap
+async def read_body(request) -> bytes | None:
     chunks: list[bytes] = []
 
     size: int = 0
@@ -113,25 +86,19 @@ async def read_body(request: Request) -> bytes | None:
 
     return b"".join(chunks)
 
-
-#META SIGNED
-#meta signs the body with the app secret, sent as "sha256=<hex>" in X-Hub-Signature-256
+#meta signs the body with the app secret, its header carries the sha256 hex
 def meta_signed(body: bytes, signature: str, secret: str) -> bool:
     expected: str = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
     #compare_digest so the response time does not leak how close a guess was
     return hmac.compare_digest(signature.encode(), f"sha256={expected}".encode())
 
-
-#FIRST SEEN
 #set nx is one atomic step, so two copies of a delivery can never both get through
 def first_seen(message_id: str) -> bool:
     seen: bool | None = REDIS_CLIENT.set(f"seen_messenger_{message_id}", "1", nx=True, ex=SEEN_TTL_SECONDS)
 
     return bool(seen)
 
-
-#NEW MESSAGE
 #meta resends a delivery it thinks was missed, an id already seen was already batched
 async def new_message(message_id: str | None) -> bool:
     if(not message_id):
@@ -144,44 +111,65 @@ async def new_message(message_id: str | None) -> bool:
             print()
 
             return False
-
-    #redis down must not drop the message, it is answered without the dedupe
     except Exception as error:
+        #redis down must not drop the message, it is answered without the dedupe
         print(f"DEDUPE ERROR: {error}")
 
     return True
 
 
+#MESSENGER EVENTS
 
-#**********MESSENGER EVENTS**********
-#pulls what they sent out of each event, a message, a button tap or an ad click
-
-
-#EVENT MESSAGE
-#[text, attachments, referral] out of one event, None when there is nothing to answer
+#text, attachments and referral out of one event, None when theres nothing to answer
 def event_message(event: dict) -> list | None:
-    message: dict = event.get("message") or {}
+    message: dict | None = event.get("message")
 
-    postback: dict = event.get("postback") or {}
+    if(not message):
+        message = {}
 
-    #echoes are the page's own sends, from this system or the owner replying in the inbox
+    postback: dict | None = event.get("postback")
+
+    if(not postback):
+        postback = {}
+
+    #echoes are the pages own sends, from this system or the owner replying in the inbox
     if(message.get("is_echo")):
         return None
 
+    text: str | None = message.get("text")
+
     #a postback is a get started, icebreaker or menu tap, its title is what they tapped
-    text: str | None = message.get("text") or postback.get("title") or None
+    if(not text):
+        text = postback.get("title")
+
+    if(not text):
+        text = None
 
     attachments: list = []
 
+    all_attachments: list | None = message.get("attachments")
+
+    if(not all_attachments):
+        all_attachments = []
+
     #stickers like the thumbs up have nothing to describe or answer
-    for attachment in message.get("attachments") or []:
+    for attachment in all_attachments:
         if(attachment.get("type") != "sticker"):
             attachments.append(attachment)
 
-    #an ad click comes inside the message, on its own for a thread they already had, or with a get started tap
-    referral: dict = message.get("referral") or event.get("referral") or postback.get("referral") or {}
+    #an ad click comes in the message, on its own for an old thread, or with a get started tap
+    referral: dict | None = message.get("referral")
 
-    #only an ad referral carries context, m.me links and shop products do not
+    if(not referral):
+        referral = event.get("referral")
+
+    if(not referral):
+        referral = postback.get("referral")
+
+    if(not referral):
+        referral = {}
+
+    #only an ad referral carries context, m dot me links and shop products don't
     if(referral.get("source") != "ADS"):
         referral = {}
 
@@ -190,41 +178,47 @@ def event_message(event: dict) -> list | None:
 
     return [text, attachments, referral]
 
-
-#EVENT ID
-#the id meta resends the event with, an ad click on its own has no mid so the sender and its time stand in for it
+#the id meta resends the event with, a lone ad click has no mid so sender and time stand in
 def event_message_id(event: dict, id: str) -> str:
-    message: dict = event.get("message") or {}
+    message: dict | None = event.get("message")
 
-    postback: dict = event.get("postback") or {}
+    if(not message):
+        message = {}
 
-    return message.get("mid") or postback.get("mid") or f"{id}_{event.get('timestamp')}"
+    postback: dict | None = event.get("postback")
+
+    if(not postback):
+        postback = {}
+
+    message_id: str | None = message.get("mid")
+
+    if(not message_id):
+        message_id = postback.get("mid")
+
+    if(not message_id):
+        message_id = f"{id}_{event.get('timestamp')}"
+
+    return message_id
 
 
+#PIC WAITING
 
-#**********PIC WAITING**********
-#gives a pic the shop asked for time to land, so it goes out in the same batch as its message
-
-
-#PIC PENDING
-#true when the shop's last reply asked for a pic and none is in the batch yet, a list with anything in it is a pic or a shared post
+#true when the shops last reply asked for a pic and the batch still has none
 def pic_pending(id: str, message_batch: list) -> bool:
+    #a list with anything in it is a pic or a shared post
     for message in message_batch:
         if(isinstance(message, list) and message != []):
             return False
 
     return spacing.asks_for_pic(spacing.last_sent_reply(message_history_form(id)))
 
-
-#PIC WAIT
-#the pic the shop asked for gets time to land before the countdown starts, so it goes out in the same batch as its message
+#the pic the shop asked for gets time to land first, so it joins the batch with its message
 async def wait_for_pic(id: str) -> None:
     try:
-        #a copy, the batch keeps growing in the event loop while the history gets read in a worker thread
+        #a copy, since the batch keeps growing while a worker thread reads the history
         waiting: bool = await asyncio.to_thread(pic_pending, id, list(MESSAGE_BATCHES[id]))
-
-    #redis down never holds the batch up, it just goes out on the usual countdown
     except Exception as error:
+        #redis down never holds the batch up, it just goes out on the usual countdown
         print(f"PIC WAIT ERROR: {error}")
 
         return
@@ -237,47 +231,35 @@ async def wait_for_pic(id: str) -> None:
         await asyncio.sleep(MESSENGER_PIC_WAIT_TIME)
 
 
+#CUSTOMER LOCKS
 
-#**********CUSTOMER LOCKS**********
-#makes a customer's batches and the owner's news for them take turns, so only one gets answered at a time
-
-
-#CUSTOMER LOCK
 #their lock, made the first time they need one
-def customer_lock(id: str) -> asyncio.Lock:
+def customer_lock(id: str):
     if(id not in CUSTOMER_LOCKS):
         CUSTOMER_LOCKS[id] = asyncio.Lock()
 
     return CUSTOMER_LOCKS[id]
 
-
-#INCOMING BATCH
-#a batch of theirs still counting down gets answered first, and a restarted countdown keeps the wait on the new one
+#any batch of theirs still counting down gets answered first, a restarted one included
 async def incoming_batch_answered(id: str) -> None:
     while(id in BATCH_COUNTDOWNS):
         await asyncio.wait([BATCH_COUNTDOWNS[id]])
 
 
+#COLOR NEWS
 
-#**********COLOR NEWS**********
-#sends what the owner found on its own when no reply to a message of theirs carries it
-
-
-#STOP TIMER
-#their news wait is called off, if one is running
+#there news wait is called off, if one is running
 def stop_news_timer(id: str) -> None:
-    timer: asyncio.Task | None = NEWS_TIMERS.pop(id, None)
+    timer = NEWS_TIMERS.pop(id, None)
 
     if(timer is not None):
         timer.cancel()
 
-
-#NEWS WAIT
-#a few seconds for a message they're still sending to land, then any batch of theirs goes first so its reply carries it
+#a few seconds for a message they're still sending, then any batch of theirs gets to carry it
 async def news_wait(id: str) -> None:
     await asyncio.sleep(owner.NEWS_WAIT_SECONDS)
 
-    #done waiting, so nothing cancels it from here, a newer answer from the owner gets its own wait
+    #done waiting, so nothing cancels it from here, a newer owner answer gets its own wait
     if(NEWS_TIMERS.get(id) is asyncio.current_task()):
         del NEWS_TIMERS[id]
 
@@ -286,13 +268,15 @@ async def news_wait(id: str) -> None:
         await incoming_batch_answered(id)
 
         async with customer_lock(id):
-            #a message that came in while this waited on their lock starts a batch that carries it too
+            #anything they sent while this waited on the lock starts a batch, which carries it
             if(id in BATCH_COUNTDOWNS):
                 continue
 
             #a reply that carried it leaves nothing to send
             if(await asyncio.to_thread(owner.news_due, id)):
-                with prints.held():
+                held_token = prints.hold()
+
+                try:
                     user_name: str = await asyncio.to_thread(username.username, id, "messenger")
 
                     print(f"COLOR NEWS: nothing from {user_name} is being answered, so what the owner found goes out on its own")
@@ -300,11 +284,11 @@ async def news_wait(id: str) -> None:
                     print()
 
                     await asyncio.to_thread(color_chains.send_color_news, id)
+                finally:
+                    prints.release(held_token)
 
             return
 
-
-#START TIMER
 #a newer answer from the owner restarts their news wait
 def start_news_timer(id: str) -> None:
     stop_news_timer(id)
@@ -312,53 +296,42 @@ def start_news_timer(id: str) -> None:
     NEWS_TIMERS[id] = asyncio.create_task(news_wait(id))
 
 
+#OWNER ANSWERS
 
-#**********OWNER ANSWERS**********
-#the owner answers color checks over his texts, so the text server hands his answer for a messenger customer to here
-
-
-#OWNER ANSWER
-#a reply of theirs being written holds off at the send till his answer is on file, so it goes out again carrying what he found
+#his answer for a messenger customer, handed over by blooio since his texts land there
 async def owner_answer(customer: str, answer: tuple, materials: list[dict[str, str]]) -> None:
-    #the reply core is writing for them right now, if there is one, gets held so their batch is answered again with it
+    #a reply core is writing for them right now gets held and redone with his answer
     owner.hold_for_news(customer)
 
-    #a reply of theirs being written or already going out when he answered means what he found waits for the next reply to them
+    #a reply already underway when he answered means the news waits for their next reply
     replying: bool = customer_lock(customer).locked()
 
     news_due: bool = False
 
     try:
         async with customer_lock(customer):
-            #a batch answered in the meantime can send a different exact color, which takes this check off
+            #a batch answered meanwhile can bring a new exact color and take this check off
             if(await asyncio.to_thread(owner.color_check_customer, answer[2]) != customer):
                 await asyncio.to_thread(color_chains.color_check_unmatched, answer)
 
                 return
 
             news_due = await asyncio.to_thread(color_chains.color_check_answered, customer, answer[1], answer[2], materials, replying)
-
     finally:
         owner.news_landed(customer)
 
-    #nothing of theirs was being answered, so the reply to what they're sending carries it, or it goes out on its own once they go quiet
+    #nothing was underway, so it rides their next reply or goes out alone once they go quiet
     if(news_due and not replying):
         start_news_timer(customer)
 
 
+#MESSAGE BATCHING
 
-#**********MESSAGE BATCHING**********
-#holds their messages until they stop sending, then answers them all at once
-
-
-#SENT SINCE
-#they messaged again after their batch was taken, so the reply being written for it never goes out and the batch carrying the new messages answers both
+#they messaged again after there batch was taken, so its reply gets tossed for the next batch
 def sent_since(id: str) -> bool:
     return id in MESSAGE_BATCHES
 
-
-#FOLD BATCH
-#a batch whose reply never went out goes in front of the messages they sent since, so one reply answers them all, False when nothing of theirs is waiting
+#a tossed batch goes in front of their newer messages, False when nothing of theirs is waiting
 def fold_batch(id: str, user_name: str, current_message_batch: list, current_entries: list[str]) -> bool:
     if(id not in MESSAGE_BATCHES):
         return False
@@ -373,18 +346,17 @@ def fold_batch(id: str, user_name: str, current_message_batch: list, current_ent
 
     return True
 
-
-#BATCH
-#waits on an asked-for pic and the countdown, then answers the whole batch, again if its reply was held for the owner's answer
-#it stays open till it holds their lock, so a message that lands while their last batch is still being answered joins it
+#answers the whole batch once they stop, late messages join right up until it gets there lock
 async def batch(id: str) -> None:
-    #everything this batch prints, its countdown included, comes out in one block once its reply went out or it failed
-    with prints.held():
+    #everything it prints comes out as one block at the end, sent or failed
+    held_token = prints.hold()
+
+    try:
         await wait_for_pic(id)
 
         await asyncio.sleep(MESSENGER_BATCH_TIME)
 
-        #the name lookup is a web request, so it runs off the event loop, before the batch closes so a message landing meanwhile still joins it
+        #the name lookup is slow, doing it before the batch closes lets late messages still join
         user_name: str = await asyncio.to_thread(username.username, id, "messenger")
 
         current_message_batch: list = []
@@ -395,11 +367,11 @@ async def batch(id: str) -> None:
 
         answered: bool = False
 
-        #a reply held for the owner's answer landing gets written again once his answer is on file, so it carries what he found
+        #a reply held for the owners answer gets written again once its on file
         while(not answered):
-            #a batch closing while their last one is still being answered waits, so it sees that reply in the history
+            #there last batch finishes first, so this one sees that reply in the history
             async with customer_lock(id):
-                #it closes the first time it holds their lock, and nothing waits from here to core, so what the owner found never goes out on its own in between
+                #no waiting from here to core, so the owners news can't sneak out in between
                 if(not taken):
                     current_message_batch = MESSAGE_BATCHES.pop(id)
 
@@ -415,19 +387,18 @@ async def batch(id: str) -> None:
 
                     print()
 
-                #core runs in its own worker thread, so the server keeps taking webhooks while it works
-                answered = await asyncio.to_thread(core, current_message_batch, id, "messenger", lambda: sent_since(id))
+                answered = await asyncio.to_thread(core, current_message_batch, id, "messenger", sent_since)
 
-                #they messaged again while its reply was being written, so the batch carrying those answers this one with them
+                #they messaged mid reply, so their newer batch answers this one too
                 if(not answered and fold_batch(id, user_name, current_message_batch, current_entries)):
                     return
 
         #answered, so its messages come off the journal and a restart never answers them again
         await asyncio.to_thread(journal.clear, "messenger", id, current_entries)
+    finally:
+        prints.release(held_token)
 
-
-#QUEUE MESSAGE
-#every new message restarts the id's countdown, so the whole batch goes out once they stop sending, journal_entry is where the message is on file
+#every new message restarts their countdown, so the batch only goes out once they stop
 def queue_message(id: str, message: list, journal_entry: str) -> None:
     if(id not in BATCH_COUNTDOWNS):
         MESSAGE_BATCHES[id] = message
@@ -435,7 +406,6 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
         BATCH_ENTRIES[id] = [journal_entry]
 
         BATCH_COUNTDOWNS[id] = asyncio.create_task(batch(id))
-
     else:
         MESSAGE_BATCHES[id].extend(message)
 
@@ -446,21 +416,16 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
         BATCH_COUNTDOWNS[id] = asyncio.create_task(batch(id))
 
 
+#TAKING IN
 
-#**********TAKING IN**********
-#every message gets its spam check before anything else sees it, then goes to the dashboard and the batch
-
-
-#TAKE MESSAGE
-#their messages take turns through the spam check, so each one still reaches the dashboard and the batch in the order it came in
-#spam goes no further, so it never shows in the dashboard and never gets a reply
+#one message at a time through the spam check, so the dashboard and the batch keep order
 async def take_message(id: str, message: list) -> None:
     async with spam.intake_lock(id):
-        #a message is text + attachments + referral, only its text can be spam
+        #only its text can be spam, and spam never shows in the dashboard or gets a reply
         if(await asyncio.to_thread(spam.is_spam, id, message[0], "messenger")):
             return
 
-        #every message but spam shows in the dashboard, unless the owner had them before the bot, and only one from a customer switched on there gets batched
+        #the dashboard shows it unless the owner had them first, only switched on ones get batched
         if(await asyncio.to_thread(dashboard.take_in, id, "messenger", message)):
             #on file before it waits in the batch, so a restart while it waits never loses it
             journal_entry: str = await asyncio.to_thread(journal.save, "messenger", id, message)
@@ -468,22 +433,17 @@ async def take_message(id: str, message: list) -> None:
             queue_message(id, message, journal_entry)
 
 
+#MESSENGER WEBHOOK
 
-#**********MESSENGER WEBHOOK**********
-#answers meta's verify check, then takes every message messenger delivers, checks it's real, and sends it to the batch
-
-
-#MESSENGER VERIFY
-#meta's subscribe check comes as a GET, it gets its challenge back only with the right verify token
-@APP.get("/messenger/webhook")
-async def messenger_verify(request: Request) -> PlainTextResponse:
+#metas subscribe check is a GET, the challenge only goes back with the right verify token
+async def messenger_verify(request: Request):
     mode: str = request.query_params.get("hub.mode", "")
 
     token: str = request.query_params.get("hub.verify_token", "")
 
     challenge: str = request.query_params.get("hub.challenge", "")
 
-    #meta only gets its challenge back when the token matches the one set in the app dashboard, compare_digest so the response time does not leak how close a guess was
+    #compare_digest so the response time does not leak how close a guess was
     if(mode == "subscribe" and hmac.compare_digest(token.encode(), MESSENGER_VERIFY_TOKEN.encode())):
         return PlainTextResponse(challenge)
 
@@ -491,11 +451,8 @@ async def messenger_verify(request: Request) -> PlainTextResponse:
 
     return PlainTextResponse("Forbidden", status_code=403)
 
-
-#MESSENGER HOOK
 #every messenger message comes in here as a signed POST
-@APP.post("/messenger/webhook")
-async def messenger_hook(request: Request) -> JSONResponse:
+async def messenger_hook(request: Request):
     if(not MESSENGER_APP_SECRET):
         print("MESSENGER WEBHOOK ERROR: MESSENGER_APP_SECRET is not set, event refused")
 
@@ -521,9 +478,24 @@ async def messenger_hook(request: Request) -> JSONResponse:
         return JSONResponse({"status": "ok"})
 
     #meta can group several entries and events into one POST, so every one of them is read
-    for entry in data.get("entry") or []:
-        for event in entry.get("messaging") or []:
-            id: str = (event.get("sender") or {}).get("id")
+    entries: list | None = data.get("entry")
+
+    if(not entries):
+        entries = []
+
+    for entry in entries:
+        events: list | None = entry.get("messaging")
+
+        if(not events):
+            events = []
+
+        for event in events:
+            sender: dict | None = event.get("sender")
+
+            if(not sender):
+                sender = {}
+
+            id: str = sender.get("id")
 
             message: list | None = event_message(event)
 
@@ -531,19 +503,21 @@ async def messenger_hook(request: Request) -> JSONResponse:
             if(not id or message is None):
                 continue
 
-            #a message is text + attachments + referral
             if(await new_message(event_message_id(event, id))):
                 await take_message(id, message)
 
     return JSONResponse({"status": "ok"})
 
 
+#ROUTES
 
-#**********RUN**********
-#starts this webhook server on its own when the file is run directly
+APP.add_api_route("/messenger/webhook", messenger_verify, methods=["GET"])
+
+APP.add_api_route("/messenger/webhook", messenger_hook, methods=["POST"])
 
 
-#RUN SERVER
+#RUN
+
 #uvicorn only prints its warnings and errors, so the terminal is just the held blocks
 if(__name__ == "__main__"):
     uvicorn.run(APP, port=8000, log_level="warning")

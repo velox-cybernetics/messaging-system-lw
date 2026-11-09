@@ -1,16 +1,12 @@
-#**********IMPORTS**********
-#the shop's shared notes plus the main reply's input guide and rules
+#IMPORTS
+
 from src.prompts import shared
 from src.prompts.pricing import generator as pricing_generator
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the base prompt every reply still waiting on something from them is built from
-
-
-#SYSTEM PROMPT
-#static on purpose, each prompt is the cached prefix of its interrogator's requests
+#static on purpose, each prompt is the cached prefix of its interrogators requests
 def prompt(whats_missing: str, examples: str) -> str:
     prompt_text: str = """
     #ROLE

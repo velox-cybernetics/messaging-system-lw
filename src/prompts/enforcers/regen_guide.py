@@ -1,8 +1,5 @@
-#**********REGEN GUIDE**********
-#the playbook every regen prompt carries: what it gets, how to fix, and why every fix is the way it is
+#REGEN GUIDE
 
-
-#REGENERATION
 #what the rewrite is, and why we patch the draft instead of starting over
 def regeneration() -> str:
     return """
@@ -11,8 +8,6 @@ def regeneration() -> str:
     - Why it works this way: FLAGGED_RESPONSE was written from the same details and the same conversation you have, so almost all of it is already right. Writing the whole thing over just gives a second chance to get something else wrong, like a price, a detail or a line the shop already said. Fixing only the part that got caught keeps what was right and gets rid of what wasn't.
 """
 
-
-#WHAT YOU GET
 #the inputs every regen gets, a branch tacks its own extras on right after these
 def inputs() -> str:
     return """
@@ -21,8 +16,6 @@ def inputs() -> str:
     - FLAGGED_RESPONSE: the reply that got caught.
     - WHAT_TO_FIX: one line for each check that caught it. Each line starts with the check, and for the question and tone checks the rule it broke in parentheses, like "QUESTION (schedule_asked_again): ..." or "TONE (ai_wording): ...", then says what's wrong and what to do about it. A "COLOR ASK: ..." line can come last, naming an ask that stays in the reply word for word. #FIX GUIDE below has an entry for every one of them, with what the check saw, why it's a rule and how to fix it."""
 
-
-#HOW TO FIX
 #the steps, in order, so every regen fixes the same careful way
 def how_to_fix() -> str:
     return """
@@ -36,8 +29,6 @@ def how_to_fix() -> str:
     6. Read the fixed reply back the way the customer would see it: it still answers everything they asked, it doesn't break anything WHAT_TO_FIX named, and it sounds like the same person who texted the rest of the conversation.
 """
 
-
-#FIX GUIDE
 #every rule the checks can flag, with what got seen, why the shop cares, and how to fix it
 def fix_guide() -> str:
     return """
@@ -140,8 +131,6 @@ def fix_guide() -> str:
     - Example: WHAT_TO_FIX has "QUESTION (more_than_one): ..." and "COLOR ASK: "Do you have an exact color in mind? If you do, can you shoot a pic of it over" ...", so "Sweet, so a wrap on the LS 500 would run $2950 + tax. Did you want to hop on the schedule? Do you have an exact color in mind? If you do, can you shoot a pic of it over" becomes "Sweet, so a wrap on the LS 500 would run $2950 + tax. Do you have an exact color in mind? If you do, can you shoot a pic of it over".
 """
 
-
-#OUTPUT
 #the last word, literally
 def output() -> str:
     return """
@@ -150,9 +139,7 @@ def output() -> str:
     - Output only the fixed reply, the exact text that goes to the customer: never a note on what you fixed or why, never a mention that it was flagged, and never quotes around it.
 """
 
-
-#GUIDE
-#stitches the playbook together, with this regen's extra inputs and its own fix notes slotted in
+#stitches the playbook together, with this regens extra inputs and its own fix notes slotted in
 def guide(extra_inputs: str, fix_notes: str) -> str:
     guide_text: str = regeneration()
 

@@ -1,9 +1,6 @@
-#**********CHECK EXAMPLES**********
-#what makes a quiet conversation one the shop leaves be for good, with yes and no samples, and the kind of follow up the rest get
+#CHECK EXAMPLES
 
-
-#NOT INTERESTED
-#the yes and no rules and samples for whether they're done with the shop for good, read every night before a follow up gets picked
+#yes and no rules plus samples for whether they're done with the shop for good, checked nightly
 def not_interested_examples() -> str:
     return r"""Yes: by the end of `message_history` the customer is done with the shop for good: they turned the whole job down with nothing left open ("no thanks im good", "not interested", "nah ill pass", "never mind, not gonna do it"), went with another shop or already got it done somewhere else ("went with another place", "already got it tinted", "found someone cheaper, thanks anyway"), said the price is too much and that they won't do it ("way too much for me, ill pass"), asked the shop to stop messaging them ("stop", "stop texting me", "unsubscribe", "leave me alone"), never meant to reach out or have nothing to get done ("wrong number", "didnt mean to message you", "sold the car"), or were never a customer at all, like someone selling something to the shop, asking about a job at the shop or sending spam.
 No: anything that leaves the door open, even a little: thinking it over, talking it over with someone, checking the budget or the schedule, saving up or shopping around while keeping the shop in mind ("ill think about it and let you know", "let me talk to my wife first", "gonna shop around a bit but ill keep you guys in mind"), putting the job off for now ("ill hold off for now", "nah not right now", "maybe in the spring"), a price that's more than they hoped with no clear no ("kinda steep", "another place said 2500", "thats more than I wanted to spend right now"), turning down one service, option or add on while the rest stays ("no ceramic, just the wrap"), signing off or reacting ("thanks for the info", "ok sounds good", "👍"), saying they'll send something later, or going quiet after a price, an answer or a question from the shop with nothing from them after it.
@@ -40,9 +37,7 @@ answer: False
 state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_media":{},"user_text":"thinking about getting my 2022 bronco wrapped"},"system_response_to_user_message_0":"Sweet, what color are you thinking for the Bronco, and what color is it right now? Send me a pic if you can","user_message_1":{"user_media":{},"user_text":"ill send pics when I get home"},"system_response_to_user_message_1":"Sounds good, just send them over whenever."}}
 answer: False"""
 
-
-#SPAM
-#the yes and no rules and samples for whether nobody looking to get work done was ever on the other end, read every night before a follow up gets picked
+#yes and no rules plus samples for whether a real customer was ever on the other end
 def spam_examples() -> str:
     return r"""Yes: every message of theirs in `message_history` comes from a business, a service or a bot instead of a person who wants work done on a vehicle: ads and offers (insurance, an auto warranty or coverage plan, loans), alerts and notices (a settlement or claim, an account, a delivery, a document to sign, a verification code), a message written to someone else by name, a link to click, anything with an opt out on it like "Reply STOP to opt out", or someone selling something to the shop or pitching it marketing, leads or a website. The shop's replies to it never change that, even when they ask what they're looking to get done.
 No: a person who reached out about work on a vehicle at any point, even when they went quiet, said it was a wrong number, turned the job down or only asked about the shop, and a business that wants work done on its own vehicles, like a fleet or commercial wrap, which is a customer.
@@ -65,9 +60,7 @@ answer: False
 state: {"current_user_message":{"user_media":{},"user_text":""},"message_history":{"user_message_0":{"user_text":"hello my name is Mia Torres, I am interested in your services, the vehicle I have is 2021 Honda Civic."},"system_response_to_user_message_0":"Heyy Mia, this is Hazel at the Lone Wraps team, saw your quote request on the Civic. What are you looking to get done?"}}
 answer: False"""
 
-
-#FOLLOW UP KINDS
-#the three kinds the night's check picks from, once per quiet stretch
+#the three kinds the nights check picks from, once per quiet stretch
 def kind_criteria() -> dict[str, str]:
     criteria: dict[str, str] = {}
 
@@ -79,9 +72,7 @@ def kind_criteria() -> dict[str, str]:
 
     return criteria
 
-
-#KIND EXAMPLES
-#the rules and samples for picking a kind, so "getting the car in 2 weeks" never gets a next morning text again
+#rules and samples for picking a kind, so a car coming in 2 weeks never gets a text tomorrow
 def kind_examples() -> str:
     return r"""The conversation went quiet, so `current_user_message` is empty and every message of theirs is in `message_history`, oldest first: user_message_N is theirs and system_response_to_user_message_N is the shop's reply to it, an empty system_response is a message of theirs the shop let be, and a conversation_summary entry holds earlier turns that no longer fit. Follow ups the shop already sent sit on the end of its last system_response, one per line. Go by where the customer stands at the end of it: a later message of theirs takes back an earlier one, like saying the vehicle came in after saying they were waiting on it, or asking to get on the schedule after saying the price was too much. A wait they put a day or time frame on is event even with a push back next to it, since the follow up waits for it. `current_date_time` never changes the answer.
 Examples:

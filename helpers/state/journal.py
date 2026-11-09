@@ -1,42 +1,25 @@
-#**********IMPORTS**********
-#python's json, clock and random names, the shape a waiting conversation comes back in, and the bot's database
+#IMPORTS
+
 import json
 import time
 import uuid
-from typing import TypeAlias
 
 from helpers.state import log
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#what a waiting conversation comes back as, and how long a message stays worth answering after a restart
-
-
-#WAITING
-#one conversation's messages still on file: the channel, their id, and each message's entry with the message, oldest first
-WAITING: TypeAlias = tuple[str, str, list[tuple[str, list]]]
-
-
-#REPLAY WINDOW
-#a message over a day old is never answered out of nowhere after a restart, meta's 24 hour window to answer it has closed by then anyway
+#a message over a day old never gets replayed, metas 24 hour window is shut by then anyway
 REPLAY_SECONDS: int = 24 * 3600
 
 
+#JOURNAL
 
-#**********JOURNAL**********
-#every message waiting in a batch stays on file till its batch is answered, so a restart never loses one
-
-
-#JOURNAL KEY
-#one per conversation on each channel, named <what it is>_<id> like every key of theirs, with the channel in it so the replay knows where it goes
+#one per conversation per channel, the channels in the name so the replay knows where it goes
 def journal_key(channel: str, id: str) -> str:
     return f"journal_{channel}_{id}"
 
-
-#SAVE
-#the message goes on file under its own entry with when it came in, and the entry comes back so its batch can clear it
-#empty when it couldn't be saved, redis down never drops the message, it still gets answered, only a restart before then loses it
+#files the message and hands back its entry, empty if saving failed, it still gets answered
 def save(channel: str, id: str, message: list) -> str:
     entry: str = uuid.uuid4().hex
 
@@ -44,7 +27,6 @@ def save(channel: str, id: str, message: list) -> str:
 
     try:
         log.write_info(journal_key(channel, id), [saved_text], [entry])
-
     except Exception as error:
         print(f"JOURNAL SAVE ERROR: {error}")
 
@@ -52,40 +34,29 @@ def save(channel: str, id: str, message: list) -> str:
 
     return entry
 
-
-#CLEAR
-#their batch got answered, so its messages come off file and a restart never answers them again
-#a message that couldn't be saved has an empty entry, and taking that off file does nothing
+#there batch got answered, so off file it goes and a restart won't answer it twice
 def clear(channel: str, id: str, entries: list[str]) -> None:
     try:
         log.clear_info(journal_key(channel, id), entries)
-
-    #a clear that fails only means a restart answers them again
     except Exception as error:
+        #a clear that fails only means a restart answers them again
         print(f"JOURNAL CLEAR ERROR: {error}")
 
 
+#REPLAY
 
-#**********REPLAY**********
-#reads back every message still waiting when the server starts, so each one goes back in its batch
-
-
-#ENTRY PARTS
-#one entry's time and message, None when what's on file can't be read as one
+#one entrys time and message, None when whats on file can't be read as one
 def entry_parts(saved_text: str) -> tuple[float, list] | None:
     try:
         saved: dict = json.loads(saved_text)
 
         return (float(saved["at"]), saved["message"])
-
     except (ValueError, KeyError, TypeError) as error:
         print(f"JOURNAL READ ERROR: {error}")
 
         return None
 
-
-#WAITING MESSAGES
-#one conversation's messages still worth answering, oldest first, the ones too old or that can't be read come off file
+#one convos messages still worth answering, oldest first, stale or garbled ones get tossed
 def waiting_messages(key: str, now: float) -> list[tuple[str, list]]:
     timed: list[tuple[float, str, list]] = []
 
@@ -96,7 +67,6 @@ def waiting_messages(key: str, now: float) -> list[tuple[str, list]]:
 
         if(parts is None or now - parts[0] > REPLAY_SECONDS):
             stale_entries.append(entry)
-
         else:
             timed.append((parts[0], entry, parts[1]))
 
@@ -110,11 +80,9 @@ def waiting_messages(key: str, now: float) -> list[tuple[str, list]]:
 
     return messages
 
-
-#PENDING
-#every conversation with a message still waiting on its reply, read when the server starts, empty when the journal can't be read
-def pending() -> list[WAITING]:
-    waiting: list[WAITING] = []
+#each convo still owed a reply as channel, id and messages, empty when the journal won't read
+def pending() -> list[tuple]:
+    waiting: list[tuple] = []
 
     now: float = time.time()
 
@@ -127,7 +95,6 @@ def pending() -> list[WAITING]:
 
             if(len(messages) > 0):
                 waiting.append((key_parts[0], key_parts[1], messages))
-
     except Exception as error:
         print(f"JOURNAL READ ERROR: {error}")
 

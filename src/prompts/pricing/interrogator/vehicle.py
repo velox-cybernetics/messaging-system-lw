@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared prompt that every reply still waiting on something from them is built on
+#IMPORTS
+
 from src.prompts.pricing.interrogator import shared as interrogator_shared
 
 
-
-#**********EXAMPLES**********
-#sample replies that answer what they asked and ask what vehicle it is
-
-
 #EXAMPLES
+
 #handed to the shared prompt, which puts them last, after the rules
 def examples() -> str:
     return r"""
@@ -202,12 +198,8 @@ def examples() -> str:
 """
 
 
-
-#**********WHATS MISSING**********
-#the make and model of their vehicle, and no price goes out without it
-
-
 #WHATS MISSING
+
 #rides in the prompt, and the regen gets the whole prompt, so both go by the same held prices
 def whats_missing() -> str:
     return """
@@ -221,12 +213,8 @@ def whats_missing() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts the shared prompt together with what's missing and the examples for this reply
-
-
-#SYSTEM PROMPT
-#static on purpose, it's the cached prefix of every make/model interrogator request
+#static on purpose, its the cached prefix of every make and model interrogator request
 def prompt() -> str:
     return interrogator_shared.prompt(whats_missing(), examples())

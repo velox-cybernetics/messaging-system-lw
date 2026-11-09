@@ -1,22 +1,15 @@
-#**********QUESTION ENFORCER**********
-#jev's one question about the questions a draft asks, the picks it can make, and how the regen fixes each one
+#QUESTION ENFORCER
 
-
-#FOLLOWS PICK
-#the pick that means the draft's questions are all good, no rewrite needed
+#the pick that means the drafts questions are all good, no rewrite needed
 FOLLOWS: str = "follows"
 
-
-#QUESTION
 #what jev gets asked, the examples ride right under it
 def question() -> str:
     return """Does a question in `draft_reply`, the shop's reply about to go out, break one of the question rules? `last_question_asked` is the last question the shop asked them ("" when it never asked one), `message_context` is the conversation before their message, and `current_customer_message` is what they just sent.
 Read what they said in `current_customer_message` and `message_context` first, then judge only the asks in `draft_reply`. One ask is a question plus the words that finish it, and it always counts as one question, never two: "What color is it right now? Send me a pic if you can", "Do you have an exact orange in mind? If you do, can you shoot a pic of it over", "What car is it, and what color is it right now? Send me a pic if you can" and "Do you have a photo of it as it is now, and of the look you want?" are each one question. A line that asks nothing ("just reach out whenever you're ready") is never a question, and what `draft_reply` answers, prices or says never changes the answer.
 Pick follows when every question in `draft_reply` fits, or when it asks none. Otherwise pick the rule its question breaks."""
 
-
-#CRITERIA
-#every pick jev can make, follows or the one rule the draft's question breaks
+#every pick jev can make, follows or the one rule the drafts question breaks
 def criteria() -> dict[str, str]:
     rules: dict[str, str] = {}
 
@@ -42,8 +35,6 @@ def criteria() -> dict[str, str]:
 
     return rules
 
-
-#FIXES
 #what the regen gets told for each broken rule, short and bossy on purpose
 def fixes() -> dict[str, str]:
     fix_lines: dict[str, str] = {}
@@ -66,16 +57,12 @@ def fixes() -> dict[str, str]:
 
     return fix_lines
 
-
-#KEEP COLOR ASK
-#rides on what to fix whenever the flagged draft asks for a color the job still waits on, so no regen ever takes that ask out
+#tacked onto the fixes when the draft asks for a color still owed, so no regen drops that ask
 def keep_color_ask(color_asks: list[str]) -> str:
     color_ask_text: str = " ".join(color_asks)
 
     return f"COLOR ASK: \"{color_ask_text}\" asks for a color the job still waits on, so it stays in the reply word for word. Fix only what the other lines name."
 
-
-#EXAMPLES
 #samples for every pick, follows ones included so a fine question never gets flagged
 def examples() -> str:
     return r"""Examples:

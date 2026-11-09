@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the texting habits every reply prompt shares
+#IMPORTS
+
 from src.prompts import shared
 
 
-
-#**********EXAMPLES**********
-#sample asks going out again in new words, so a new wording sounds like the shop's
-
-
 #EXAMPLES
+
 #put last, after the rules
 def examples() -> str:
     return r"""
@@ -63,13 +59,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for saying an ask again in new words, then the shared texting habits and the examples
-
-
-#SYSTEM PROMPT
-#static on purpose, it's the cached prefix of every asked again request
+#static on purpose, its the cached prefix of every asked again request
 def prompt() -> str:
     prompt_text: str = """
     #ROLE

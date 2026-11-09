@@ -1,5 +1,5 @@
-//**********IMPORTS**********
-//the replies, the database, the sign in check, the feed's shapes and the flag email
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
@@ -7,59 +7,45 @@ import * as email from "./_helpers/email.js";
 import * as shop from "./_helpers/shop.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//limits, channel names and the shapes the email is built from
-
-
-//FEEDBACK MAX
 const FEEDBACK_MAX: number = 4000;
 
-
-//CHANNEL NAMES
 const CHANNEL_NAMES: Record<string, string> = {"blooio": "Text", "ig": "Instagram", "messenger": "Messenger", "meta-form": "Meta form", "website-form": "Website form"};
 
-
-//EMAIL SHAPES
 type REPLY = {at: number; text: string};
 
 type SECTION = {title: string; body: string};
 
 
+//TEXT
 
-//**********TEXT**********
-//small pieces of the email
-
-
-//HTML CODE
 //one character as its numbered html code
 function html_code(character: string): string {
     return `&#${character.charCodeAt(0)};`;
 }
 
-
-//ESCAPE HTML
+//safe to drop into the emails html, quotes included
 function escape_html(text: string): string {
     return text.replace(/[&<>"']/g, html_code);
 }
 
-
-//SHOP TIME
+//when it happened on the shops clock, written the way people read it
 function shop_time(at: number): string {
     return new Intl.DateTimeFormat("en-US", {"timeZone": shop.SHOP_TIME_ZONE, "dateStyle": "medium", "timeStyle": "short"}).format(at);
 }
 
 
+//EMAIL
 
-//**********EMAIL**********
-//the sections of the flag email
-
-
-//LAST REPLY
 //newest reply in the thread as its texts, with when it went out
 function last_reply(entries: Record<string, unknown>[]): REPLY | null {
     for(let index: number = entries.length - 1; index >= 0; index--) {
-        const entry: Record<string, unknown> = entries[index] ?? {};
+        let entry: Record<string, unknown> | undefined = entries[index];
+
+        if(entry === undefined) {
+            entry = {};
+        }
 
         if(entry.kind !== "out" || !Array.isArray(entry.parts)) {
             continue;
@@ -75,14 +61,18 @@ function last_reply(entries: Record<string, unknown>[]): REPLY | null {
             }
         }
 
-        return {"at": Number(entry.at), "text": texts.join("\n") || "(pics only)"};
+        let text: string = texts.join("\n");
+
+        if(!text) {
+            text = "(pics only)";
+        }
+
+        return {"at": Number(entry.at), "text": text};
     }
 
     return null;
 }
 
-
-//STATE SECTION
 //state gets noted right before a reply is written, so one newer than the last reply never went out
 function state_section(state_text: unknown, reply: REPLY | null): SECTION {
     const state: Record<string, unknown> = shop.fields_of(shop.parse_json(state_text));
@@ -102,10 +92,21 @@ function state_section(state_text: unknown, reply: REPLY | null): SECTION {
     return {"title": title, "body": JSON.stringify(state.state, null, 2)};
 }
 
-
-//EMAIL SECTIONS
+//what went wrong, who it was, the reply and its state, in the order the email reads
 function email_sections(summary: shop.SUMMARY, feedback: string, link: string, reply: REPLY | null, state_text: unknown): SECTION[] {
-    const customer: string = [`Name: ${summary.name || "not known"}`, `Id: ${summary.id}`, `Channel: ${CHANNEL_NAMES[summary.channel] ?? summary.channel}`, `Open it: ${link}`].join("\n");
+    let name: string = summary.name;
+
+    if(!name) {
+        name = "not known";
+    }
+
+    let channel_name: string | undefined = CHANNEL_NAMES[summary.channel];
+
+    if(channel_name === undefined) {
+        channel_name = summary.channel;
+    }
+
+    const customer: string = [`Name: ${name}`, `Id: ${summary.id}`, `Channel: ${channel_name}`, `Open it: ${link}`].join("\n");
 
     let response: SECTION = {"title": "Response", "body": "No reply has gone out in this conversation yet."};
 
@@ -117,12 +118,9 @@ function email_sections(summary: shop.SUMMARY, feedback: string, link: string, r
 }
 
 
+//FLAG
 
-//**********FLAG**********
-//emails the feedback, the last reply and its state, then marks the conversation flagged
-
-
-//SEND FLAG
+//emails the flag out first, the conversation only gets marked once it actually sent
 async function send_flag(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -176,10 +174,21 @@ async function send_flag(request: Request): Promise<Response> {
 
     const text: string = text_parts.join("\n\n");
 
-    try {
-        await email.send_email(`Flag: ${summary.name || id} on ${CHANNEL_NAMES[summary.channel] ?? summary.channel}`, text, html);
+    let who: string = summary.name;
+
+    if(!who) {
+        who = id;
     }
 
+    let channel_name: string | undefined = CHANNEL_NAMES[summary.channel];
+
+    if(channel_name === undefined) {
+        channel_name = summary.channel;
+    }
+
+    try {
+        await email.send_email(`Flag: ${who} on ${channel_name}`, text, html);
+    }
     catch(error: unknown) {
         let message: string = "";
 
@@ -198,12 +207,9 @@ async function send_flag(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for POST /api/flag
-
-
-//POST
+//a flag on a reply that went wrong
 export function POST(request: Request): Promise<Response> {
     return http.guarded(send_flag, request);
 }

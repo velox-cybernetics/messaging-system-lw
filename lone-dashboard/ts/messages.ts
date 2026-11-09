@@ -1,109 +1,65 @@
-//**********IMPORTS**********
-//the api call, page helpers and formats every page shares
+//IMPORTS
+
 import * as shared from "./shared.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//shapes from api/convos.ts, api/thread.ts and api/upvote.ts, the page's parts and what's open
-
-
-//TAB
 type TAB = "forms" | "instagram" | "messenger";
 
-
-//VIEW
 //each tab splits into the convos the system answers and the ones switched off
 type VIEW = "on" | "off";
 
-
-//CONVO
 type CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; flagged_at: number};
 
-
-//THREAD CONVO
 //same convo plus whether its whole channel is switched off
 type THREAD_CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; tab_off: boolean; flagged_at: number};
 
-
-//MEDIA
 type MEDIA = {kind: "pic"; id: string; width?: number; height?: number; caption: string} | {kind: "video" | "link"; url: string; caption: string} | {kind: "post"; caption: string};
 
-
-//PART
 type PART = {text?: string; media?: MEDIA};
 
-
-//ENTRY
 type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean; sms?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string} | {at: number; kind: "upvote"; reason: string; generator: string; example: number};
 
-
-//CONVO PAGE
 type CONVO_PAGE = {tab: TAB; view: VIEW; counts: Record<TAB, number>; view_counts: Record<VIEW, number>; off_tabs: TAB[]; more: boolean; convos: CONVO[]};
 
-
-//THREAD
 type THREAD = {convo: THREAD_CONVO; entries: ENTRY[]};
 
-
-//FLAG RESULT
 type FLAG_RESULT = {ok: boolean; sent_to: string; flagged_at: number};
 
-
-//UPVOTE RESULT
 //the prompt file the example went in, its number and the commit it got pushed in
 type UPVOTE_RESULT = {ok: boolean; generator: string; example: number; commit: string};
 
-
-//LIVE RESULT
 type LIVE_RESULT = {commit: string; running: string; live: boolean};
 
-
-//UPVOTE STAGE
-//writing while the example gets written and pushed, deploying till the system runs it, then done, or failed on the way
+//writing the example, deploying it, done once the system runs it, or failed on the way
 type UPVOTE_STAGE = "idle" | "writing" | "deploying" | "done" | "failed";
 
-
-//UPVOTE
-//the convo it's for and who's on it, how far it got, when it was sent, the commit it went out in and when it got pushed, the thread's newest entry when it was sent, and whether its line is in the log yet
+//an upvote on its way, after is the threads newest entry when it was sent
 type UPVOTE = {id: string; name: string; stage: UPVOTE_STAGE; sent_at: number; commit: string; pushed_at: number; after: number; logged: boolean};
 
-
-//TAB PARTS
 type TAB_PARTS = {button: HTMLButtonElement; count: HTMLSpanElement; off_mark: HTMLSpanElement};
 
-
-//VIEW PARTS
 type VIEW_PARTS = {button: HTMLButtonElement; count: HTMLSpanElement};
 
-
-//TABS
 const TABS: TAB[] = ["forms", "instagram", "messenger"];
 
 const TAB_NAMES: Record<TAB, string> = {"forms": "Forms", "instagram": "Instagram", "messenger": "Messenger"};
 
-
-//VIEWS
 const VIEWS: VIEW[] = ["on", "off"];
 
-
-//WEB LINK
 //only web links get linked, so a customer can't slip a script link in
 const WEB_LINK: RegExp = /^https?:\/\//i;
 
-
-//NEAR BOTTOM
 //within this many px of the bottom, a refresh keeps the thread scrolled down
 const NEAR_BOTTOM_PX: number = 80;
 
-
-//UPVOTE TIMES
 //render takes a few minutes to deploy, so the check goes every 15s and gives up after 15 minutes
 const UPVOTE_CHECK_MS: number = 15 * 1000;
 
 const UPVOTE_WAIT_MS: number = 15 * 60 * 1000;
 
-//the ring takes 600ms to close all the way (messages.css), its line goes in the log right after
+//the rings css takes 600ms to close, its line goes in the log right after
 const UPVOTE_FILL_MS: number = 700;
 
 //a full ring stays a moment after its line goes in, then the arrow goes back to how it was
@@ -112,9 +68,7 @@ const UPVOTE_HOLD_MS: number = 2500;
 //a failed one stays red as long as its toast shows, then clears
 const UPVOTE_RED_MS: number = 5000;
 
-
-//UPVOTE FILL
-//the ring creeps toward 40% while the example gets written and toward 92% while render deploys, slowing as it goes so it never sits still or looks done early, then closes all the way once the system runs it
+//the ring creeps toward each fill, slowing as it goes so it never looks done early
 const WRITING_FILL: number = 0.4;
 
 const WRITING_PACE_MS: number = 12 * 1000;
@@ -126,28 +80,18 @@ const DEPLOYING_PACE_MS: number = 75 * 1000;
 //it moves on every second, the css glides it between
 const UPVOTE_TICK_MS: number = 1000;
 
-
-//UPVOTE KEY
-//a deploying upvote is kept in the tab's storage, so a reload picks its ring back up
+//a deploying upvote is kept in the tabs storage, so a reload picks its ring back up
 const UPVOTE_KEY: string = "upvote";
 
-
-//COMMIT SHA
 //the only commit a kept upvote can carry
 const COMMIT_SHA: RegExp = /^[0-9a-f]{40}$/;
 
-
-//UPWEIGHTED
 //the line an upvote leaves in the conversation once its ring fills
 const UPWEIGHTED: string = "Response up-weighted!";
 
-
-//UPVOTE TITLES
 //what the arrow says at each stage when you hover it
 const UPVOTE_TITLES: Record<UPVOTE_STAGE, string> = {"idle": "Up-weight the last response", "writing": "Up-weighting…", "deploying": "Up-weighting, the system is updating…", "done": UPWEIGHTED, "failed": "The up-weight didn't go through"};
 
-
-//LIST PARTS
 const PAGE: HTMLElement = shared.by_id<HTMLElement>("messages");
 
 const TABS_NAV: HTMLElement = shared.by_id<HTMLElement>("tabs");
@@ -158,8 +102,6 @@ const LIST_NOTE: HTMLParagraphElement = shared.by_id<HTMLParagraphElement>("list
 
 const MORE_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("more");
 
-
-//THREAD PARTS
 const THREAD_HEAD: HTMLElement = shared.by_id<HTMLElement>("thread-head");
 
 const THREAD_NAME: HTMLHeadingElement = shared.by_id<HTMLHeadingElement>("thread-name");
@@ -174,8 +116,6 @@ const UPVOTE_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("upvote
 
 const FLAG_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("flag");
 
-
-//CHANNEL PARTS
 const CHANNEL_BAR: HTMLElement = shared.by_id<HTMLElement>("channel-bar");
 
 const CHANNEL_SWITCH: HTMLButtonElement = shared.by_id<HTMLButtonElement>("channel-switch");
@@ -184,8 +124,6 @@ const CHANNEL_SWITCH_LABEL: HTMLSpanElement = shared.by_id<HTMLSpanElement>("cha
 
 const LIST_HEAD: HTMLElement = shared.by_id<HTMLElement>("list-head");
 
-
-//VIEW BUTTONS
 const VIEW_ON_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("view-on");
 
 const VIEW_ON_COUNT: HTMLSpanElement = shared.by_id<HTMLSpanElement>("view-on-count");
@@ -196,14 +134,10 @@ const VIEW_OFF_COUNT: HTMLSpanElement = shared.by_id<HTMLSpanElement>("view-off-
 
 const VIEW_BUTTONS: Record<VIEW, VIEW_PARTS> = {"on": {"button": VIEW_ON_BUTTON, "count": VIEW_ON_COUNT}, "off": {"button": VIEW_OFF_BUTTON, "count": VIEW_OFF_COUNT}};
 
-
-//LOG
 const LOG: HTMLElement = shared.by_id<HTMLElement>("log");
 
 const BACK_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("back");
 
-
-//COMPOSE PARTS
 //texts out from the dashboard go on the blooio line, so only the forms tab gets the box
 const COMPOSE_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("compose");
 
@@ -211,8 +145,6 @@ const COMPOSE_TEXT: HTMLTextAreaElement = shared.by_id<HTMLTextAreaElement>("com
 
 const COMPOSE_SEND: HTMLButtonElement = shared.by_id<HTMLButtonElement>("compose-send");
 
-
-//FLAG PARTS
 const FLAG_DIALOG: HTMLDialogElement = shared.by_id<HTMLDialogElement>("flag-dialog");
 
 const FLAG_TEXT: HTMLTextAreaElement = shared.by_id<HTMLTextAreaElement>("flag-text");
@@ -225,8 +157,6 @@ const FLAG_CANCEL: HTMLButtonElement = shared.by_id<HTMLButtonElement>("flag-can
 
 const FLAG_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("flag-form");
 
-
-//UPVOTE PARTS
 const UPVOTE_DIALOG: HTMLDialogElement = shared.by_id<HTMLDialogElement>("upvote-dialog");
 
 const UPVOTE_TEXT: HTMLTextAreaElement = shared.by_id<HTMLTextAreaElement>("upvote-text");
@@ -237,8 +167,6 @@ const UPVOTE_CANCEL: HTMLButtonElement = shared.by_id<HTMLButtonElement>("upvote
 
 const UPVOTE_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("upvote-form");
 
-
-//TRASH PARTS
 const TRASH_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("trash");
 
 const TRASH_DIALOG: HTMLDialogElement = shared.by_id<HTMLDialogElement>("trash-dialog");
@@ -253,19 +181,13 @@ const TRASH_CANCEL: HTMLButtonElement = shared.by_id<HTMLButtonElement>("trash-c
 
 const TRASH_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("trash-form");
 
-
-//ADDRESS
 const ADDRESS: URLSearchParams = new URLSearchParams(location.search);
 
 const ADDRESS_TAB: string | null = ADDRESS.get("tab");
 
-
-//TAB BUTTONS
 //built once in START, so a refresh never pulls focus off the one being used
 const TAB_BUTTONS: Map<TAB, TAB_PARTS> = new Map<TAB, TAB_PARTS>();
 
-
-//PAGE STATE
 //tab, view and id get set from the address in START
 let CURRENT_TAB: TAB = "forms";
 
@@ -277,25 +199,22 @@ let SHOWN_CONVOS: CONVO[] = [];
 
 let CURRENT_CONVO: THREAD_CONVO | null = null;
 
-//tabs with their whole channel switched off, as of the last list load
+//tabs with there whole channel switched off, as of the last list load
 let OFF_TABS: Set<TAB> = new Set<TAB>();
 
-//the one upvote going, null till there's one
+//the one upvote going, null till theres one
 let CURRENT_UPVOTE: UPVOTE | null = null;
 
-//moves the ring on every second while the open convo's upvote is going, 0 when it isn't
+//moves the ring on every second while the open convos upvote is going, 0 when it isn't
 let UPVOTE_TICKER: number = 0;
 
-//the open thread's newest entry, an upvote's own line is anything newer than it was when the upvote went
+//the open threads newest entry, an upvotes own line is anything newer than this was
 let NEWEST_AT: number = 0;
 
 
+//PLACE
 
-//**********PLACE**********
-//which tab, view and convo is open, kept in the address
-
-
-//IS TAB
+//true for one of the three tabs, so a made up tab in the address gets ignored
 function is_tab(value: string | null): value is TAB {
     for(const tab of TABS) {
         if(tab === value) {
@@ -306,14 +225,17 @@ function is_tab(value: string | null): value is TAB {
     return false;
 }
 
-
-//CONVO TITLE
+//there name, or their id dressed up when the channel never gave one
 function convo_title(convo: CONVO | THREAD_CONVO): string {
-    return convo.name || shared.readable_id(convo.id);
+    let title: string = convo.name;
+
+    if(!title) {
+        title = shared.readable_id(convo.id);
+    }
+
+    return title;
 }
 
-
-//REMEMBER PLACE
 //so a reload or a link from a flag email opens the same place
 function remember_place(): void {
     const query: URLSearchParams = new URLSearchParams({"tab": CURRENT_TAB});
@@ -330,19 +252,14 @@ function remember_place(): void {
 }
 
 
+//THREAD
 
-//**********THREAD**********
-//every message in and reply out for the open convo
-
-
-//GONE PIC
-//copies only last 30 days
+//pic copies only last 30 days, an old one turns into a note
 function show_gone_pic(image: HTMLImageElement): void {
-    image.replaceWith(shared.make_element("span", {"class": "attachment is-gone"}, "Pic no longer kept. Copies last 30 days."));
+    image.replaceWith(shared.make_element("span", {"class": "attachment is-gone"}, ["Pic no longer kept. Copies last 30 days."]));
 }
 
-
-//MEDIA NODE
+//a pic, video, link or shared post, ready to go in a message
 function media_node(media: MEDIA, from_customer: boolean): HTMLElement {
     if(media.kind === "pic") {
         const src: string = `/api/media?id=${encodeURIComponent(media.id)}`;
@@ -364,13 +281,24 @@ function media_node(media: MEDIA, from_customer: boolean): HTMLElement {
 
         const image: HTMLImageElement = shared.make_element("img", attributes);
 
-        image.addEventListener("error", (): void => { show_gone_pic(image); });
+        //a pic that won't load gets the gone note instead
+        function on_gone(): void {
+            show_gone_pic(image);
+        }
 
-        return shared.make_element("a", {"class": "pic", "href": src, "target": "_blank", "rel": "noopener"}, image);
+        image.addEventListener("error", on_gone);
+
+        return shared.make_element("a", {"class": "pic", "href": src, "target": "_blank", "rel": "noopener"}, [image]);
     }
 
     if(media.kind === "post") {
-        return shared.make_element("span", {"class": "attachment"}, media.caption || "Shared post");
+        let post_text: string = media.caption;
+
+        if(!post_text) {
+            post_text = "Shared post";
+        }
+
+        return shared.make_element("span", {"class": "attachment"}, [post_text]);
     }
 
     let label: string = "Attachment";
@@ -382,7 +310,7 @@ function media_node(media: MEDIA, from_customer: boolean): HTMLElement {
     let link: HTMLAnchorElement | string = label;
 
     if(WEB_LINK.test(media.url)) {
-        link = shared.make_element("a", {"href": media.url, "target": "_blank", "rel": "noopener noreferrer"}, label);
+        link = shared.make_element("a", {"href": media.url, "target": "_blank", "rel": "noopener noreferrer"}, [label]);
     }
 
     //empty caption gets left out
@@ -392,17 +320,16 @@ function media_node(media: MEDIA, from_customer: boolean): HTMLElement {
         caption = ` ${media.caption}`;
     }
 
-    return shared.make_element("span", {"class": "attachment"}, link, caption);
+    return shared.make_element("span", {"class": "attachment"}, [link, caption]);
 }
 
-
-//PART NODES
+//a messages text bubbles and attachments, in the order they came
 function part_nodes(parts: PART[], from_customer: boolean): HTMLElement[] {
     const nodes: HTMLElement[] = [];
 
     for(const part of parts) {
         if(part.text) {
-            nodes.push(shared.make_element("p", {"class": "bubble"}, part.text));
+            nodes.push(shared.make_element("p", {"class": "bubble"}, [part.text]));
         }
 
         if(part.media) {
@@ -413,62 +340,62 @@ function part_nodes(parts: PART[], from_customer: boolean): HTMLElement[] {
     return nodes;
 }
 
-
-//MESSAGE NOTE
 //false gets left out of the footer
 function message_note(show: boolean | undefined, text: string): HTMLSpanElement | false {
     if(show) {
-        return shared.make_element("span", {"class": "msg-note is-off"}, text);
+        return shared.make_element("span", {"class": "msg-note is-off"}, [text]);
     }
 
     return false;
 }
 
-
-//SENDER NOTE
-//a text sent from ghl was a person, not the system, and an sms follow up went out from the shop's ghl number instead of hazel's line, false gets left out of the footer
+//ghl texts came from a person, sms follow ups from teh shops ghl number, not hazels line
 function sender_note(from_ghl: boolean | undefined, sms: boolean | undefined): HTMLSpanElement | false {
     if(from_ghl) {
-        return shared.make_element("span", {"class": "msg-note"}, "Sent from GHL");
+        return shared.make_element("span", {"class": "msg-note"}, ["Sent from GHL"]);
     }
 
     if(sms) {
-        return shared.make_element("span", {"class": "msg-note is-sms"}, "SMS follow up");
+        return shared.make_element("span", {"class": "msg-note is-sms"}, ["SMS follow up"]);
     }
 
     return false;
 }
 
-
-
-//EVENT NODE
 //a note from the system between the messages, its words then its time
 function event_node(class_name: string, text: string, time: HTMLTimeElement | false): HTMLParagraphElement {
-    return shared.make_element("p", {"class": class_name}, shared.make_element("span", {"class": "event-text"}, text), time);
+    return shared.make_element("p", {"class": class_name}, [shared.make_element("span", {"class": "event-text"}, [text]), time]);
 }
 
-
-//ENTRY NODE
+//one thread entry, a message in or out, or a note between them
 function entry_node(entry: ENTRY): HTMLElement {
-    const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(entry.at).toISOString()}, shared.local_time(entry.at));
+    const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(entry.at).toISOString()}, [shared.local_time(entry.at)]);
 
     if(entry.kind === "in") {
-        const footer: HTMLElement = shared.make_element("footer", {}, time, message_note(entry.off, "System was off, not answered"));
+        const footer: HTMLElement = shared.make_element("footer", {}, [time, message_note(entry.off, "System was off, not answered")]);
 
-        return shared.make_element("article", {"class": "msg is-in"}, ...part_nodes(entry.parts, true), footer);
+        const nodes: HTMLElement[] = part_nodes(entry.parts, true);
+
+        nodes.push(footer);
+
+        return shared.make_element("article", {"class": "msg is-in"}, nodes);
     }
 
     if(entry.kind === "out") {
-        const footer: HTMLElement = shared.make_element("footer", {}, sender_note(entry.ghl, entry.sms), message_note(entry.failed, "Not delivered"), time);
+        const footer: HTMLElement = shared.make_element("footer", {}, [sender_note(entry.ghl, entry.sms), message_note(entry.failed, "Not delivered"), time]);
 
         let class_name: string = "msg is-out";
 
-        //sms follow ups show in green so they stand apart from hazel's texts
+        //sms follow ups show in green so they stand apart from hazels texts
         if(entry.sms) {
             class_name = "msg is-out is-sms";
         }
 
-        return shared.make_element("article", {"class": class_name}, ...part_nodes(entry.parts, false), footer);
+        const nodes: HTMLElement[] = part_nodes(entry.parts, false);
+
+        nodes.push(footer);
+
+        return shared.make_element("article", {"class": class_name}, nodes);
     }
 
     if(entry.kind === "hil") {
@@ -503,9 +430,7 @@ function entry_node(entry: ENTRY): HTMLElement {
     return event_node("event", "An entry this dashboard doesn't know how to show.", false);
 }
 
-
-//RENDER LOG
-//a day heading every time the viewer's date changes, and an upvote's own line waits on its ring
+//a day heading every time the viewers date changes, and an upvotes own line waits on its ring
 function render_log(entries: ENTRY[]): void {
     const nodes: HTMLElement[] = [];
 
@@ -523,7 +448,7 @@ function render_log(entries: ENTRY[]): void {
         const date: string = shared.local_date(entry.at);
 
         if(date !== last_date) {
-            nodes.push(shared.make_element("h3", {"class": "day"}, shared.day_label(date)));
+            nodes.push(shared.make_element("h3", {"class": "day"}, [shared.day_label(date)]));
 
             last_date = date;
         }
@@ -532,20 +457,27 @@ function render_log(entries: ENTRY[]): void {
     }
 
     if(nodes.length === 0) {
-        nodes.push(shared.make_element("p", {"class": "log-note"}, "Nothing is kept for this conversation anymore. Threads last a year after the last message."));
+        nodes.push(shared.make_element("p", {"class": "log-note"}, ["Nothing is kept for this conversation anymore. Threads last a year after the last message."]));
     }
 
-    LOG.replaceChildren(...nodes);
+    LOG.replaceChildren();
+
+    for(const node of nodes) {
+        LOG.append(node);
+    }
 }
 
-
-//RENDER HEAD
+//everything above the open thread, name, channel, switch, flag and the upvote ring
 function render_head(convo: THREAD_CONVO): void {
     THREAD_HEAD.hidden = false;
 
     THREAD_NAME.textContent = convo_title(convo);
 
-    const where: string = shared.CHANNEL_NAMES[convo.channel] ?? convo.channel;
+    let where: string | undefined = shared.CHANNEL_NAMES[convo.channel];
+
+    if(where === undefined) {
+        where = convo.channel;
+    }
 
     let meta: string = where;
 
@@ -555,7 +487,7 @@ function render_head(convo: THREAD_CONVO): void {
 
     THREAD_META.textContent = meta;
 
-    //whole channel off outranks the customer's own switch, so it shows that and waits for the channel
+    //whole channel off outranks there own switch, so it shows that and waits for the channel
     const channel_name: string = TAB_NAMES[convo.tab];
 
     SWITCH_BUTTON.disabled = convo.tab_off;
@@ -567,7 +499,6 @@ function render_head(convo: THREAD_CONVO): void {
     if(convo.tab_off) {
         switch_text = `${channel_name} off`;
     }
-
     else if(convo.off) {
         switch_text = "System off";
     }
@@ -597,8 +528,6 @@ function render_head(convo: THREAD_CONVO): void {
     render_upvote();
 }
 
-
-//LOAD THREAD
 //fresh means a newly opened convo, a refresh only scrolls down if they were near the bottom
 async function load_thread(fresh: boolean): Promise<void> {
     if(!CURRENT_ID) {
@@ -612,7 +541,7 @@ async function load_thread(fresh: boolean): Promise<void> {
     if(fresh) {
         THREAD_HEAD.hidden = true;
 
-        LOG.replaceChildren(shared.make_element("p", {"class": "log-note"}, "Loading messages…"));
+        LOG.replaceChildren(shared.make_element("p", {"class": "log-note"}, ["Loading messages…"]));
     }
 
     const near_bottom: boolean = LOG.scrollHeight - LOG.scrollTop - LOG.clientHeight < NEAR_BOTTOM_PX;
@@ -635,20 +564,18 @@ async function load_thread(fresh: boolean): Promise<void> {
             LOG.scrollTop = LOG.scrollHeight;
         }
     }
-
     catch(error: unknown) {
         let message: string = "Couldn't load this conversation. It retries on its own.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
-        LOG.replaceChildren(shared.make_element("p", {"class": "log-note"}, message));
+        LOG.replaceChildren(shared.make_element("p", {"class": "log-note"}, [message]));
     }
 }
 
-
-//SHOW LIST
+//nothing open, the log just asks them to pick a conversation
 function show_list(): void {
     PAGE.classList.remove("show-thread");
 
@@ -658,26 +585,20 @@ function show_list(): void {
 
     CURRENT_CONVO = null;
 
-    LOG.replaceChildren(shared.make_element("p", {"class": "log-note"}, "Pick a conversation to see every message in and every reply out."));
+    LOG.replaceChildren(shared.make_element("p", {"class": "log-note"}, ["Pick a conversation to see every message in and every reply out."]));
 }
 
 
+//LIST
 
-//**********LIST**********
-//the open tab's convos, its counts and its channel switch
-
-
-//PRESS VIEW
-//the tab's convos split by their own switch into System on and System off
+//the tabs convos split by their own switch into System on and System off
 function press_view(): void {
     for(const view of VIEWS) {
         VIEW_BUTTONS[view].button.setAttribute("aria-pressed", String(view === CURRENT_VIEW));
     }
 }
 
-
-//RENDER CHANNEL
-//off means the system answers nobody on the tab's channels till it's switched back on
+//off means the system answers nobody on the tabs channels till its switched back on
 function render_channel(): void {
     const name: string = TAB_NAMES[CURRENT_TAB];
 
@@ -704,8 +625,6 @@ function render_channel(): void {
     }
 }
 
-
-//EMPTY NOTE
 //what an empty list says for the open view
 function empty_note(view_counts: Record<VIEW, number>): string {
     const name: string = TAB_NAMES[CURRENT_TAB];
@@ -721,8 +640,7 @@ function empty_note(view_counts: Record<VIEW, number>): string {
     return `No ${name} conversations yet. They show up here the moment a customer messages in.`;
 }
 
-
-//OPEN CONVO
+//the clicked rows convo opens, and only that row gets marked current
 function open_convo(id: string, button: HTMLButtonElement): void {
     CURRENT_ID = id;
 
@@ -735,8 +653,6 @@ function open_convo(id: string, button: HTMLButtonElement): void {
     load_thread(true);
 }
 
-
-//CONVO ROW
 //is_new lights up a convo that got a new message since the last load
 function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
     let row_class: string = "convo";
@@ -745,15 +661,19 @@ function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
         row_class = "convo is-new";
     }
 
-    const name: HTMLSpanElement = shared.make_element("span", {"class": "convo-name"}, convo_title(convo));
+    const name: HTMLSpanElement = shared.make_element("span", {"class": "convo-name"}, [convo_title(convo)]);
 
-    const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(convo.last_at).toISOString()}, shared.when_short(convo.last_at));
+    const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(convo.last_at).toISOString()}, [shared.when_short(convo.last_at)]);
 
-    const top: HTMLSpanElement = shared.make_element("span", {"class": "convo-top"}, name, time);
+    const top: HTMLSpanElement = shared.make_element("span", {"class": "convo-top"}, [name, time]);
 
     let preview_class: string = "convo-preview";
 
-    let preview_text: string = convo.last_text || "Sent media";
+    let preview_text: string = convo.last_text;
+
+    if(!preview_text) {
+        preview_text = "Sent media";
+    }
 
     if(convo.last_kind === "out") {
         preview_class = "convo-preview is-reply";
@@ -761,25 +681,28 @@ function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
         preview_text = `System: ${convo.last_text}`;
     }
 
-    const preview: HTMLSpanElement = shared.make_element("span", {"class": preview_class}, preview_text);
+    const preview: HTMLSpanElement = shared.make_element("span", {"class": preview_class}, [preview_text]);
 
     //false gets left out
     let badges: HTMLSpanElement | false = false;
 
     if(convo.flagged_at > 0) {
-        badges = shared.make_element("span", {"class": "convo-badges"}, shared.make_element("span", {"class": "badge is-flagged"}, "Flagged"));
+        badges = shared.make_element("span", {"class": "convo-badges"}, [shared.make_element("span", {"class": "badge is-flagged"}, ["Flagged"])]);
     }
 
-    const button: HTMLButtonElement = shared.make_element("button", {"type": "button", "class": row_class, "data-id": convo.id, "aria-current": String(convo.id === CURRENT_ID)}, top, preview, badges);
+    const button: HTMLButtonElement = shared.make_element("button", {"type": "button", "class": row_class, "data-id": convo.id, "aria-current": String(convo.id === CURRENT_ID)}, [top, preview, badges]);
 
-    button.addEventListener("click", (): void => { open_convo(convo.id, button); });
+    //each row opens its own convo
+    function open_row(): void {
+        open_convo(convo.id, button);
+    }
 
-    return shared.make_element("li", {}, button);
+    button.addEventListener("click", open_row);
+
+    return shared.make_element("li", {}, [button]);
 }
 
-
-//LOAD LIST
-//append is "Show older", anything else rebuilds the list
+//append is for Show older, anything else rebuilds the list
 async function load_list(append: boolean = false): Promise<void> {
     if(!append && SHOWN_CONVOS.length === 0) {
         LIST_NOTE.textContent = "Loading conversations…";
@@ -788,7 +711,7 @@ async function load_list(append: boolean = false): Promise<void> {
     }
 
     try {
-        //a refresh asks for everything on screen, so a list opened past 50 with "Show older" stays open
+        //a refresh asks for everything on screen, so a list grown past 50 stays that long
         let query: string = `limit=${Math.max(50, SHOWN_CONVOS.length)}`;
 
         if(append) {
@@ -803,11 +726,23 @@ async function load_list(append: boolean = false): Promise<void> {
         }
 
         for(const entry of TAB_BUTTONS) {
-            entry[1].count.textContent = String(data.counts[entry[0]] ?? 0);
+            let count: number = data.counts[entry[0]];
+
+            if(count === undefined || count === null) {
+                count = 0;
+            }
+
+            entry[1].count.textContent = String(count);
         }
 
         for(const view of VIEWS) {
-            VIEW_BUTTONS[view].count.textContent = String(data.view_counts[view] ?? 0);
+            let count: number = data.view_counts[view];
+
+            if(count === undefined || count === null) {
+                count = 0;
+            }
+
+            VIEW_BUTTONS[view].count.textContent = String(count);
         }
 
         OFF_TABS = new Set<TAB>(data.off_tabs);
@@ -827,9 +762,8 @@ async function load_list(append: boolean = false): Promise<void> {
         }
 
         if(append) {
-            SHOWN_CONVOS = [...SHOWN_CONVOS, ...data.convos];
+            SHOWN_CONVOS = SHOWN_CONVOS.concat(data.convos);
         }
-
         else {
             SHOWN_CONVOS = data.convos;
         }
@@ -861,11 +795,10 @@ async function load_list(append: boolean = false): Promise<void> {
 
         MORE_BUTTON.hidden = !data.more;
     }
-
     catch(error: unknown) {
         let message: string = "Couldn't load conversations. It retries on its own.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
@@ -876,12 +809,9 @@ async function load_list(append: boolean = false): Promise<void> {
 }
 
 
+//PICKING
 
-//**********PICKING**********
-//tabs, views, older convos and the back button
-
-
-//PICK TAB
+//switching tabs starts over, nothing open and the list loads fresh
 function pick_tab(tab: TAB): void {
     if(tab === CURRENT_TAB) {
         return;
@@ -911,25 +841,27 @@ function pick_tab(tab: TAB): void {
     load_list();
 }
 
-
-//BUILD TAB
-//red dot on a channel that's switched off, so it shows from every tab
+//red dot on a channel thats switched off, so it shows from every tab
 function build_tab(tab: TAB): void {
-    const count: HTMLSpanElement = shared.make_element("span", {"class": "tab-count"}, "");
+    const count: HTMLSpanElement = shared.make_element("span", {"class": "tab-count"}, [""]);
 
-    const off_mark: HTMLSpanElement = shared.make_element("span", {"class": "tab-off", "hidden": true}, shared.make_element("span", {"class": "visually-hidden"}, "System off"));
+    const off_mark: HTMLSpanElement = shared.make_element("span", {"class": "tab-off", "hidden": true}, [shared.make_element("span", {"class": "visually-hidden"}, ["System off"])]);
 
-    const button: HTMLButtonElement = shared.make_element("button", {"type": "button", "class": "tab", "aria-pressed": String(tab === CURRENT_TAB)}, TAB_NAMES[tab], off_mark, count);
+    const button: HTMLButtonElement = shared.make_element("button", {"type": "button", "class": "tab", "aria-pressed": String(tab === CURRENT_TAB)}, [TAB_NAMES[tab], off_mark, count]);
 
-    button.addEventListener("click", (): void => { pick_tab(tab); });
+    //each tab button picks its own tab
+    function pick_this_tab(): void {
+        pick_tab(tab);
+    }
+
+    button.addEventListener("click", pick_this_tab);
 
     TAB_BUTTONS.set(tab, {"button": button, "count": count, "off_mark": off_mark});
 
     TABS_NAV.append(button);
 }
 
-
-//PICK VIEW
+//switching between System on and System off reloads the list from the top
 function pick_view(view: VIEW): void {
     if(view === CURRENT_VIEW) {
         return;
@@ -946,14 +878,12 @@ function pick_view(view: VIEW): void {
     load_list();
 }
 
-
-//SHOW MORE
+//the Show older button, the next page goes under whats their
 function show_more(): void {
     load_list(true);
 }
 
-
-//GO BACK
+//the back button, the thread closes and no row stays marked
 function go_back(): void {
     CURRENT_ID = "";
 
@@ -967,12 +897,8 @@ function go_back(): void {
 }
 
 
+//SWITCHES
 
-//**********SWITCHES**********
-//off means the system sends nothing till it's switched back on
-
-
-//FLIP SWITCH
 //just this customer
 async function flip_switch(): Promise<void> {
     if(CURRENT_CONVO === null) {
@@ -1004,17 +930,15 @@ async function flip_switch(): Promise<void> {
 
         load_list();
     }
-
     catch(error: unknown) {
         let message: string = "The switch didn't change. Try again.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
         shared.toast(message, true);
     }
-
     finally {
         //stays off while the whole channel is off
         let disabled: boolean = false;
@@ -1027,9 +951,7 @@ async function flip_switch(): Promise<void> {
     }
 }
 
-
-//FLIP CHANNEL
-//everyone on the open tab's channels
+//everyone on the open tabs channels
 async function flip_channel(): Promise<void> {
     const tab: TAB = CURRENT_TAB;
 
@@ -1045,7 +967,6 @@ async function flip_channel(): Promise<void> {
         if(on) {
             OFF_TABS.delete(tab);
         }
-
         else {
             OFF_TABS.add(tab);
         }
@@ -1064,29 +985,24 @@ async function flip_channel(): Promise<void> {
 
         load_thread(false);
     }
-
     catch(error: unknown) {
         let message: string = "The switch didn't change. Try again.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
         shared.toast(message, true);
     }
-
     finally {
         CHANNEL_SWITCH.disabled = false;
     }
 }
 
 
+//DELETE
 
-//**********DELETE**********
-//after an are-you-sure, everything kept for the convo goes and the overview drops what it added
-
-
-//OPEN TRASH
+//the delete box spells out what goes before anything does
 function open_trash(): void {
     if(CURRENT_CONVO === null) {
         return;
@@ -1099,14 +1015,12 @@ function open_trash(): void {
     TRASH_DIALOG.showModal();
 }
 
-
-//CLOSE TRASH
+//changed there mind, nothing gets deleted
 function close_trash(): void {
     TRASH_DIALOG.close();
 }
 
-
-//SEND TRASH
+//deletes the open conversation for good, then its back to the list
 async function send_trash(event: SubmitEvent): Promise<void> {
     event.preventDefault();
 
@@ -1133,11 +1047,10 @@ async function send_trash(event: SubmitEvent): Promise<void> {
 
         load_list();
     }
-
     catch(error: unknown) {
         let message: string = "It didn't delete. Check your connection and try again.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
@@ -1145,19 +1058,15 @@ async function send_trash(event: SubmitEvent): Promise<void> {
 
         TRASH_ERROR.hidden = false;
     }
-
     finally {
         TRASH_CONFIRM.disabled = false;
     }
 }
 
 
+//FLAG
 
-//**********FLAG**********
-//what went wrong, emailed with the last reply and the state it came from
-
-
-//OPEN FLAG
+//the flag box opens empty every time
 function open_flag(): void {
     if(CURRENT_CONVO === null) {
         return;
@@ -1170,14 +1079,12 @@ function open_flag(): void {
     FLAG_DIALOG.showModal();
 }
 
-
-//CLOSE FLAG
+//no flag after all, the box just closes
 function close_flag(): void {
     FLAG_DIALOG.close();
 }
 
-
-//SEND FLAG
+//sends what went wrong, and the toast says who it went to
 async function send_flag(event: SubmitEvent): Promise<void> {
     event.preventDefault();
 
@@ -1210,11 +1117,10 @@ async function send_flag(event: SubmitEvent): Promise<void> {
 
         load_list();
     }
-
     catch(error: unknown) {
         let message: string = "The flag didn't send. Check your connection and try again.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
@@ -1222,7 +1128,6 @@ async function send_flag(event: SubmitEvent): Promise<void> {
 
         FLAG_ERROR.hidden = false;
     }
-
     finally {
         FLAG_SEND.disabled = false;
 
@@ -1231,12 +1136,9 @@ async function send_flag(event: SubmitEvent): Promise<void> {
 }
 
 
-//**********UPVOTE**********
-//the system's last reply was good, so it goes in as an example for the generator that wrote it, the ring around the arrow fills all the way as the system gets the update, then the conversation logs it
+//UPVOTE
 
-
-//UPVOTE FILL
-//how much of the ring is filled, from how long the stage it's on has been going
+//how much of the ring is filled, from how long the stage its on has been going
 function upvote_fill(upvote: UPVOTE, now: number): number {
     if(upvote.stage === "writing") {
         return WRITING_FILL * (1 - Math.exp((upvote.sent_at - now) / WRITING_PACE_MS));
@@ -1249,9 +1151,7 @@ function upvote_fill(upvote: UPVOTE, now: number): number {
     return 1;
 }
 
-
-//RENDER UPVOTE
-//the ring only shows on the convo the upvote is for, filled by how long it's been going, so a reload or coming back to the convo picks it up where it should be
+//the ring only shows on its own convo, filled by time so a reload picks up where it was
 function render_upvote(): void {
     let stage: UPVOTE_STAGE = "idle";
 
@@ -1274,7 +1174,6 @@ function render_upvote(): void {
     if(going && UPVOTE_TICKER === 0) {
         UPVOTE_TICKER = window.setInterval(render_upvote, UPVOTE_TICK_MS);
     }
-
     else if(!going && UPVOTE_TICKER !== 0) {
         window.clearInterval(UPVOTE_TICKER);
 
@@ -1282,9 +1181,7 @@ function render_upvote(): void {
     }
 }
 
-
-//IS WAITING
-//the upvote's own line is anything newer than the thread's newest entry when it went, kept out of the log till the ring fills
+//an upvotes own line stays out of the log till its ring fills
 function is_waiting(entry: ENTRY): boolean {
     if(entry.kind !== "upvote" || CURRENT_UPVOTE === null || CURRENT_UPVOTE.logged) {
         return false;
@@ -1293,8 +1190,7 @@ function is_waiting(entry: ENTRY): boolean {
     return CURRENT_UPVOTE.id === CURRENT_ID && entry.at > CURRENT_UPVOTE.after;
 }
 
-
-//OPEN UPVOTE
+//the upvote box opens empty, unless one is still going
 function open_upvote(): void {
     if(CURRENT_CONVO === null) {
         return;
@@ -1314,14 +1210,11 @@ function open_upvote(): void {
     UPVOTE_DIALOG.showModal();
 }
 
-
-//CLOSE UPVOTE
+//second thoughts, no upvote goes out
 function close_upvote(): void {
     UPVOTE_DIALOG.close();
 }
 
-
-//SEND UPVOTE
 //the box closes right away, and the ring around the arrow shows the rest
 async function send_upvote(event: SubmitEvent): Promise<void> {
     event.preventDefault();
@@ -1363,11 +1256,10 @@ async function send_upvote(event: SubmitEvent): Promise<void> {
 
         check_upvote(upvote);
     }
-
     catch(error: unknown) {
         let message: string = "The up-weight didn't go through. Check your connection.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
@@ -1375,8 +1267,6 @@ async function send_upvote(event: SubmitEvent): Promise<void> {
     }
 }
 
-
-//CHECK UPVOTE
 //asks every 15s whether the system is running the push yet, till it is or the wait runs out
 async function check_upvote(upvote: UPVOTE): Promise<void> {
     try {
@@ -1388,7 +1278,6 @@ async function check_upvote(upvote: UPVOTE): Promise<void> {
             return;
         }
     }
-
     catch {
         //missed one, the next check tries again
     }
@@ -1399,11 +1288,9 @@ async function check_upvote(upvote: UPVOTE): Promise<void> {
         return;
     }
 
-    window.setTimeout((): void => { check_upvote(upvote); }, UPVOTE_CHECK_MS);
+    window.setTimeout(check_upvote, UPVOTE_CHECK_MS, upvote);
 }
 
-
-//FILL UPVOTE
 //the system runs it, so the ring closes all the way, and only then does the conversation log it
 function fill_upvote(upvote: UPVOTE): void {
     upvote.stage = "done";
@@ -1412,16 +1299,14 @@ function fill_upvote(upvote: UPVOTE): void {
 
     render_upvote();
 
-    window.setTimeout((): void => { log_upvote(upvote); }, UPVOTE_FILL_MS);
+    window.setTimeout(log_upvote, UPVOTE_FILL_MS, upvote);
 }
 
-
-//LOG UPVOTE
-//its line goes in the open thread, or a toast says so from anywhere else, then the arrow goes back to how it was
+//its line goes in the open thread, or a toast from anywhere else, then the arrow resets
 async function log_upvote(upvote: UPVOTE): Promise<void> {
     upvote.logged = true;
 
-    window.setTimeout((): void => { clear_upvote(upvote); }, UPVOTE_HOLD_MS);
+    window.setTimeout(clear_upvote, UPVOTE_HOLD_MS, upvote);
 
     if(upvote.id !== CURRENT_ID) {
         shared.toast(`Response up-weighted for ${upvote.name}.`);
@@ -1438,11 +1323,13 @@ async function log_upvote(upvote: UPVOTE): Promise<void> {
 
     const lines: NodeListOf<HTMLElement> = LOG.querySelectorAll<HTMLElement>(".event.is-upvote");
 
-    lines[lines.length - 1]?.classList.add("is-arriving");
+    const last_line: HTMLElement | undefined = lines[lines.length - 1];
+
+    if(last_line !== undefined) {
+        last_line.classList.add("is-arriving");
+    }
 }
 
-
-//FAIL UPVOTE
 //the ring goes red while the toast says what broke, then clears
 function fail_upvote(upvote: UPVOTE, message: string): void {
     upvote.stage = "failed";
@@ -1453,11 +1340,9 @@ function fail_upvote(upvote: UPVOTE, message: string): void {
 
     shared.toast(message, true);
 
-    window.setTimeout((): void => { clear_upvote(upvote); }, UPVOTE_RED_MS);
+    window.setTimeout(clear_upvote, UPVOTE_RED_MS, upvote);
 }
 
-
-//CLEAR UPVOTE
 //the arrow goes back to how it was
 function clear_upvote(upvote: UPVOTE): void {
     //a newer upvote already took its place
@@ -1475,40 +1360,39 @@ function clear_upvote(upvote: UPVOTE): void {
     }
 }
 
-
-//SAVE UPVOTE
+//kept in the tabs storage so a reload can pick the ring back up
 function save_upvote(upvote: UPVOTE): void {
     try {
         sessionStorage.setItem(UPVOTE_KEY, JSON.stringify(upvote));
     }
-
     catch {
         //storage is off, the ring just won't make it through a reload
     }
 }
 
-
-//FORGET UPVOTE
+//nothing left for a reload to pick back up
 function forget_upvote(): void {
     try {
         sessionStorage.removeItem(UPVOTE_KEY);
     }
-
     catch {
         //storage is off, so nothing was kept
     }
 }
 
-
-//SAVED UPVOTE
-//null when nothing's kept or it isn't a deploying upvote this page wrote
+//null when nothings kept or it isn't a deploying upvote this page wrote
 function saved_upvote(): UPVOTE | null {
     let saved: unknown = null;
 
     try {
-        saved = JSON.parse(sessionStorage.getItem(UPVOTE_KEY) ?? "null");
-    }
+        let kept: string | null = sessionStorage.getItem(UPVOTE_KEY);
 
+        if(kept === null) {
+            kept = "null";
+        }
+
+        saved = JSON.parse(kept);
+    }
     catch {
         return null;
     }
@@ -1526,9 +1410,7 @@ function saved_upvote(): UPVOTE | null {
     return {"id": fields.id, "name": fields.name, "stage": "deploying", "sent_at": fields.sent_at, "commit": fields.commit, "pushed_at": fields.pushed_at, "after": fields.after, "logged": false};
 }
 
-
-//RESUME UPVOTE
-//a reload mid deploy picks the checks back up, so the ring still fills and its line still waits for it
+//a reload mid deploy picks the checks back up, the ring still fills and its line still waits
 function resume_upvote(): void {
     const upvote: UPVOTE | null = saved_upvote();
 
@@ -1544,12 +1426,9 @@ function resume_upvote(): void {
 }
 
 
+//COMPOSE
 
-//**********COMPOSE**********
-//a text from the shop, sent right from the dashboard over blooio
-
-
-//SEND TEXT
+//a text out from the dashboard, the thread and list reload either way
 async function send_text(event: SubmitEvent): Promise<void> {
     event.preventDefault();
 
@@ -1570,17 +1449,15 @@ async function send_text(event: SubmitEvent): Promise<void> {
 
         fit_compose();
     }
-
     catch(error: unknown) {
         let message: string = "The text didn't send. Check your connection and try again.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
         shared.toast(message);
     }
-
     finally {
         COMPOSE_SEND.disabled = false;
 
@@ -1594,8 +1471,6 @@ async function send_text(event: SubmitEvent): Promise<void> {
     }
 }
 
-
-//SEND ON ENTER
 //enter sends, shift enter starts a new line
 function send_on_enter(event: KeyboardEvent): void {
     if(event.key === "Enter" && !event.shiftKey && !event.isComposing) {
@@ -1605,9 +1480,7 @@ function send_on_enter(event: KeyboardEvent): void {
     }
 }
 
-
-//FIT COMPOSE
-//the box grows with what's typed till it hits its max height, then scrolls
+//the box grows with whats typed till it hits its max height, then scrolls
 function fit_compose(): void {
     COMPOSE_TEXT.style.height = "auto";
 
@@ -1615,12 +1488,9 @@ function fit_compose(): void {
 }
 
 
+//PULSE
 
-//**********PULSE**********
-//the feed wrote something new
-
-
-//REFRESH
+//something changed in the feed, so the list and the open thread reload
 function refresh(): void {
     load_list();
 
@@ -1628,12 +1498,8 @@ function refresh(): void {
 }
 
 
+//START
 
-//**********START**********
-//read the address, build the tabs, wire everything, then the first loads
-
-
-//PLACE
 //tab, view and convo come from the address
 if(is_tab(ADDRESS_TAB)) {
     CURRENT_TAB = ADDRESS_TAB;
@@ -1643,70 +1509,61 @@ if(ADDRESS.get("view") === "off") {
     CURRENT_VIEW = "off";
 }
 
-CURRENT_ID = ADDRESS.get("id") ?? "";
+let address_id: string | null = ADDRESS.get("id");
 
+if(address_id === null) {
+    address_id = "";
+}
 
-//TABS
+CURRENT_ID = address_id;
+
 for(const tab of TABS) {
     build_tab(tab);
 }
 
-
-//VIEWS
 for(const view of VIEWS) {
-    VIEW_BUTTONS[view].button.addEventListener("click", (): void => { pick_view(view); });
+    //each view button picks its own view
+    function pick_this_view(): void {
+        pick_view(view);
+    }
+
+    VIEW_BUTTONS[view].button.addEventListener("click", pick_this_view);
 }
 
 press_view();
 
-
-//MORE
 MORE_BUTTON.addEventListener("click", show_more);
 
-
-//BACK
 BACK_BUTTON.addEventListener("click", go_back);
 
-
-//SWITCHES
 SWITCH_BUTTON.addEventListener("click", flip_switch);
 
 CHANNEL_SWITCH.addEventListener("click", flip_channel);
 
-
-//DELETE
 TRASH_BUTTON.addEventListener("click", open_trash);
 
 TRASH_CANCEL.addEventListener("click", close_trash);
 
 TRASH_FORM.addEventListener("submit", send_trash);
 
-
-//FLAG
 FLAG_BUTTON.addEventListener("click", open_flag);
 
 FLAG_CANCEL.addEventListener("click", close_flag);
 
 FLAG_FORM.addEventListener("submit", send_flag);
 
-
-//UPVOTE
 UPVOTE_BUTTON.addEventListener("click", open_upvote);
 
 UPVOTE_CANCEL.addEventListener("click", close_upvote);
 
 UPVOTE_FORM.addEventListener("submit", send_upvote);
 
-
-//COMPOSE
 COMPOSE_FORM.addEventListener("submit", send_text);
 
 COMPOSE_TEXT.addEventListener("keydown", send_on_enter);
 
 COMPOSE_TEXT.addEventListener("input", fit_compose);
 
-
-//FIRST LOAD
 //a reload mid upvote picks its ring back up first, so its line keeps waiting in the first draw
 resume_upvote();
 
@@ -1717,11 +1574,8 @@ load_list();
 if(CURRENT_ID) {
     load_thread(true);
 }
-
 else {
     show_list();
 }
 
-
-//PULSE
 shared.on_pulse(refresh);

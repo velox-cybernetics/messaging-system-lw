@@ -1,20 +1,13 @@
-#**********READING NOTE**********
-#reminds the model to read each new text together with the texts that came before it
+#READING NOTE
 
-
-#CONTEXT NOTE
-#pasted into every example set below, so a short reply like "No" gets read with the texts before it
+#pasted into every example set below, so a bare no gets read with the texts before it
 def context_note() -> str:
     return r"""Read `current_user_message` in light of `message_history`, never on its own: a short reply or follow up ("No", "Yes, I do", "Dodge Durango", "What is the price difference?", "how much is just the chrome delete") keeps going on whatever job the earlier turns point it at. A job asked about only in earlier turns does NOT count once the current message moves on to a different one. A job mentioned only to rule it out ("no chrome delete", "hold off on the logos") does NOT count. A message can ask about more than one job, so the other jobs in it, custom or regular (a full wrap in one gloss, satin or matte color, PPF on the front end, full body or windshield, colored PPF, window tint, a ceramic coating), never change the answer. Media in `current_user_message.user_media` counts when the customer's text points at it ("this is what we want", "can you do these?"). `current_date_time` never changes the answer."""
 
 
+#CUSTOM JOBS
 
-#**********CUSTOM JOBS**********
-#examples for spotting which custom job the owner prices himself a customer is asking about
-
-
-#COMMERCIAL WRAP
-#yes and no examples for the custom analyzer's commercial wrap question ("c1")
+#yes and no examples for the custom analyzers commercial wrap question, c1
 def commercial_wrap_examples() -> str:
     return rf"""Yes: a wrap or graphics for a business. A full, half or partial wrap, logos, decals, lettering or printed graphics on a business, company or work vehicle, a fleet, a van, box truck, food truck or trailer, business info on it like the company name, a phone number, a website or a QR code, the artwork, design or mock up for it, designing the printed wrap, a Meta form that names a commercial wrap, or a follow up to a commercial wrap quote. An answer to the shop asking whether a business job is a full wrap, a half wrap or just decals ("Full wrap", "half", "decals") is a commercial wrap on any vehicle, a personal car or SUV too, even when they floated a regular color change next to the business, and so is asking whether a price the shop gave was for their business wrap. An old wrap coming off counts only when a new wrap, decals or lettering for a business goes on after it.
 No: a wrap on a personal car, truck or SUV with nothing about a business, a graphic wrap, graphics, a printed design, pattern, fade or livery that is only for the look ("Im looking to do a graphic wrap on my car", "can you wrap a cool design on my carbon fiber"), which is a custom wrap, a business wrap they drop outright for a color change ("forget the logo, just want it gloss red"), an old wrap on the vehicle now that they want taken off with nothing said about a new wrap, decals or lettering for a business going on, a business wrap too (the last owner's company wrap on a van they bought), even when the photos show its business name, phone number or website, or when they answer the shop asking about a full wrap, a half wrap or decals with just the removal ("we just want the wrap removed"), which is an old wrap coming off, a chrome delete, or any other job.
@@ -79,9 +72,7 @@ answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"can you wrap a cool design on my carbon fiber"}},"message_history":{{}}}}
 answer: False"""
 
-
-#CUSTOM WRAP
-#yes and no examples for the custom analyzer's custom wrap on a personal vehicle question ("c2")
+#yes and no examples for the custom analyzers custom wrap on a personal vehicle question, c2
 def custom_wrap_examples() -> str:
     return rf"""Yes: a wrap on a personal vehicle that isn't a full wrap in one gloss, satin or matte color. A partial like just the hood, roof, mirrors, pillars, bumpers, a fender, one panel, the top half or just the cab, stripes or racing stripes, a two tone or a piece in its own color or finish next to a full wrap (a gloss black roof, hood, mirrors or pillars), a specialty film like chrome, satin or matte chrome (a chrome gold wrap), color shift, camo, Inozetek, carbon fiber or another textured film, a custom design or effect like a printed design, a fade, flames, a pattern, splatter or a livery, a graphic wrap, graphics or a design on their own car with nothing about a business ("Im looking to do a graphic wrap on my car", "can you wrap a cool design on my carbon fiber"), or a follow up to a custom wrap quote or to the shop asking for the pic of the vehicle and the design ("how much would this cost"). A plain "wrap", "full wrap" or "color change" with no design named is the regular wrap, so No.
 No: a full wrap in one gloss, satin or matte color (metallic and pearl colors too), what a full wrap covers (the mirrors, the roof, the door jambs), emblems coming off or getting black replacements as part of a full wrap, anything for a business, company or work vehicle, a fleet, a van, box truck, food truck or trailer, even a half or partial wrap, decals, lettering or a printed design (that is a commercial wrap), covering or blacking out the chrome or the trim, grille, handles or badges (that is a chrome delete), redoing or fixing a wrap that's on the vehicle now on certain panels after an accident, for insurance or because a piece is lifting, interior pieces, a wrap going over hail damage, dents or body damage, or a wrap on a motorcycle, boat, jet ski, RV, motorhome, side by side, UTV, ATV, snowmobile or golf cart with nothing custom asked for (those are jobs the services don't list), PPF, or any other job.
@@ -152,9 +143,7 @@ answer: True
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Im looking to do a wrap on my car"}},"message_history":{{"user_message_0":{{"user_text":"hello my name is Adam Walker, I am interested in your services, the vehicle I have is 2017 Infiniti Q50."}},"system_response_to_user_message_0":"Heyy Adam, this is Hazel at the Lone Wraps team, saw your quote request on the Q50. What are you looking to get done?"}}}}
 answer: False"""
 
-
-#PPF REMOVAL
-#yes and no examples for the custom analyzer's old ppf coming off question ("c3")
+#yes and no examples for the custom analyzers old ppf coming off question, c3
 def ppf_removal_examples() -> str:
     return rf"""Yes: PPF or clear bra the customer says is on the vehicle now that they want taken off, redone or replaced. Old, yellowed, peeling, bubbling, torn or chipped PPF getting taken off, redone or replaced, on its own or before a wrap or new film goes on, what taking it off costs or whether that's included, whether it has to come off before new film goes on, or a follow up to a quote for taking it off.
 No: new PPF going on with nothing saying there's PPF on the vehicle now, whether the front end, the full body or just one piece like the headlights, the hood or a bumper (new PPF on one piece is the front end or a job the services don't list), even when it comes up as a follow up to another job, an old wrap, chrome delete or tint coming off, whether PPF or a wrap can come off someday down the road, PPF on the vehicle now that a wrap only goes over, which is treated just like the paint with no extra cost and no extra work (saying it's on there, whether the shop can wrap over it, whether it has to come off first or whether that costs more), or any other job.
@@ -187,9 +176,7 @@ answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Hey so I had my car wrapped by you guys about a year and a half ago. I was recently in an accident and messed up a couple panels. Caliber Collision reached out last week about getting it rewrapped and told me I'd just need to schedule an appointment to get it taken care of"}},"message_history":{{}}}}
 answer: False"""
 
-
-#CHROME DELETE
-#yes and no examples for the custom analyzer's chrome delete question ("c4")
+#yes and no examples for the custom analyzers chrome delete question, c4
 def chrome_delete_examples() -> str:
     return rf"""Yes: covering or blacking out the chrome on the vehicle. A chrome delete, dechrome, blackout or de-badge, the chrome or silver window trim, grille, bumpers, running boards, roof rails, door handles, mirror caps, emblems or badges wrapped black or in another color, redoing or replacing an old chrome delete that's peeling, or a follow up to a chrome delete quote. Blacking out the window trim, grille, emblems or badges ("blackout", "black out the trim") is a chrome delete even when the message doesn't say they're chrome.
 No: a full wrap in a chrome film (a chrome gold wrap, that is a custom wrap), emblems coming off or getting black replacements as part of a full wrap, a roof, hood, pillars or other painted pieces in their own color (that is a custom wrap), a full wrap in one color with nothing about the chrome, interior trim or pieces (that is a job the services don't list), or any other job.
@@ -234,9 +221,7 @@ answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"Can you do carbon fiber on the center console and the door panels inside?"}},"message_history":{{}}}}
 answer: False"""
 
-
-#OTHER JOB
-#yes and no examples for the custom analyzer's other job question, for anything the services don't list ("c5")
+#yes and no examples for the other job question, anything the services don't list, c5
 def other_job_examples() -> str:
     return rf"""Yes: a job that is none of the shop's services and none of the other custom jobs (a commercial wrap, a custom wrap, old PPF or an old wrap coming off, a chrome delete), that the shop doesn't say it won't do. Body work or dents getting fixed, a wrap or film going over hail damage, dents or body damage, clear PPF or clear bra on just one piece or a section of a panel rather than the front end, full body or windshield, a piece the front end doesn't cover (just the rocker panels, just the tailgate) or one it covers (just the hood, the bumper or the headlights) only once a system_response in message_history already offered them the front end and they still want only that piece, redoing a wrap or PPF on certain panels after an accident, for insurance or because a piece is lifting, wheels, rims or calipers, a motorcycle, boat, jet ski or other watercraft, RV or motorhome, side by side or UTV (a Polaris RZR, often typed "razor", a Can-Am Maverick), ATV, snowmobile, golf cart, interior pieces and the like, or a follow up to one of these. A job on a motorcycle, boat or other watercraft, RV or motorhome, side by side, UTV, ATV, snowmobile or golf cart is Yes whatever the job is, and so is a wrap or film on a vehicle with hail damage, dents or body damage, since the owner looks at the damage first.
 No: a commercial wrap (any wrap or graphics for a business, a fleet, a van, box truck, food truck or trailer), a custom wrap on the outside of a car, truck or SUV (a partial or one piece in vinyl like just the roof, hood, mirrors or pillars, stripes, a two tone, a specialty film like chrome, carbon fiber or color shift, or a custom design), taking off or redoing PPF or a wrap that's on the vehicle now because it's old or worn, a chrome delete (the chrome, window trim, grille, handles, emblems or badges covered or blacked out, a blackout), a regular job (a full wrap in one gloss, satin or matte color, PPF on the front end, full body or windshield, colored PPF, window tint, a ceramic coating), new clear PPF on pieces the front end covers (the hood, the front bumper, the fenders, the headlights, the mirrors) while no system_response in message_history offered them the front end yet, even when they say just or only those pieces ("Just looking to have my headlights ppfd", "a quote for the whole car and just the front and hood"), which gets the front end offered first, or something the shop says it doesn't do (home window tint, headlight or taillight tint, undercoating, paint work like painting or repainting, chips, scratches or scuffs fixed with paint or a paint color match).
@@ -299,9 +284,7 @@ answer: False
 state: {{"current_user_message":{{"user_media":{{}},"user_text":"How much to tint my headlights? And how much for a chrome delete on my 2021 charger?"}},"message_history":{{}}}}
 answer: False"""
 
-
-#WRAP REMOVAL
-#yes and no examples for the custom analyzer's old wrap coming off question ("c6")
+#yes and no examples for the custom analyzers old wrap coming off question, c6
 def wrap_removal_examples() -> str:
     return rf"""Yes: a vinyl wrap the customer says is on the vehicle now, all of it or some of its panels, getting taken off, redone, re-wrapped or replaced, because it's old, peeling, cracking, faded or bubbling or because they just want it gone, what taking it off costs or whether that's included, whether it has to come off before a new wrap, PPF or colored PPF goes on, or a follow up to a quote for taking it off. A business wrap counts the same, its logos, lettering and business info and all (the last owner's company wrap on a van they bought), even when the photos show a business name, a phone number or a website on it.
 No: a wrap named only as the color the vehicle is now, with nothing about it coming off, getting redone or the shape it's in ("its wrapped white right now, want satin black"), whether a wrap or PPF can come off someday down the road, a wrap or PPF on certain panels getting redone after an accident, for insurance or because one piece is lifting (that is a job the services don't list), old PPF or clear bra coming off, an old chrome delete or blackout getting redone, old tint coming off, old decals or lettering on a business vehicle that isn't wrapped (that is a commercial wrap), or any other job.

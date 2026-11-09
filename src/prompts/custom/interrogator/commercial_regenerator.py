@@ -1,22 +1,16 @@
-#**********IMPORTS**********
-#the shared regen playbook every regen carries
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the commercial wrap prompt that was used, plus the playbook for fixing a flagged reply and the repeat flag the code adds
-
-
-#EXTRA INPUTS
-#the commercial regen can get the price hold line, and sometimes the code's repeat flag instead of what to fix
+#commercial regen extras, the price hold line and sometimes the codes repeat flag
 def extra_inputs() -> str:
     return """
     - PRICE_HOLD: yes, only on the shop's first reply when they didn't ask what anything costs (#PRICE HOLD above).
     - REPEATED_QUESTION: sometimes comes in place of WHAT_TO_FIX, from the shop's own code. #COMMERCIAL FIX NOTES below says what it means and how to fix it."""
 
-
-#FIX NOTES
 #the commercial quirks, mostly about the one ask and the numbers the owner actually stands behind
 def fix_notes() -> str:
     return """
@@ -38,9 +32,7 @@ def fix_notes() -> str:
         - Rule: a first reply to a lead form goes out with the shop's intro in front of it, so the fixed reply starts right with the answer or the question: no greeting, no name, no introducing yourself or the shop and nothing about the form.
         - Why: the intro already greeted them by name, so a second greeting right under it reads like two bots talking over each other."""
 
-
-#REGEN PROMPT
-#interrogator_prompt is the commercial prompt the flagged reply was written with, so the fix goes by the same what's missing
+#the fix runs on the same commercial prompt the flagged reply was written with
 def prompt(interrogator_prompt: str) -> str:
     playbook: str = regen_guide.guide(extra_inputs(), fix_notes())
 

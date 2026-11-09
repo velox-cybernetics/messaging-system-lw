@@ -1,37 +1,37 @@
-//**********IMPORTS**********
-//the replies, the database and the password check
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//how many wrong passwords lock an address out, and for how long
-
-
-//LOCKOUT
-//10 wrong from one address locks it out for 15 minutes
+//ten wrong from one address locks it out for 15 minutes
 const MAX_FAILURES: number = 10;
 
 const LOCKOUT_SECONDS: number = 900;
 
 
+//SIGN IN
 
-//**********SIGN IN**********
-//checks the password and hands back a session cookie
-
-
-//ADDRESS OF
-//first address vercel lists, "local" when there's none
+//first address vercel lists, local when theres none
 function address_of(request: Request): string {
-    const forwarded: string = request.headers.get("x-forwarded-for") ?? "local";
+    let forwarded: string | null = request.headers.get("x-forwarded-for");
 
-    return (forwarded.split(",")[0] ?? "").trim();
+    if(forwarded === null) {
+        forwarded = "local";
+    }
+
+    let first: string | undefined = forwarded.split(",")[0];
+
+    if(first === undefined) {
+        first = "";
+    }
+
+    return first.trim();
 }
 
-
-//SIGN IN
 //a locked out address gets refused before the password is even checked
 async function sign_in(request: Request): Promise<Response> {
     const failures_key: string = `login_failures:${address_of(request)}`;
@@ -53,12 +53,9 @@ async function sign_in(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for POST /api/login
-
-
-//POST
+//sign in with the dashboard password, the cookie comes back on success
 export function POST(request: Request): Promise<Response> {
     return http.guarded(sign_in, request);
 }

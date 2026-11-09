@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample texts for each way a customer answers the drop off days and price the shop gave them
+#EXAMPLES
 
-
-#AGREE DATE
 AGREE_DATE_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -40,8 +37,6 @@ AGREE_DATE_EXAMPLES: str = r"""
     category: agree_date
 """
 
-
-#AGREE JOB
 AGREE_JOB_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -58,8 +53,6 @@ AGREE_JOB_EXAMPLES: str = r"""
     category: agree_job
 """
 
-
-#NOT AGREE
 NOT_AGREE_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -106,8 +99,6 @@ NOT_AGREE_EXAMPLES: str = r"""
     category: not_agree
 """
 
-
-#NOT_AGREE DATE
 NOT_AGREE_DATE_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -136,8 +127,6 @@ NOT_AGREE_DATE_EXAMPLES: str = r"""
     category: not_agree_date
 """
 
-
-#NOT_AGREE PRICING
 NOT_AGREE_PRICING_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -157,8 +146,6 @@ NOT_AGREE_PRICING_EXAMPLES: str = r"""
     category: not_agree_pricing
 """
 
-
-#NEVERMIND
 NEVERMIND_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -175,8 +162,6 @@ NEVERMIND_EXAMPLES: str = r"""
     category: nevermind
 """
 
-
-#SERVICE PRICING
 SERVICE_PRICING_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -199,8 +184,6 @@ SERVICE_PRICING_EXAMPLES: str = r"""
     category: service_pricing
 """
 
-
-#BUSINESS OPERATIONS
 BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -217,8 +200,6 @@ BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     category: business_operations
 """
 
-
-#ASKED DATE
 ASKED_DATE_EXAMPLES: str = r"""
     # Examples showing correct answers are the following, each for the day above it:
 
@@ -259,8 +240,6 @@ ASKED_DATE_EXAMPLES: str = r"""
     answer: True
 """
 
-
-#PICKED DATE
 PICKED_DATE_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following, each with the days the shop offered numbered the way the categories are:
 
@@ -294,13 +273,9 @@ PICKED_DATE_EXAMPLES: str = r"""
 """
 
 
+#CHECK EXAMPLES
 
-#**********CHECK EXAMPLES**********
-#hands each check that reads their answer the samples it needs, grouped under each kind's name
-
-
-#AGREE EXAMPLES
-#the samples for the question of whether they picked an offered day, said yes to the job only, or neither
+#samples for whether they picked an offered day, said yes to just the job, or neither
 def agree_date_analyze_examples() -> str:
     return f"""
 
@@ -314,9 +289,7 @@ def agree_date_analyze_examples() -> str:
     {NOT_AGREE_EXAMPLES}
 """
 
-
-#NOT_AGREE EXAMPLES
-#the samples for the question of what their answer is when it doesn't pick an offered day
+#the samples for the question of what there answer is when it doesn't pick an offered day
 def not_agree_date_analyze_examples() -> str:
     return f"""
 
@@ -336,14 +309,10 @@ def not_agree_date_analyze_examples() -> str:
     {BUSINESS_OPERATIONS_EXAMPLES}
 """
 
-
-#ASKED EXAMPLES
-#the samples for the yes or no question asked about each open day, whether they ask to drop it off on that one
+#yes or no samples for each open day, did they ask to drop it off on that one
 def asked_date_analyze_examples() -> str:
     return ASKED_DATE_EXAMPLES
 
-
-#PICKED EXAMPLES
 #the samples for the question of which offered day they picked
 def picked_date_analyze_examples() -> str:
     return PICKED_DATE_EXAMPLES

@@ -1,17 +1,11 @@
-#**********GLOBALS**********
-#the quote marks the model can wrap a reply in, straight or curly
+#GLOBALS
 
-
-#QUOTES
+#straight or curly, the model isn't picky about which quotes it wraps a reply in
 QUOTES: tuple[str, ...] = ("\"", "“", "”")
 
 
+#REPLY CLEANUP
 
-#**********REPLY CLEANUP**********
-#takes off the quotes the model wraps a reply in, and starts what is left of a cut reply clean
-
-
-#COUNT QUOTES
 #how many quote marks of any kind the reply has in it
 def count_quotes(reply: str) -> int:
     quote_count: int = 0
@@ -21,31 +15,25 @@ def count_quotes(reply: str) -> int:
 
     return quote_count
 
-
-#STRIP QUOTES
-#the model sometimes wraps its reply in quotes or leaves one at an end, a paired quote is part of the text
+#peels off the quotes the model loves wrapping replies in, a paired quote inside stays
 def strip_quotes(reply: str) -> str:
     reply = reply.strip()
 
     if(len(reply) >= 2 and reply.startswith(QUOTES) and reply.endswith(QUOTES)):
         reply = reply[1:-1].strip()
 
-    #one quote left at an end with nothing to pair with
+    #one lonely quote left at an end with nothing to pair with
     quote_count: int = count_quotes(reply)
 
     if(quote_count % 2 == 1 and reply.endswith(QUOTES)):
         reply = reply[:-1].strip()
-
     elif(quote_count % 2 == 1 and reply.startswith(QUOTES)):
         reply = reply[1:].strip()
 
     return reply
 
-
-#SENTENCE START
-#the text with the spaces, commas and marks left at its front taken off, so it reads like a sentence
+#whats left after a cut starts clean and capitalized, like a real sentence
 def sentence_start(text: str) -> str:
     rest: str = text.lstrip(" \n,.!")
 
-    #what is left after a cut starts clean and capitalized
     return f"{rest[:1].upper()}{rest[1:]}"

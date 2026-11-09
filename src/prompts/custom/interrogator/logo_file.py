@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared rules that every reply asking for a missing detail is built on
+#IMPORTS
+
 from src.prompts.custom.interrogator import shared as interrogator_shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample chats still missing the logo files, with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
 #hands back the sample chats and replies, handed to the shared prompt below
 def examples() -> str:
     return r"""
@@ -150,15 +146,11 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#asks if they have their logo as a print-ready vector file, on top of the shared asking rules
-
-
-#SYSTEM PROMPT
-#hands back the shared interrogator prompt set up to ask for the logo files of a commercial wrap
+#shared interrogator prompt set up to ask for the logo files of a commercial wrap
 def prompt() -> str:
-    #static on purpose, this prompt is the cached prefix of its requests
+    #static on purpose, it lands in the cached prefix of its requests
     whats_missing: str = """
     #WHAT'S MISSING
     - Whether they have their logo and artwork as vector files (an AI, EPS, SVG or PDF file). The design gets printed from these files, and a logo with no vector file gets recreated by the designer first, which adds the design fee in design_fee.

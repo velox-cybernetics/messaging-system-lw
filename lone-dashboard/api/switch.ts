@@ -1,17 +1,14 @@
-//**********IMPORTS**********
-//the replies, the database, the sign in check and the feed's shapes
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
 import * as shop from "./_helpers/shop.js";
 
 
+//SWITCH
 
-//**********SWITCH**********
-//off customers go in the off set, off channels in off_tabs, the system checks both before every send
-
-
-//FLIP SWITCH
+//turns the system on or off for one conversation or a whole tab
 async function flip_switch(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -70,12 +67,9 @@ async function flip_switch(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for POST /api/switch
-
-
-//POST
+//the on and off switch for a conversation or a tab
 export function POST(request: Request): Promise<Response> {
     return http.guarded(flip_switch, request);
 }

@@ -1,39 +1,26 @@
-//**********GLOBALS**********
-//stuff every page shares, timings, formats, channel names
+//GLOBALS
 
-
-//SHOP TIME ZONE
-//same as api/_helpers/shop.ts, only for logic that follows the shop's clock, never for what's shown
+//matches the apis shop helper, only for shop clock logic, never for whats shown
 export const SHOP_TIME_ZONE: string = "America/Denver";
 
-
-//PULSE TIMES
 //system waits about 45s before answering a batch, so checking every 15s still looks live
 const PULSE_MS: number = 15 * 1000;
 
-//idle screens only check once a minute, saves the db's free monthly requests
+//idle screens only check once a minute, saves the dbs free monthly requests
 const IDLE_AFTER_MS: number = 5 * 60 * 1000;
 
 const IDLE_PULSE_MS: number = 60 * 1000;
 
-
-//ACTIVITY
 //anything that counts as someone using the screen
 const ACTIVITY_EVENTS: string[] = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"];
 
-
-//TOAST TIME
 const TOAST_MS: number = 5000;
 
-
-//DAY
 const DAY_MS: number = 86400 * 1000;
 
 const DAY_MINUTES: number = 24 * 60;
 
-
-//TIME FORMATS
-//no time zone means the viewer's own clock, wherever they're looking from
+//no time zone means the viewers own clock, wherever they're looking from
 const LOCAL_DATE: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-CA", {"year": "numeric", "month": "2-digit", "day": "2-digit"});
 
 const LOCAL_TIME: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"hour": "numeric", "minute": "2-digit"});
@@ -42,58 +29,38 @@ const LOCAL_WEEKDAY: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"we
 
 const LOCAL_MONTH_DAY: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"month": "short", "day": "numeric"});
 
-//the shop's clock, for when the bot runs and which shop day a moment counts toward
+//the shops clock, for when the system runs and which shop day a moment counts toward
 const SHOP_DATE: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-CA", {"timeZone": SHOP_TIME_ZONE, "year": "numeric", "month": "2-digit", "day": "2-digit"});
 
 const SHOP_WALL: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": SHOP_TIME_ZONE, "year": "numeric", "month": "numeric", "day": "numeric", "hour": "numeric", "minute": "numeric", "hourCycle": "h23"});
 
-//day_text's formats, made once per set of options since render loops ask for the same few every row
+//day_texts formats, made once per set of options since every row asks for the same few
 const DAY_FORMATS: Map<string, Intl.DateTimeFormat> = new Map<string, Intl.DateTimeFormat>();
 
-
-//NUMBER FORMATS
 const COMPACT: Intl.NumberFormat = new Intl.NumberFormat("en-US", {"notation": "compact", "maximumFractionDigits": 1});
 
 const WHOLE: Intl.NumberFormat = new Intl.NumberFormat("en-US");
 
-
-//US NUMBER
 const US_NUMBER: RegExp = /^\+1(\d{3})(\d{3})(\d{4})$/;
 
-
-//CHANNEL NAMES
 export const CHANNEL_NAMES: Record<string, string> = {"blooio": "Text", "ig": "Instagram", "messenger": "Messenger", "meta-form": "Meta form", "website-form": "Website form"};
 
-
-//PULSE
 export type PULSE = {version: number; up_last: number};
 
-
-//MOMENT
-//a moment's date (YYYY-MM-DD) and time ("3:41 PM") on the viewer's own clock
+//what local_parts hands back, a moments date and time on the viewers own clock
 export type MOMENT = {date: string; time: string};
 
-
-//BIG NUMBER
 export type BIG_NUMBER = {short: string; exact: string};
 
-
-//CHILD
 //null, undefined or false just get left out
 type CHILD = Node | string | null | undefined | false;
 
-
-//TOP BAR
 const SIGN_OUT_BUTTON: HTMLButtonElement | null = document.querySelector<HTMLButtonElement>(".sign-out");
 
-
-//SIGNING IN
 //a few calls can 401 at once, only the first one redirects
 let SIGNING_IN: boolean = false;
 
-
-//PULSE STATE
-//version is -1 till the first check
+//version is minus one till the first check
 let PULSE_VERSION: number = -1;
 
 let PULSE_TIMER: number = 0;
@@ -104,22 +71,25 @@ let ON_CHANGE: (() => void) | null = null;
 
 let ON_EACH: ((pulse: PULSE) => void) | null = null;
 
-
-//TOAST TIMER
 let TOAST_TIMER: number = 0;
 
 
+//SERVER
 
-//**********SERVER**********
-//every call to this dashboard's own api goes through here
-
-
-//SERVER ERROR
 //the server answered with an error, vs never reaching it
-export class ServerError extends Error {}
+function server_error(message: string): Error {
+    const failure: Error = new Error(message);
 
+    failure.name = "ServerError";
 
-//ASK SERVER
+    return failure;
+}
+
+//true only for the servers own no, a fetch that never got through stays false
+export function is_server_error(failure: unknown): failure is Error {
+    return failure instanceof Error && failure.name === "ServerError";
+}
+
 //a 401 sends them to sign in, then back to this page after
 export async function ask_server<T>(path: string, method: string = "GET", body: unknown = null): Promise<T> {
     const options: RequestInit = {"credentials": "same-origin", "method": method, "headers": {"Content-Type": "application/json"}};
@@ -141,7 +111,6 @@ export async function ask_server<T>(path: string, method: string = "GET", body: 
     try {
         data = await response.json();
     }
-
     catch {
         data = null;
     }
@@ -153,20 +122,16 @@ export async function ask_server<T>(path: string, method: string = "GET", body: 
             message = String(data.error);
         }
 
-        throw new ServerError(message);
+        throw server_error(message);
     }
 
-    //shapes come from this dashboard's own api handlers
+    //shapes come from this dashboards own api handlers
     return data as T;
 }
 
 
+//PULSE
 
-//**********PULSE**********
-//pages poll /api/pulse and only reload when the feed wrote something new
-
-
-//NEXT PULSE
 //slower once the screen sits idle
 function next_pulse_ms(): number {
     if(Date.now() - LAST_ACTIVE > IDLE_AFTER_MS) {
@@ -176,8 +141,7 @@ function next_pulse_ms(): number {
     return PULSE_MS;
 }
 
-
-//CHECK PULSE
+//one beat, and the next one only gets lined up while someone can see the tab
 async function check_pulse(): Promise<void> {
     window.clearTimeout(PULSE_TIMER);
 
@@ -194,7 +158,6 @@ async function check_pulse(): Promise<void> {
 
         PULSE_VERSION = pulse.version;
     }
-
     catch {
         //missed one, next beat tries again
     }
@@ -207,8 +170,6 @@ async function check_pulse(): Promise<void> {
     }
 }
 
-
-//VISIBILITY
 //coming back to the tab checks right away
 function on_visibility(): void {
     if(document.visibilityState === "visible") {
@@ -216,8 +177,6 @@ function on_visibility(): void {
     }
 }
 
-
-//ACTIVITY
 //using an idle screen again gets fresh numbers right away
 function on_activity(): void {
     const was_idle: boolean = Date.now() - LAST_ACTIVE > IDLE_AFTER_MS;
@@ -229,9 +188,7 @@ function on_activity(): void {
     }
 }
 
-
-//ON PULSE
-//on_change when the feed wrote something new, on_each with every answer, paused while the tab's hidden
+//on_change when the feed changed, on_each with every answer, paused while the tabs hidden
 export function on_pulse(on_change: () => void, on_each: ((pulse: PULSE) => void) | null = null): void {
     ON_CHANGE = on_change;
 
@@ -251,14 +208,10 @@ export function on_pulse(on_change: () => void, on_each: ((pulse: PULSE) => void
 }
 
 
+//ELEMENTS
 
-//**********ELEMENTS**********
-//builds elements safely and finds the ones the page already has
-
-
-//MAKE ELEMENT
 //text always goes in as text, so nothing a customer sends can turn into markup
-export function make_element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Record<string, string | boolean | undefined> = {}, ...children: CHILD[]): HTMLElementTagNameMap[K] {
+export function make_element<K extends keyof HTMLElementTagNameMap>(tag: K, attributes: Record<string, string | boolean | undefined> = {}, children: CHILD[] = []): HTMLElementTagNameMap[K] {
     const element: HTMLElementTagNameMap[K] = document.createElement(tag);
 
     for(const attribute of Object.entries(attributes)) {
@@ -270,7 +223,6 @@ export function make_element<K extends keyof HTMLElementTagNameMap>(tag: K, attr
         if(value === true) {
             element.setAttribute(name, "");
         }
-
         else if(typeof value === "string") {
             element.setAttribute(name, value);
         }
@@ -285,9 +237,7 @@ export function make_element<K extends keyof HTMLElementTagNameMap>(tag: K, attr
     return element;
 }
 
-
-//BY ID
-//throws when it's missing so a broken page shows right away
+//throws when its missing so a broken page shows right away
 export function by_id<T extends HTMLElement>(id: string): T {
     const found: HTMLElement | null = document.getElementById(id);
 
@@ -298,8 +248,11 @@ export function by_id<T extends HTMLElement>(id: string): T {
     return found as T;
 }
 
+//a toasts 5s are up, off it goes
+function remove_toast(note: HTMLDivElement): void {
+    note.remove();
+}
 
-//TOAST
 //note at the bottom for 5s, red when something went wrong
 export function toast(message: string, is_error: boolean = false): void {
     const old_note: Element | null = document.querySelector(".toast");
@@ -320,21 +273,17 @@ export function toast(message: string, is_error: boolean = false): void {
         role = "alert";
     }
 
-    const note: HTMLDivElement = make_element("div", {"class": class_name, "role": role}, message);
+    const note: HTMLDivElement = make_element("div", {"class": class_name, "role": role}, [message]);
 
     document.body.append(note);
 
-    TOAST_TIMER = window.setTimeout((): void => note.remove(), TOAST_MS);
+    TOAST_TIMER = window.setTimeout(remove_toast, TOAST_MS, note);
 }
 
 
+//FORMATTING
 
-//**********FORMATTING**********
-//numbers, times and ids the way the pages show them
-
-
-//BIG NUMBER
-//1.2M for big counts, the exact one goes in the title
+//counts from 10K up get the short form, the exact one goes in the title
 export function big_number(value: number): BIG_NUMBER {
     let short: string = WHOLE.format(value);
 
@@ -345,51 +294,52 @@ export function big_number(value: number): BIG_NUMBER {
     return {"short": short, "exact": WHOLE.format(value)};
 }
 
-
-//UTC DAY
-//a YYYY-MM-DD or YYYY-MM read as that day and time in utc, hours past 23 roll into the next day
+//a date or month string read as that day and time in utc, hours past 23 roll over
 function utc_day(date: string, hour: number = 0, minute: number = 0): number {
     const pieces: string[] = date.split("-");
 
-    const year: number = Number(pieces[0] ?? 1970);
+    let year: number = 1970;
 
-    const month: number = Number(pieces[1] ?? 1);
+    let month: number = 1;
 
-    const day: number = Number(pieces[2] ?? 1);
+    let day: number = 1;
+
+    if(pieces[0] !== undefined) {
+        year = Number(pieces[0]);
+    }
+
+    if(pieces[1] !== undefined) {
+        month = Number(pieces[1]);
+    }
+
+    if(pieces[2] !== undefined) {
+        day = Number(pieces[2]);
+    }
 
     return Date.UTC(year, month - 1, day, hour, minute);
 }
 
-
-//LOCAL DATE
-//the viewer's own date for a moment, YYYY-MM-DD
+//the viewers own date for a moment, year first so it sorts and compares as text
 export function local_date(at: number): string {
     return LOCAL_DATE.format(at);
 }
 
-
-//LOCAL TIME
-//the viewer's own clock time for a moment, "3:41 PM"
+//the viewers own clock time for a moment, hour and minutes with AM or PM
 export function local_time(at: number): string {
     return LOCAL_TIME.format(at);
 }
 
-
-//LOCAL PARTS
+//date and clock time for a moment in one go, both on the viewers clock
 export function local_parts(at: number): MOMENT {
     return {"date": local_date(at), "time": local_time(at)};
 }
 
-
-//SHOP DATE
-//the shop's date for a moment, YYYY-MM-DD, what the server's days are keyed by
+//the shops date for a moment, what the servers days are keyed by
 export function shop_date(at: number): string {
     return SHOP_DATE.format(at);
 }
 
-
-//SHOP OFFSET
-//how far the shop's clock runs ahead of utc at a moment, daylight saving included
+//how far the shops clock runs ahead of utc at a moment, daylight saving included
 function shop_offset(at: number): number {
     let year: number = 1970;
 
@@ -405,19 +355,15 @@ function shop_offset(at: number): number {
         if(part.type === "year") {
             year = Number(part.value);
         }
-
         else if(part.type === "month") {
             month = Number(part.value);
         }
-
         else if(part.type === "day") {
             day = Number(part.value);
         }
-
         else if(part.type === "hour") {
             hour = Number(part.value);
         }
-
         else if(part.type === "minute") {
             minute = Number(part.value);
         }
@@ -427,25 +373,21 @@ function shop_offset(at: number): number {
     return Date.UTC(year, month - 1, day, hour, minute) - Math.floor(at / 60000) * 60000;
 }
 
-
-//SHOP INSTANT
-//the moment the shop's clock reads that time on that shop date, minutes past 59 or below 0 roll over
+//when the shops clock shows that time on that date, minutes past 59 or below 0 roll over
 export function shop_instant(date: string, hour: number, minute: number = 0): number {
     const wall: number = utc_day(date, hour, minute);
 
-    //the offset at the first guess is only off near a daylight saving switch, a second look settles it
+    //the first guess is only off near a daylight saving switch, a second look settles it
     const guess: number = wall - shop_offset(wall);
 
     return wall - shop_offset(guess);
 }
 
-
-//SHOP HOUR TEXT
-//what the viewer's clock reads when the shop's clock reads that time on that shop date, written like hour_text
+//the viewers clock reading for that shop time on that shop date, written like hour_text
 export function shop_hour_text(date: string, hour: number, minute: number = 0): string {
     const at: number = shop_instant(date, hour, minute);
 
-    //shifting by the gap between the two clocks keeps a shop hour that daylight saving skips readable
+    //shifting by the gap between both clocks keeps a shop hour daylight saving skips readable
     const shift: number = Math.round((-new Date(at).getTimezoneOffset() * 60000 - shop_offset(at)) / 60000);
 
     const local: number = (((hour * 60 + minute + shift) % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
@@ -453,9 +395,7 @@ export function shop_hour_text(date: string, hour: number, minute: number = 0): 
     return hour_text(Math.floor(local / 60), local % 60);
 }
 
-
-//WHEN SHORT
-//"3:41 PM" today, "Tue" this week, "Oct 12" before that, all on the viewer's own clock
+//time if its today, weekday this week, month and day before that, on the viewers clock
 export function when_short(at: number): string {
     const moment: MOMENT = local_parts(at);
 
@@ -472,9 +412,7 @@ export function when_short(at: number): string {
     return LOCAL_MONTH_DAY.format(at);
 }
 
-
-//DAY TEXT
-//days come as YYYY-MM-DD or YYYY-MM, formatting in utc keeps the day from shifting
+//days come as plain date strings, formatting them in utc keeps the day from shifting
 export function day_text(date: string, options: Intl.DateTimeFormatOptions): string {
     const key: string = JSON.stringify(options);
 
@@ -489,9 +427,7 @@ export function day_text(date: string, options: Intl.DateTimeFormatOptions): str
     return format.format(utc_day(date));
 }
 
-
-//DAY LABEL
-//"Today", "Yesterday", or "Tuesday, Oct 27", for a date on the viewer's own clock
+//today, yesterday or the weekday and date, for a date on the viewers own clock
 export function day_label(date: string): string {
     const today: string = local_date(Date.now());
 
@@ -508,11 +444,14 @@ export function day_label(date: string): string {
     return day_text(date, {"weekday": "long", "month": "short", "day": "numeric"});
 }
 
-
-//HOUR TEXT
-//"10 AM", "10 PM", and "9:50 AM" when it's past the hour
+//just the hour like 10 AM, the minutes only show up when its past the hour
 export function hour_text(hour: number, minute: number = 0): string {
-    const twelve_hour: number = hour % 12 || 12;
+    let twelve_hour: number = hour % 12;
+
+    //noon and midnight come out as 0, clocks say 12
+    if(!twelve_hour) {
+        twelve_hour = 12;
+    }
 
     let half: string = "PM";
 
@@ -527,9 +466,7 @@ export function hour_text(hour: number, minute: number = 0): string {
     return `${twelve_hour} ${half}`;
 }
 
-
-//READABLE ID
-//us numbers read as (555) 123-4567, anything else stays how it came
+//us numbers get the usual area code look, anything else stays how it came
 export function readable_id(id: string): string {
     const us: RegExpExecArray | null = US_NUMBER.exec(id);
 
@@ -541,18 +478,13 @@ export function readable_id(id: string): string {
 }
 
 
-
-//**********SIGN OUT**********
-//the sign out button in the top bar of every page
-
-
 //SIGN OUT
+
 //leaves even when the server can't be reached
 async function sign_out(): Promise<void> {
     try {
         await ask_server("/api/logout", "POST");
     }
-
     catch {
         //clearing the cookie is just a courtesy, still leave
     }
@@ -561,12 +493,8 @@ async function sign_out(): Promise<void> {
 }
 
 
+//START
 
-//**********START**********
-//sign out works on any page that loads this
-
-
-//SIGN OUT BUTTON
 if(SIGN_OUT_BUTTON !== null) {
     SIGN_OUT_BUTTON.addEventListener("click", sign_out);
 }

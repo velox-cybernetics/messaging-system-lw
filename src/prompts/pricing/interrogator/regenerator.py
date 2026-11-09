@@ -1,23 +1,17 @@
-#**********IMPORTS**********
-#the shared regen playbook every regen carries
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the interrogator prompt that was used, plus the playbook for fixing a flagged reply around what's still missing
-
-
-#EXTRA INPUTS
-#the interrogator regen also gets the shop's last reply, and the price hold line on a first reply
+#the interrogator regen also gets the shops last reply, and the price hold line on a first reply
 def extra_inputs() -> str:
     return """
     - SHOP_LAST_REPLY: the last system_response in message_history on its own, empty when none went out yet, so a fix never says one of its lines again.
     - PRICE_HOLD: yes, only on the shop's first reply when they didn't ask what anything costs (#PRICE HOLD above)."""
 
-
-#FIX NOTES
-#the interrogator quirks, mostly about what's missing and which prices stay held
+#the interrogator quirks, mostly about whats missing and which prices stay held
 def fix_notes() -> str:
     return """
     #INTERROGATOR FIX NOTES
@@ -38,9 +32,7 @@ def fix_notes() -> str:
         - Rule: when a fix needs a few new words, they never come from SHOP_LAST_REPLY, in the same words or close to them.
         - Why: the same line twice in a row reads copy pasted, and customers notice that right away."""
 
-
-#REGEN PROMPT
-#interrogator_prompt is the prompt the flagged reply was written with, so the fix goes by the same what's missing
+#the prompt the flagged reply was written with, so the fix goes by the same whats missing
 def prompt(interrogator_prompt: str) -> str:
     playbook: str = regen_guide.guide(extra_inputs(), fix_notes())
 

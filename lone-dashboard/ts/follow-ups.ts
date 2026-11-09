@@ -1,104 +1,78 @@
-//**********IMPORTS**********
-//the api call, page helpers and the shop's and viewer's clocks every page shares
+//IMPORTS
+
 import * as shared from "./shared.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//shapes from api/follow-ups.ts, the track's size and the page's parts
-
-
-//FOLLOW UP
-//number is which one in a row it is, counted since the customer last wrote, sms is one that went out from the shop's ghl number
+//number is its place in the row since they last wrote, sms went out on the shops ghl number
 type FOLLOW_UP = {at: number; number: number; sms: boolean};
 
-
-//CUSTOMER
 //held is when blooio started holding their texts till they text back or react, null when it isn't
 type CUSTOMER = {id: string; name: string; channel: string; tab: string | null; due: FOLLOW_UP | null; sent: FOLLOW_UP[]; held: number | null};
 
-
-//FOLLOW UPS
-//recheck_minutes is how long before the send the morning's check reads anyone the night's pick missed
+//recheck_minutes before the send, the mornings check reads anyone the nights pick missed
 type FOLLOW_UPS = {pick_hour: number; send_hour: number; recheck_minutes: number; customers: CUSTOMER[]};
 
-
-//DAY
 //what one customer has on one day, the ones that went out, the next one, and when blooio held them
 type DAY = {sent: FOLLOW_UP[]; due: FOLLOW_UP | null; held: number | null};
 
-
-//DAYS BACK
 //today and the 13 days before it, then tomorrow for the next ones
 const DAYS_BACK: number = 13;
 
-
-//PHONE
-//keep in step with the phone layout in base.css, phones don't load this page
+//keep in step with the phone layout in the base css, phones don't load this page
 const PHONE: string = "(max-width: 640px)";
 
 const PHONE_QUERY: MediaQueryList = window.matchMedia(PHONE);
 
-
-//RELOAD GAP
 //follow ups barely change, so busy messages reload them at most every 30s
 const RELOAD_GAP_MS: number = 30 * 1000;
 
-
-//PAGE PARTS
 const LINEUP: HTMLParagraphElement = shared.by_id<HTMLParagraphElement>("lineup");
 
 const SCHEDULE: HTMLParagraphElement = shared.by_id<HTMLParagraphElement>("schedule");
 
 const TRACK: HTMLElement = shared.by_id<HTMLElement>("track");
 
-
-//ORDINALS
 const ORDINALS: Intl.PluralRules = new Intl.PluralRules("en-US", {"type": "ordinal"});
 
 const SUFFIXES: Record<string, string> = {"one": "st", "two": "nd", "few": "rd", "other": "th"};
 
-
-//FORMATS
-//"Thu, Oct 29, 10:02 AM" on the viewer's own clock
+//short weekday, date and clock time, on the viewers own clock
 const MOMENT_FORMAT: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"weekday": "short", "month": "short", "day": "numeric", "hour": "numeric", "minute": "2-digit"});
 
-//the bot picks, rechecks and sends on the shop's clock, so whether one already ran today goes by it
+//the system picks, rechecks and sends on the shops clock, so todays runs go by it
 const SHOP_CLOCK: Intl.DateTimeFormat = new Intl.DateTimeFormat("en-US", {"timeZone": shared.SHOP_TIME_ZONE, "hour": "numeric", "minute": "numeric", "hourCycle": "h23"});
 
-
-//DAY MINUTES
 const DAY_MINUTES: number = 24 * 60;
 
-
-//PAGE STATE
 let LATEST: FOLLOW_UPS | null = null;
 
 let LAST_LOAD: number = 0;
 
 let RELOAD_TIMER: number = 0;
 
-//viewer's day the track was drawn for, their midnight moves every column
+//viewers day the track was drawn for, their midnight moves every column
 let DRAWN_FOR: string = "";
 
 //every send already drawn, so a new one fills in, null before the first draw
 let DRAWN_SENT: Set<string> | null = null;
 
 
+//DATES
 
-//**********DATES**********
-//ordinals, day math and the words for when
-
-
-//NTH
-//"1st", "2nd", "3rd", "4th"
+//ordinals like 1st, 2nd, 3rd and 4th
 function nth(number: number): string {
-    return `${number}${SUFFIXES[ORDINALS.select(number)] ?? "th"}`;
+    let suffix: string | undefined = SUFFIXES[ORDINALS.select(number)];
+
+    if(suffix === undefined) {
+        suffix = "th";
+    }
+
+    return `${number}${suffix}`;
 }
 
-
-//ADD DAYS
-//calendar math on YYYY-MM-DD so daylight saving never skips or repeats a day
+//calendar math on the date string so daylight saving never skips or repeats a day
 function add_days(date: string, days: number): string {
     const pieces: string[] = date.split("-");
 
@@ -123,9 +97,7 @@ function add_days(date: string, days: number): string {
     return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
-
-//DAY WORD
-//"today", "tomorrow", "yesterday", or the day spelled out, next to the viewer's today
+//today, tomorrow, yesterday, or the day spelled out, next to the viewers today
 function day_word(date: string, today: string): string {
     if(date === today) {
         return "today";
@@ -142,30 +114,24 @@ function day_word(date: string, today: string): string {
     return shared.day_text(date, {"weekday": "long", "month": "short", "day": "numeric"});
 }
 
-
-//WHEN WORDS
-//"today at 10 AM", "tomorrow at 10 AM", or the day spelled out, on the viewer's own clock
+//when in words like today at 10 AM, on the viewers own clock
 function when_words(at: number): string {
     const moment: shared.MOMENT = shared.local_parts(at);
 
     const day: string = day_word(moment.date, shared.local_date(Date.now()));
 
-    //"10:00 AM" reads as "10 AM"
+    //right on the hour drops the double zero, so just 10 AM
     return `${day} at ${moment.time.replace(/:00(?=\s)/, "")}`;
 }
 
-
-//SEND WORDS
-//"today at 10 AM" for the send on that shop date, told on the viewer's own clock
+//like today at 10 AM, for the send on that shop date, told on the viewers own clock
 function send_words(data: FOLLOW_UPS, date: string): string {
     const at: number = shared.shop_instant(date, data.send_hour);
 
     return `${day_word(shared.local_date(at), shared.local_date(Date.now()))} at ${shared.shop_hour_text(date, data.send_hour)}`;
 }
 
-
-//SHOP MINUTE
-//minutes since midnight on the shop's clock
+//minutes since midnight on the shops clock
 function shop_minute(at: number): number {
     let hour: number = 0;
 
@@ -175,7 +141,6 @@ function shop_minute(at: number): number {
         if(part.type === "hour") {
             hour = Number(part.value);
         }
-
         else if(part.type === "minute") {
             minute = Number(part.value);
         }
@@ -184,25 +149,19 @@ function shop_minute(at: number): number {
     return hour * 60 + minute;
 }
 
-
-//MINUTES SINCE
-//how long ago the shop's clock last showed that minute of the day, 0 right at it
+//how long ago the shops clock last showed that minute of the day, 0 right at it
 function minutes_since(now: number, minute_of_day: number): number {
     return (now - minute_of_day + DAY_MINUTES) % DAY_MINUTES;
 }
 
-
-//RECHECK TEXT
-//"9:50 AM", the morning's check recheck_minutes before the send on that shop date, on the viewer's own clock
+//the mornings check on that shop date, recheck_minutes before the send, on the viewers clock
 function recheck_text(data: FOLLOW_UPS, date: string): string {
     const minutes: number = data.send_hour * 60 - data.recheck_minutes;
 
     return shared.shop_hour_text(date, Math.floor(minutes / 60), minutes % 60);
 }
 
-
-//LINEUP TEXT
-//who gets the next ones and when, or that nobody's lined up
+//who gets the next ones and when, or that nobodys lined up
 function lineup_text(data: FOLLOW_UPS): string {
     const due: number[] = [];
 
@@ -213,7 +172,11 @@ function lineup_text(data: FOLLOW_UPS): string {
     }
 
     if(due.length > 0) {
-        const next: number = Math.min(...due);
+        let next: number = Infinity;
+
+        for(const at of due) {
+            next = Math.min(next, at);
+        }
 
         const when: string = when_words(next);
 
@@ -233,19 +196,19 @@ function lineup_text(data: FOLLOW_UPS): string {
         return `${due.length} follow ups due ${when} haven't gone out yet.`;
     }
 
-    //where the shop's clock is since the last send, the night's pick and the morning's check
+    //where the shops clock is since the last send, the nights pick and the mornings check
     const now: number = shop_minute(Date.now());
 
     const shop_today: string = shared.shop_date(Date.now());
 
     const since_send: number = minutes_since(now, data.send_hour * 60);
 
-    //the morning's check ran after the last send and lined nobody up either
+    //the mornings check ran after the last send and lined nobody up either
     if(minutes_since(now, data.send_hour * 60 - data.recheck_minutes) < since_send) {
         return `Nobody gets a follow up ${send_words(data, shop_today)}.`;
     }
 
-    //the night's pick lined nobody up, and the morning's check can still add anyone who texts overnight
+    //the nights pick lined nobody up, but the mornings check can still add late texters
     if(minutes_since(now, data.pick_hour * 60) < since_send) {
         let send_date: string = add_days(shop_today, 1);
 
@@ -259,8 +222,6 @@ function lineup_text(data: FOLLOW_UPS): string {
     return "Nobody is lined up for a follow up yet.";
 }
 
-
-//HELD TEXT
 //how many on the track blooio holds till they text back or react, empty when nobody
 function held_text(data: FOLLOW_UPS): string {
     const first_day: string = add_days(shared.local_date(Date.now()), -DAYS_BACK);
@@ -284,9 +245,7 @@ function held_text(data: FOLLOW_UPS): string {
     return `${held} customers are on hold till they text back or react, Blooio won't take more texts to them before then.`;
 }
 
-
-//HEADLINE
-//the lineup, then who's on hold
+//the lineup, then whos on hold
 function headline(data: FOLLOW_UPS): string {
     const held: string = held_text(data);
 
@@ -298,12 +257,9 @@ function headline(data: FOLLOW_UPS): string {
 }
 
 
+//TRACK
 
-//**********TRACK**********
-//the table of customers by day
-
-
-//DAY HEAD
+//a columns heading, a narrow weekday and the date, the full day for screen readers
 function day_head(date: string, today: string): HTMLTableCellElement {
     const full: string = shared.day_text(date, {"weekday": "long", "month": "long", "day": "numeric"});
 
@@ -312,23 +268,20 @@ function day_head(date: string, today: string): HTMLTableCellElement {
     if(date === today) {
         class_name = "day is-today";
     }
-
     else if(date > today) {
         class_name = "day is-later";
     }
 
-    const weekday: HTMLSpanElement = shared.make_element("span", {"class": "weekday", "aria-hidden": "true"}, shared.day_text(date, {"weekday": "narrow"}));
+    const weekday: HTMLSpanElement = shared.make_element("span", {"class": "weekday", "aria-hidden": "true"}, [shared.day_text(date, {"weekday": "narrow"})]);
 
-    const day_number: HTMLSpanElement = shared.make_element("span", {"class": "date", "aria-hidden": "true"}, shared.day_text(date, {"day": "numeric"}));
+    const day_number: HTMLSpanElement = shared.make_element("span", {"class": "date", "aria-hidden": "true"}, [shared.day_text(date, {"day": "numeric"})]);
 
-    const hidden: HTMLSpanElement = shared.make_element("span", {"class": "visually-hidden"}, full);
+    const hidden: HTMLSpanElement = shared.make_element("span", {"class": "visually-hidden"}, [full]);
 
-    return shared.make_element("th", {"scope": "col", "class": class_name, "title": full}, weekday, day_number, hidden);
+    return shared.make_element("th", {"scope": "col", "class": class_name, "title": full}, [weekday, day_number, hidden]);
 }
 
-
-//DAY CELL
-//dot for one that went out, green when it went by sms, ring for the next one, amber ring for the day blooio held them, exact times in the tooltip
+//dot when one went out, green by sms, ring for the next, amber ring when held, times on hover
 function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HTMLTableCellElement {
     if(!day) {
         return shared.make_element("td", {"class": class_name});
@@ -360,7 +313,6 @@ function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HT
     if(day.held !== null) {
         mark_class = "mark is-held";
     }
-
     else if(day.sent.length > 0) {
         mark_class = "mark is-sent";
 
@@ -375,28 +327,28 @@ function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HT
         mark_class += " is-new";
     }
 
-    const hidden: HTMLSpanElement = shared.make_element("span", {"class": "visually-hidden"}, lines.join(". "));
+    const hidden: HTMLSpanElement = shared.make_element("span", {"class": "visually-hidden"}, [lines.join(". ")]);
 
-    const mark: HTMLSpanElement = shared.make_element("span", {"class": mark_class, "title": lines.join("\n")}, hidden);
+    const mark: HTMLSpanElement = shared.make_element("span", {"class": mark_class, "title": lines.join("\n")}, [hidden]);
 
-    return shared.make_element("td", {"class": class_name}, mark);
+    return shared.make_element("td", {"class": class_name}, [mark]);
 }
 
-
-//DAY OF
-//the viewer's day a moment falls on, made empty the first time
+//the viewers day a moment falls on, made empty the first time
 function day_of(by_date: Map<string, DAY>, at: number): DAY {
     const date: string = shared.local_date(at);
 
-    const day: DAY = by_date.get(date) ?? {"sent": [], "due": null, "held": null};
+    let day: DAY | undefined = by_date.get(date);
+
+    if(day === undefined) {
+        day = {"sent": [], "due": null, "held": null};
+    }
 
     by_date.set(date, day);
 
     return day;
 }
 
-
-//HAS NEW SEND
 //a send that wasn't drawn last time gets marked new
 function has_new_send(customer: CUSTOMER, day: DAY | undefined): boolean {
     if(DRAWN_SENT === null || day === undefined) {
@@ -412,8 +364,6 @@ function has_new_send(customer: CUSTOMER, day: DAY | undefined): boolean {
     return false;
 }
 
-
-//CUSTOMER ROW
 //null when all of theirs is older than the first day
 function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTableRowElement | null {
     const by_date: Map<string, DAY> = new Map<string, DAY>();
@@ -444,15 +394,19 @@ function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTa
         return null;
     }
 
-    const title: string = customer.name || shared.readable_id(customer.id);
+    let title: string = customer.name;
+
+    if(!title) {
+        title = shared.readable_id(customer.id);
+    }
 
     //deleted on Messages means nowhere to link to
-    let who: HTMLElement = shared.make_element("span", {"class": "who-name"}, title);
+    let who: HTMLElement = shared.make_element("span", {"class": "who-name"}, [title]);
 
     if(customer.tab) {
         const query: URLSearchParams = new URLSearchParams({"tab": customer.tab, "id": customer.id});
 
-        who = shared.make_element("a", {"class": "who-name", "href": `/messages?${query}`, "data-id": customer.id}, title);
+        who = shared.make_element("a", {"class": "who-name", "href": `/messages?${query}`, "data-id": customer.id}, [title]);
     }
 
     const cells: HTMLTableCellElement[] = [];
@@ -469,15 +423,20 @@ function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTa
         cells.push(day_cell(day, class_name, has_new_send(customer, day)));
     }
 
-    const name_cell: HTMLTableCellElement = shared.make_element("th", {"scope": "row", "class": "who", "title": title}, who);
+    const name_cell: HTMLTableCellElement = shared.make_element("th", {"scope": "row", "class": "who", "title": title}, [who]);
 
-    const channel_cell: HTMLTableCellElement = shared.make_element("td", {"class": "channel"}, shared.CHANNEL_NAMES[customer.channel] ?? customer.channel);
+    let channel: string | undefined = shared.CHANNEL_NAMES[customer.channel];
 
-    return shared.make_element("tr", {}, name_cell, channel_cell, ...cells);
+    if(channel === undefined) {
+        channel = customer.channel;
+    }
+
+    const channel_cell: HTMLTableCellElement = shared.make_element("td", {"class": "channel"}, [channel]);
+
+    return shared.make_element("tr", {}, [name_cell, channel_cell].concat(cells));
 }
 
-
-//RENDER
+//the lineup, the schedule line and the whole two week track
 function render(): void {
     if(!LATEST) {
         return;
@@ -485,7 +444,7 @@ function render(): void {
 
     LINEUP.textContent = headline(LATEST);
 
-    //the bot's hours are on the shop's clock, today's shop date gives them the right daylight saving
+    //the systems hours run on the shops clock, todays shop date gets daylight saving right
     const shop_today: string = shared.shop_date(Date.now());
 
     SCHEDULE.textContent = `Picked every night at ${shared.shop_hour_text(shop_today, LATEST.pick_hour)}, checked again at ${recheck_text(LATEST, shop_today)} for anyone who texted overnight, sent at ${shared.shop_hour_text(shop_today, LATEST.send_hour)}.`;
@@ -521,7 +480,7 @@ function render(): void {
     DRAWN_SENT = drawn_sent;
 
     if(rows.length === 0) {
-        TRACK.replaceChildren(shared.make_element("p", {"class": "track-note"}, "No follow ups went out in the last two weeks."));
+        TRACK.replaceChildren(shared.make_element("p", {"class": "track-note"}, ["No follow ups went out in the last two weeks."]));
 
         return;
     }
@@ -543,19 +502,21 @@ function render(): void {
         day_heads.push(day_head(date, today));
     }
 
-    const caption: HTMLTableCaptionElement = shared.make_element("caption", {"class": "visually-hidden"}, "Follow ups by customer and day");
+    const caption: HTMLTableCaptionElement = shared.make_element("caption", {"class": "visually-hidden"}, ["Follow ups by customer and day"]);
 
-    const colgroup: HTMLTableColElement = shared.make_element("colgroup", {}, shared.make_element("col", {"class": "who-column"}), shared.make_element("col", {"class": "channel-column"}), ...day_columns);
+    const columns: HTMLTableColElement[] = [shared.make_element("col", {"class": "who-column"}), shared.make_element("col", {"class": "channel-column"})];
 
-    const customer_head: HTMLTableCellElement = shared.make_element("th", {"scope": "col"}, shared.make_element("span", {"class": "visually-hidden"}, "Customer"));
+    const colgroup: HTMLTableColElement = shared.make_element("colgroup", {}, columns.concat(day_columns));
 
-    const channel_head: HTMLTableCellElement = shared.make_element("th", {"scope": "col"}, shared.make_element("span", {"class": "visually-hidden"}, "Channel"));
+    const customer_head: HTMLTableCellElement = shared.make_element("th", {"scope": "col"}, [shared.make_element("span", {"class": "visually-hidden"}, ["Customer"])]);
 
-    const head: HTMLTableSectionElement = shared.make_element("thead", {}, shared.make_element("tr", {}, customer_head, channel_head, ...day_heads));
+    const channel_head: HTMLTableCellElement = shared.make_element("th", {"scope": "col"}, [shared.make_element("span", {"class": "visually-hidden"}, ["Channel"])]);
 
-    const body: HTMLTableSectionElement = shared.make_element("tbody", {}, ...rows);
+    const head: HTMLTableSectionElement = shared.make_element("thead", {}, [shared.make_element("tr", {}, [customer_head, channel_head].concat(day_heads))]);
 
-    TRACK.replaceChildren(shared.make_element("table", {}, caption, colgroup, head, body));
+    const body: HTMLTableSectionElement = shared.make_element("tbody", {}, rows);
+
+    TRACK.replaceChildren(shared.make_element("table", {}, [caption, colgroup, head, body]));
 
     if(focused_id) {
         const link: HTMLAnchorElement | null = TRACK.querySelector<HTMLAnchorElement>(`a[data-id="${CSS.escape(focused_id)}"]`);
@@ -567,12 +528,9 @@ function render(): void {
 }
 
 
+//LOADING
 
-//**********LOADING**********
-//fetching, throttled reloads and the clock
-
-
-//LOAD
+//fetches everything for the page, an error never wipes whats already up
 async function load(): Promise<void> {
     LAST_LOAD = Date.now();
 
@@ -581,27 +539,23 @@ async function load(): Promise<void> {
 
         render();
     }
-
     catch(error: unknown) {
         let message: string = "Couldn't load follow ups. It retries on its own.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
-        //what's on screen stays up, error goes under it
+        //whats on screen stays up, error goes under it
         if(LATEST) {
             SCHEDULE.textContent = message;
         }
-
         else {
             LINEUP.textContent = message;
         }
     }
 }
 
-
-//RELOAD SOON
 //new activity reloads, at most once every RELOAD_GAP_MS
 function reload_soon(): void {
     window.clearTimeout(RELOAD_TIMER);
@@ -609,9 +563,7 @@ function reload_soon(): void {
     RELOAD_TIMER = window.setTimeout(load, Math.max(0, LAST_LOAD + RELOAD_GAP_MS - Date.now()));
 }
 
-
-//TICK
-//sentence moves with the clock, the viewer's midnight moves every column
+//sentence moves with the clock, the viewers midnight moves every column
 function tick(): void {
     if(!LATEST) {
         return;
@@ -620,14 +572,12 @@ function tick(): void {
     if(shared.local_date(Date.now()) !== DRAWN_FOR) {
         render();
     }
-
     else {
         LINEUP.textContent = headline(LATEST);
     }
 }
 
-
-//START PAGE
+//phones wait till the screen gets wide enough, nothing loads before then
 function start_page(): void {
     load();
 
@@ -637,16 +587,11 @@ function start_page(): void {
 }
 
 
+//START
 
-//**********START**********
-//phones wait till the screen grows, everything else starts now
-
-
-//PHONE GATE
 if(PHONE_QUERY.matches) {
     PHONE_QUERY.addEventListener("change", start_page, {"once": true});
 }
-
 else {
     start_page();
 }

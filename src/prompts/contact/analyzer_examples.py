@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample texts for each way a customer answers when the shop asks for a name, number and email
+#EXAMPLES
 
-
-#CONTACT INFO
 CONTACT_INFO_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -31,8 +28,6 @@ CONTACT_INFO_EXAMPLES: str = r"""
     category: contact_info
 """
 
-
-#NO_CONTACT INFO
 NO_CONTACT_INFO_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -58,8 +53,6 @@ NO_CONTACT_INFO_EXAMPLES: str = r"""
     category: no_contact_info
 """
 
-
-#WONT_GIVE INFO
 WONT_GIVE_INFO_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -79,8 +72,6 @@ WONT_GIVE_INFO_EXAMPLES: str = r"""
     category: wont_give_info
 """
 
-
-#GETTING INFO
 GETTING_INFO_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -100,8 +91,6 @@ GETTING_INFO_EXAMPLES: str = r"""
     category: getting_info
 """
 
-
-#SERVICE PRICING
 SERVICE_PRICING_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -118,8 +107,6 @@ SERVICE_PRICING_EXAMPLES: str = r"""
     category: service_pricing
 """
 
-
-#BUSINESS OPERATIONS
 BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -136,8 +123,6 @@ BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     category: business_operations
 """
 
-
-#SPAM HARASS
 SPAM_HARASS_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -152,13 +137,9 @@ SPAM_HARASS_EXAMPLES: str = r"""
 """
 
 
+#CHECK EXAMPLES
 
-#**********CHECK EXAMPLES**********
-#hands each check that reads their answer the samples it needs, grouped under each kind's name
-
-
-#CONTACT EXAMPLES
-#the samples for the question of whether their answer gives any of their info for the invoice
+#the samples for the question of whether there answer gives any of their info for the invoice
 def contact_analyze_examples() -> str:
     return f"""
 
@@ -169,9 +150,7 @@ def contact_analyze_examples() -> str:
     {NO_CONTACT_INFO_EXAMPLES}
 """
 
-
-#NO_CONTACT EXAMPLES
-#the samples for the question of what their answer is when it has none of their info
+#the samples for the question of what there answer is when it has none of their info
 def no_contact_analyze_examples() -> str:
     return f"""
 

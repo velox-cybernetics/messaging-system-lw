@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample quiet chats and what they're waiting on with the day it lands, so the follow up shows up the day before instead of the next morning
+#EXAMPLES
 
-
-#EXTRACT EXAMPLES
 #the sample conversations added to the end of the prompt, with what gets pulled out of each
 def examples() -> str:
     return r"""
@@ -77,13 +74,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for pulling out what a quiet customer is waiting on and the day it comes, with the samples added on the end
-
-
-#SYSTEM PROMPT
-#the system prompt for the night's check reading what a customer who went quiet is waiting on
+#the system prompt for the nights check reading what a customer who went quiet is waiting on
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of every event extractor request
     prompt_text: str = """

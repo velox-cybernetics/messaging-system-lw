@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#python's tools, the web server, ghl's signing key, the shop's ghl app, the dashboard's switch, the sender that texts over blooio, and the capped body read every webhook goes through
+#IMPORTS
+
 import asyncio
 import base64
 import json
@@ -19,70 +19,45 @@ from helpers.state.log import REDIS_CLIENT
 from servers.blooio import read_body
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#the web server ghl hands every text the owner sends on the bot's channel to, since the shop's ghl app is that channel
-
-
-#LOAD ENV
 load_dotenv()
 
+#no docs or openapi pages, nobody gets a free map of the webhook
+APP = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-#APP
-#no /docs, /redoc, or /openapi.json, so nobody can pull up a map of the webhook
-APP: FastAPI = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-
-
-#PATHS
-#the app's install comes back to the callback, and the delivery url is where ghl posts every text sent from it
-#ghl refuses any url with "ghl" or "highlevel" in it, so both go under /crm
+#ghl refuses any url with ghl or highlevel in it, so both paths hide under crm
 CALLBACK_PATH: str = "/crm/oauth/callback"
 
 DELIVERY_PATH: str = "/crm/outbound"
 
-
-#REDIRECT URL
 #the exact redirect url saved on the app, ghl only trades an install code for tokens with it
 REDIRECT_URI: str = f"{os.getenv('PUBLIC_BASE_URL', '').rstrip('/')}{CALLBACK_PATH}"
 
-
-#GHL KEY
-#ghl signs every post to the delivery url with its ed25519 key, the same public key for every account
-#this is the key ghl publishes as a pem, the key itself is its last 32 bytes
+#ghls published ed25519 pem, same for every account, the real key is its last 32 bytes
 GHL_PUBLIC_KEY_TEXT: str = "MCowBQYDK2VwAyEAi2HR1srL4o18O8BRa7gVJY7G7bupbN3H9AwJrHCDiOg="
 
-GHL_PUBLIC_KEY: Ed25519PublicKey = Ed25519PublicKey.from_public_bytes(base64.b64decode(GHL_PUBLIC_KEY_TEXT)[-32:])
+GHL_PUBLIC_KEY = Ed25519PublicKey.from_public_bytes(base64.b64decode(GHL_PUBLIC_KEY_TEXT)[-32:])
 
-
-#TEXT TYPES
-#a text sent on the bot's channel can come in as an sms or as the channel's own custom type
+#a text on the systems channel comes in as an sms or as the channels own custom type
 TEXT_TYPES: list[str] = ["SMS", "Custom"]
 
-
-#SEEN TIME
-#ghl retries a delivery it thinks was missed, so a text's id is kept for 48 hours and it only ever goes out once
+#ghl resends anything it thinks got missed, so ids stick around 48 hours and texts go out once
 SEEN_TTL_SECONDS: int = 172800
 
 
+#WEBHOOK SAFETY
 
-#**********WEBHOOK SAFETY**********
-#keeps out forged and repeated deliveries, so each text he sends goes out once and only when ghl sent it
-
-
-#GHL SIGNED
-#the signature is ghl's ed25519 signature of the exact body bytes, base64 in X-GHL-Signature
+#true when the base64 signature header is ghls ed25519 signature of the exact body bytes
 def ghl_signed(body: bytes, signature: str) -> bool:
-    #a signature that isn't base64 at all raises a ValueError before it's ever checked
+    #a signature that isn't even base64 raises a ValueError before it gets checked
     try:
         GHL_PUBLIC_KEY.verify(base64.b64decode(signature, validate=True), body)
-
     except (InvalidSignature, ValueError):
         return False
 
     return True
 
-
-#FIRST SEEN
 #set nx is one atomic step, so two copies of a delivery can never both go out
 def first_seen(message_id: str) -> bool:
     seen: bool | None = REDIS_CLIENT.set(f"seen_ghl_{message_id}", "1", nx=True, ex=SEEN_TTL_SECONDS)
@@ -90,33 +65,40 @@ def first_seen(message_id: str) -> bool:
     return bool(seen)
 
 
+#SENDING
 
-#**********SENDING**********
-#his text goes out from the bot's number, the bot goes quiet for them when a person wrote it, and ghl hears whether it went out
-
-
-#REPORT STATUS
-#a status ghl refuses is only printed, the text already went out or didn't
+#tells ghl how the text went, a refusal is only printed since the text is out or not anyway
 def report_status(message_id: str, delivered: bool, reason: str) -> None:
-    status: str = "delivered" if delivered else "failed"
+    status: str = ""
+
+    if(delivered):
+        status = "delivered"
+    else:
+        status = "failed"
 
     try:
         ghl.mark_status(message_id, delivered, reason)
-
     except Exception as error:
         print(f"[GHL] marking {message_id} {status} failed: {error}")
 
-
-#SEND FROM GHL
-#a person wrote it when it has a userId, so the bot is switched off for them before it goes out, a workflow's text leaves the bot on
+#a text with a userId came from a person, so the system goes quiet for them, workflows don't count
 def send_from_ghl(data: dict) -> None:
     message_id: str = data["messageId"]
 
-    phone: str = data.get("phone") or ""
+    phone: str = data.get("phone")
 
-    text: str = data.get("message") or ""
+    if(not phone):
+        phone = ""
 
-    attachments: list[str] = data.get("attachments") or []
+    text: str = data.get("message")
+
+    if(not text):
+        text = ""
+
+    attachments: list[str] = data.get("attachments")
+
+    if(not attachments):
+        attachments = []
 
     if(phone == ""):
         print(f"[GHL] text {message_id} has no phone to go to, so it never went out")
@@ -125,13 +107,12 @@ def send_from_ghl(data: dict) -> None:
 
         return
 
-    #a switch that fails still lets his text go out, the dashboard can switch them off by hand
+    #a failed switch still lets his text out, the dashboard can switch them off by hand
     if(data.get("userId")):
         try:
             dashboard.switch_off(phone)
 
             print(f"SWITCHED OFF: the owner texted {phone} from ghl, so the bot stays quiet for them")
-
         except Exception as error:
             print(f"[GHL] switching {phone} off failed, the bot may still answer them: {error}")
 
@@ -140,21 +121,15 @@ def send_from_ghl(data: dict) -> None:
     report_status(message_id, sent, "Blooio refused the text.")
 
 
+#GHL WEBHOOKS
 
-#**********GHL WEBHOOKS**********
-#the app's install and every text sent from ghl come in here
-
-
-#GHL INSTALL
-#installing the app on the shop's sub-account lands here with a code, traded once for the tokens that mark his texts delivered
-@APP.get(CALLBACK_PATH, response_model=None)
-async def ghl_install(code: str = "") -> HTMLResponse:
+#installing the app on the shops account lands here with a code, traded once for tokens
+async def ghl_install(code: str = ""):
     if(code == ""):
         return HTMLResponse("No install code came back from GHL.", status_code=400)
 
     try:
         await asyncio.to_thread(ghl.connect_app, code, REDIRECT_URI)
-
     except Exception as error:
         print(f"[GHL] connecting the app failed: {error}")
 
@@ -164,12 +139,8 @@ async def ghl_install(code: str = "") -> HTMLResponse:
 
     return HTMLResponse("Connected. The bot's number now shows in GHL's message box as its own channel, system-line.")
 
-
-#GHL HOOK
-#every text sent on the bot's channel in ghl comes in here as a signed POST, a text for the shop's sub-account goes out over blooio
-#it answers with a dict or a JSONResponse, so fastapi makes no response model from the annotation
-@APP.post(DELIVERY_PATH, response_model=None)
-async def ghl_hook(request: Request) -> dict | JSONResponse:
+#every text sent on the systems channel in ghl lands here signed, the shops go out over blooio
+async def ghl_hook(request: Request):
     body: bytes | None = await read_body(request)
 
     if(body is None):
@@ -184,15 +155,18 @@ async def ghl_hook(request: Request) -> dict | JSONResponse:
 
     data: dict = json.loads(body)
 
-    #the app is only ever the bot's channel in the shop's own sub-account, and it only ever sends texts
+    #the app only ever lives in the shops own account, and it only ever sends texts
     if(data.get("type") not in TEXT_TYPES or data.get("locationId") != ghl.GHL_LOCATION_ID):
         print(f"GHL DELIVERY SKIPPED: a {data.get('type')} for {data.get('locationId')}, only the shop's texts go out")
 
         return {"status": "ok"}
 
-    message_id: str = data.get("messageId") or ""
+    message_id: str = data.get("messageId")
 
-    #a delivery ghl sends again goes out only the first time, and one with no id can't be told apart from a resend
+    if(not message_id):
+        message_id = ""
+
+    #a resend only goes out the first time, and one with no id can't be told from a resend
     if(message_id == "" or not await asyncio.to_thread(first_seen, message_id)):
         return {"status": "ok"}
 
@@ -201,12 +175,16 @@ async def ghl_hook(request: Request) -> dict | JSONResponse:
     return {"status": "ok"}
 
 
+#ROUTES
 
-#**********RUN**********
-#starts this webhook server on its own when the file is run directly
+#no response model for either, fastapi just sends back whatever they return
+APP.add_api_route(CALLBACK_PATH, ghl_install, methods=["GET"], response_model=None)
+
+APP.add_api_route(DELIVERY_PATH, ghl_hook, methods=["POST"], response_model=None)
 
 
-#RUN SERVER
+#RUN
+
 #uvicorn only prints its warnings and errors, so the terminal is just the held blocks
 if(__name__ == "__main__"):
     uvicorn.run(APP, port=8000, log_level="warning")

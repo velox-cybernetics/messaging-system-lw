@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shop details, booking info and typo notes that the check reads along with its own rules
+#IMPORTS
+
 from src.prompts import shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample questions marked as answerable from the shop details or not, so the check learns the line
-
-
-#CHECK EXAMPLES
 #hands back the sample questions, pasted at the end of the check rules below
 def examples() -> str:
     return r"""
@@ -110,13 +106,9 @@ def examples() -> str:
 """
 
 
+#RULES
 
-#**********RULES**********
-#decides if nothing they asked has an answer in the shop details, so the reply says we're not sure
-
-
-#CHECK RULES
-#hands back the rules for the business check, which is true when BUSINESS_DETAILS covers nothing they asked
+#rules for the business check, true only when BUSINESS_DETAILS covers nothing they asked
 def instructions() -> str:
     instructions_text: str = """
     #How To Answer

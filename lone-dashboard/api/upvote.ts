@@ -1,5 +1,5 @@
-//**********IMPORTS**********
-//the replies, the database, the sign in check, the feed's shapes, the repo the system deploys from and the model that writes the example
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
@@ -8,64 +8,46 @@ import * as github from "./_helpers/github.js";
 import * as openrouter from "./_helpers/openrouter.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//limits, the keys and model an upvote needs, what the bot notes about a reply, and how a generator's examples are laid out
-
-
-//REASON MAX
 const REASON_MAX: number = 2000;
 
-
-//SETTINGS
-//every key an upvote needs from vercel, checked up front so one try names all that's missing
+//every key an upvote needs from vercel, checked up front so one try names all thats missing
 const SETTINGS: string[] = ["OPENROUTER_API_KEY", "GITHUB_TOKEN"];
 
-
-//EXAMPLE MODEL
-//kimi k3.1 pro, the system's own backup writer, at medium so the example gets thought through
+//kimi, the systems own backup writer, at medium so the example gets thought through
 const EXAMPLE_MODEL: string = "moonshotai/kimi-k3.1-pro";
 
 const EXAMPLE_EFFORT: string = "medium";
 
-//4 minutes leaves the push room inside vercel's 5 minute limit
+//four minutes leaves the push room inside vercels 5 minute limit
 const EXAMPLE_TIMEOUT_MS: number = 240 * 1000;
 
-
-//EXAMPLES SHOWN
-//how many of the file's newest examples the model copies the shape of
+//how many of the files newest examples the model copies the shape of
 const EXAMPLES_SHOWN: number = 3;
 
-
-//WRITER
-//what helpers/state/dashboard.py notes about the system's last reply: when, the prompt file that wrote it ("" when only the code did), what it was handed and the reply
+//the systems last reply as the feed notes it, generator is empty when only code wrote it
 type WRITER = {at: number; generator: string; input: string; reply: string};
 
-
-//EXAMPLES
-//where a file's examples sit, from right after they open to the quotes that close them
+//where a files examples sit, from right after they open to the quotes that close them
 type EXAMPLES = {start: number; end: number; text: string};
 
-
-//PATTERNS
-//only one of the system's prompt files ever gets pushed to
+//only one of the systems prompt files ever gets pushed to
 const GENERATOR_PATH: RegExp = /^src\/prompts\/[a-z0-9_/]+\.py$/;
 
-//every example in a file opens on its number, "Ex 12:", or "Ex 8a:" for one slotted in by hand
+//every example opens on its number, like Ex 12, or Ex 8a for one slotted in by hand
 const EXAMPLE_NUMBER: RegExp = /^ {4}Ex (\d+)[a-z]*:$/gm;
 
 //an Ex line the model wrote on its own
 const EXAMPLE_LINE: RegExp = /^Ex \d+[a-z]*:$/;
 
-//the line a generator's input carries the conversation on
+//the line a generators input carries the conversation on
 const STATE_LINE: RegExp = /^\s*STATE: (.+)$/m;
 
 //a commit sha, the only thing the live check takes
 const COMMIT_SHA: RegExp = /^[0-9a-f]{40}$/;
 
-
-//EXAMPLES BLOCK
-//every generator's examples are one raw string in its examples(), the new one goes in right before it closes
+//every generators examples are one raw string, the new one goes in right before it closes
 const EXAMPLES_OPEN: string = 'def examples() -> str:\n    return r"""\n';
 
 const EXAMPLES_CLOSE: string = '"""';
@@ -73,9 +55,7 @@ const EXAMPLES_CLOSE: string = '"""';
 //they sit 4 spaces in
 const INDENT: string = "    ";
 
-
-//EXAMPLE PROMPT
-//the model writes the example in the file's own shape, then the state and the reply get filled in exactly
+//the model writes it in the files own shape, then state and reply get filled in exactly
 const EXAMPLE_PROMPT: string = `
 #ROLE
 You write examples for the prompt files of Lone Wraps' texting system, the one that texts the shop's customers as Hazel. The owner read a reply one of its generators wrote and said it was good. You write that reply up as one new example for that generator, in the same shape as its other examples, so it writes more replies like it.
@@ -99,13 +79,9 @@ You write examples for the prompt files of Lone Wraps' texting system, the one t
 `;
 
 
+//NOTE
 
-//**********NOTE**********
-//what the bot noted about the system's last reply, and whether that reply went out
-
-
-//PARSE WRITER
-//null when it's missing or isn't what the bot writes
+//null when its missing or isn't what the system writes
 function parse_writer(text: unknown): WRITER | null {
     const fields: Record<string, unknown> = shop.fields_of(shop.parse_json(text));
 
@@ -116,9 +92,7 @@ function parse_writer(text: unknown): WRITER | null {
     return {"at": fields.at, "generator": fields.generator, "input": fields.input, "reply": fields.reply};
 }
 
-
-//WENT OUT
-//the reply the note is on went out once the system sent something after it, a text a person sent from ghl never counts
+//the reply went out once the system sent something after it, a text from ghl never counts
 function went_out(entries: Record<string, unknown>[], at: number): boolean {
     for(const entry of entries) {
         if(entry.kind === "out" && entry.ghl !== true && Number(entry.at) > at) {
@@ -130,12 +104,8 @@ function went_out(entries: Record<string, unknown>[], at: number): boolean {
 }
 
 
+//EXAMPLES
 
-//**********EXAMPLES**********
-//finds a generator's examples in its file and puts the new one last
-
-
-//FIND EXAMPLES
 //throws when the file doesn't lay them out the way every generator does
 function find_examples(file_text: string, path: string): EXAMPLES {
     const open: number = file_text.indexOf(EXAMPLES_OPEN);
@@ -148,7 +118,7 @@ function find_examples(file_text: string, path: string): EXAMPLES {
 
     const end: number = file_text.indexOf(EXAMPLES_CLOSE, start);
 
-    //the closing quotes sit on their own line, so the new example goes right in front of them
+    //the closing quotes sit on there own line, so the new example goes right in front of them
     if(end === -1 || file_text[end - 1] !== "\n") {
         throw new Error(`${path}'s examples don't close on a line of their own, so the example can't go in.`);
     }
@@ -156,8 +126,6 @@ function find_examples(file_text: string, path: string): EXAMPLES {
     return {"start": start, "end": end, "text": file_text.slice(start, end)};
 }
 
-
-//NEXT NUMBER
 //one past the highest example number in the file
 function next_number(examples: EXAMPLES): number {
     let highest: number = 0;
@@ -169,24 +137,30 @@ function next_number(examples: EXAMPLES): number {
     return highest + 1;
 }
 
-
-//LAST EXAMPLES
-//the file's newest few, the shape the model copies
+//the files newest few, the shape the model copies
 function last_examples(examples: EXAMPLES): string {
     const starts: number[] = [];
 
     for(const found of examples.text.matchAll(EXAMPLE_NUMBER)) {
-        starts.push(found.index ?? 0);
+        let index: number | undefined = found.index;
+
+        if(index === undefined) {
+            index = 0;
+        }
+
+        starts.push(index);
     }
 
-    const first: number = starts[Math.max(0, starts.length - EXAMPLES_SHOWN)] ?? 0;
+    let first: number | undefined = starts[Math.max(0, starts.length - EXAMPLES_SHOWN)];
+
+    if(first === undefined) {
+        first = 0;
+    }
 
     return examples.text.slice(first).trim();
 }
 
-
-//WITH EXAMPLE
-//the file with the new example last in its examples, a blank line after the one before it like the rest
+//the file with the new example last, a blank line after the one before like the rest
 function with_example(file_text: string, examples: EXAMPLES, number: number, lines: string[]): string {
     let example: string = `\n${INDENT}Ex ${number}:\n`;
 
@@ -198,13 +172,9 @@ function with_example(file_text: string, examples: EXAMPLES, number: number, lin
 }
 
 
+//WRITING
 
-//**********WRITING**********
-//the model writes the example, then the state and the reply go in exactly as the generator had them
-
-
-//STATE OF
-//the conversation exactly as the generator got it, "" for an input with no state line
+//the conversation exactly as the generator got it, empty for an input with no state line
 function state_of(input: string): string {
     const found: RegExpMatchArray | null = input.match(STATE_LINE);
 
@@ -212,12 +182,16 @@ function state_of(input: string): string {
         return "";
     }
 
-    return found[1] ?? "";
+    let state: string | undefined = found[1];
+
+    if(state === undefined) {
+        state = "";
+    }
+
+    return state;
 }
 
-
-//EXAMPLE LINES
-//the model's lines with the state and the reply filled in, throws when it left out either one the example needs
+//the models lines with state and reply filled in, throws when it left one out
 function example_lines(written: string, writer: WRITER): string[] {
     const state: string = state_of(writer.input);
 
@@ -230,32 +204,28 @@ function example_lines(written: string, writer: WRITER): string[] {
     for(const written_line of written.split("\n")) {
         const line: string = written_line.trim();
 
-        //code fences, blank lines and an Ex line of its own never go in, the number gets put on here
+        //code fences, blank lines and its own Ex line never go in, the number gets put on here
         if(line === "" || line.startsWith("```") || EXAMPLE_LINE.test(line)) {
             continue;
         }
 
-        //the reason runs to the end, kept on one line like every example's
+        //the reason runs to the end, kept on one line like every examples
         if(line.startsWith("REASON:") || reason !== "") {
             reason = `${reason} ${line}`.trim();
         }
-
-        //a line break in the reply is written \n, the way every example's response has them
         else if(line.startsWith("Response:")) {
+            //a line break in the reply is written as backslash n, like every examples response
             lines.push(`Response: "${writer.reply.trim().replace(/\r?\n/g, "\\n")}"`);
 
             has_response = true;
         }
-
-        //anything between the response and the reason is the reply spilling onto more lines, and it's already in
         else if(has_response) {
+            //anything between response and reason is the reply spilling over, its allready in
             continue;
         }
-
         else if(line.startsWith("STATE:") && state !== "") {
             lines.push(`STATE: ${state}`);
         }
-
         else {
             lines.push(line);
         }
@@ -275,9 +245,7 @@ function example_lines(written: string, writer: WRITER): string[] {
     return lines;
 }
 
-
-//WRITE EXAMPLE
-//written from the file's rules, its newest examples, what the generator was handed, its reply and why the owner liked it
+//written from the files rules, newest examples, the generators input, reply and the why
 async function write_example(writer: WRITER, reason: string, file_text: string, examples: EXAMPLES): Promise<string[]> {
     const rules: string = file_text.slice(0, examples.start) + file_text.slice(examples.end);
 
@@ -289,18 +257,14 @@ async function write_example(writer: WRITER, reason: string, file_text: string, 
 }
 
 
+//UPVOTE
 
-//**********UPVOTE**********
-//the system's last reply goes in as an example for the generator that wrote it, and the push to main sends it out to the system
-
-
-//MISSING SETTINGS
-//like "OPENROUTER_API_KEY and GITHUB_TOKEN", "" when every one is set
+//the missing keys joined with and, empty when every one is set
 function missing_settings(): string {
     const missing: string[] = [];
 
     for(const name of SETTINGS) {
-        if((process.env[name] ?? "") === "") {
+        if(shop.setting(process.env[name], "") === "") {
             missing.push(name);
         }
     }
@@ -308,8 +272,7 @@ function missing_settings(): string {
     return missing.join(" and ");
 }
 
-
-//SEND UPVOTE
+//writes the liked reply up as a new example and pushes it to main
 async function send_upvote(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -386,12 +349,8 @@ async function send_upvote(request: Request): Promise<Response> {
 }
 
 
+//LIVE
 
-//**********LIVE**********
-//whether the system is running the push yet, the bot says what commit render deployed every time it checks in
-
-
-//READ LIVE
 //live once the commit running is the one the example went out in, or one after it
 async function read_live(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
@@ -400,13 +359,23 @@ async function read_live(request: Request): Promise<Response> {
         return refused;
     }
 
-    const commit: string = new URL(request.url).searchParams.get("commit") ?? "";
+    let commit: string | null = new URL(request.url).searchParams.get("commit");
+
+    if(commit === null) {
+        commit = "";
+    }
 
     if(!COMMIT_SHA.test(commit)) {
         return http.fail(400, "That commit isn't valid.");
     }
 
-    const running: string = String(await redis.command(["GET", "up_commit"]) ?? "");
+    let running_value: unknown = await redis.command(["GET", "up_commit"]);
+
+    if(running_value === undefined || running_value === null) {
+        running_value = "";
+    }
+
+    const running: string = String(running_value);
 
     let live: boolean = false;
 
@@ -419,18 +388,14 @@ async function read_live(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for POST and GET /api/upvote
-
-
-//POST
+//an up weight on the systems last reply
 export function POST(request: Request): Promise<Response> {
     return http.guarded(send_upvote, request);
 }
 
-
-//GET
+//whether the pushed example is live on render yet
 export function GET(request: Request): Promise<Response> {
     return http.guarded(read_live, request);
 }

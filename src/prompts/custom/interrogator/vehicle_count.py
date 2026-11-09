@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared rules that every reply asking for a missing detail is built on
+#IMPORTS
+
 from src.prompts.custom.interrogator import shared as interrogator_shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample chats still missing the vehicle count, with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
 #hands back the sample chats and replies, handed to the shared prompt below
 def examples() -> str:
     return r"""
@@ -161,15 +157,11 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#asks how many vehicles the commercial wrap is for, on top of the shared asking rules
-
-
-#SYSTEM PROMPT
-#hands back the shared interrogator prompt set up to ask how many vehicles a commercial wrap is for
+#shared interrogator prompt set up to ask how many vehicles a commercial wrap is for
 def prompt() -> str:
-    #static on purpose, this prompt is the cached prefix of its requests
+    #static on purpose, it lands in the cached prefix of its requests
     whats_missing: str = """
     #WHAT'S MISSING
     - How many vehicles the commercial wrap is for. They haven't said, they brought up more than one without a number ("our trucks", "the fleet"), or they only named one vehicle (on a lead form, "my van", "our truck"), which says which one it is but not how many, since a business can have more than one. The owner prices a commercial job by the vehicle: every vehicle on the job gets priced, the same design goes on all of them resized to fit each one, a trailer counts as a vehicle, and every 4th vehicle gets a discount, said without the amount when they ask about a discount or fleet pricing.

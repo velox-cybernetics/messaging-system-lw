@@ -1,8 +1,5 @@
-#**********MEDIA PROMPTS**********
-#the instructions for describing a photo or video a customer sent, so the bot knows what's in it
+#MEDIA PROMPTS
 
-
-#MEDIA RULES
 #the rules for describing what a customer sent, with the kind of media named in them
 def media_rules(media: str) -> str:
     return f"""
@@ -26,14 +23,10 @@ def media_rules(media: str) -> str:
     6. Blurry, dark or cut off, it gets described as far as it can be seen, saying it's hard to make out.
 """
 
-
-#IMAGE PROMPT
 #the prompt for describing a photo or image a customer sent
 def image_prompt() -> str:
     return media_rules("a photo or image")
 
-
-#VIDEO PROMPT
 #the prompt for describing a video a customer sent, with one more rule for covering all of it
 def video_prompt() -> str:
     #a video can move around the vehicle, so what shows up anywhere in it counts

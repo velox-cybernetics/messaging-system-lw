@@ -1,15 +1,11 @@
-#**********IMPORTS**********
-#the texting habits and photo and color notes that every reply prompt shares
+#IMPORTS
+
 from src.prompts import shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample questions the shop has no info on yet with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
-#hands back the sample questions and the new girl's "I'll ask the owner" replies, pasted at the end of the prompt below
+#sample questions and the new girls I'll ask the owner replies, pasted at the end below
 def examples() -> str:
     return r"""
     Ex 1:
@@ -77,13 +73,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together the rules for the new girl telling them she's not sure yet, she's still learning, and she'll ask the owner
-
-
-#SYSTEM PROMPT
-#hands back the system prompt for a reply used when the business check finds no answer in the shop details
+#system prompt for when the business check finds no answer in the shop details
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = """

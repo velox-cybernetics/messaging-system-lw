@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared rules that every reply asking for a missing detail is built on
+#IMPORTS
+
 from src.prompts.custom.interrogator import shared as interrogator_shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample chats still missing the vehicle model, with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
 #hands back the sample chats and replies, handed to the shared prompt below
 def examples() -> str:
     return r"""
@@ -96,15 +92,11 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#asks for the model of the vehicles when we only have the make, on top of the shared asking rules
-
-
-#SYSTEM PROMPT
-#hands back the shared interrogator prompt set up to ask for the model when only the make is on file
+#shared interrogator prompt set up to ask for the model when only the make is on file
 def prompt() -> str:
-    #static on purpose, this prompt is the cached prefix of its requests
+    #static on purpose, it lands in the cached prefix of its requests
     whats_missing: str = """
     #WHAT'S MISSING
     - The model of the vehicles. They said the make, written in INFO_NEEDED, and the design gets built on a template made for that exact model, so the model decides the template and how much vinyl it takes, with the trim or roof height when they give it (Transit 250, Sprinter High Roof). A trailer, or a box truck or food truck with no make, goes by its size in place of a model, the length and the height, so for those its size is what's missing.

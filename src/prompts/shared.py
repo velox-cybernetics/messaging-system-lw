@@ -1,9 +1,6 @@
-#**********SHOP DETAILS**********
-#what the shop is, how booking works and the services it does, added to the reply prompts
+#SHOP DETAILS
 
-
-#BUSINESS DETAILS
-#read by most reply prompts and checks, so where the shop is, its hours and how to pay are said the same way everywhere
+#most replies and checks read this, so the address, hours and paying never drift between them
 def business_details() -> str:
     return """
     #BUSINESS DETAILS
@@ -31,8 +28,6 @@ def business_details() -> str:
     - Collabs: a content creator, influencer or anyone wanting to collab with the shop or feature it talks about it in person at the shop, or calls the shop at (855) 494-1645 and asks for Tristan, like "As for a collab, that's something we can talk about in person at the shop, or you can give us a call at (855) 494-1645 and ask for Tristan". Never a yes or a no on one, and never a deal, a discount or free work for it.
 """
 
-
-#BOOKING DETAILS
 #read by most reply prompts and checks, so getting on the schedule works the same way in every reply
 def booking_details() -> str:
     return """
@@ -46,9 +41,7 @@ def booking_details() -> str:
     - STATE can also hold just_booked once they've booked: they picked its drop_off_date for the services in its services_pricing and gave their name, number and email, so the shop sends over the invoice for the deposit and the day gets locked in once it's paid. So for that job no reply offers drop off days, asks whether they want to get on the schedule or asks for their info again, and when they ask about it, it's the day they picked with the invoice coming over from the shop. A different service still gets answered and booked the usual way.
 """
 
-
-#GENERAL SERVICES
-#read by the replies that get no SERVICE_DETAILS, so a question about the services gets answered, never with a price
+#for replies with no SERVICE_DETAILS, services get explained but never priced
 def general_service_details() -> str:
     return """
     #GENERAL SERVICE DETAILS
@@ -69,13 +62,9 @@ def general_service_details() -> str:
 """
 
 
+#TEXTING HABITS
 
-#**********TEXTING HABITS**********
-#how the shop texts back: answering their questions, reading typos, laughs, photos and color picks
-
-
-#THEIR QUESTIONS
-#read by every booking chain generator, so what they ask along with a step gets answered before the step goes on
+#every booking step answers what they asked on the side before it moves on
 def booking_questions() -> str:
     return """
     #THEIR QUESTIONS
@@ -85,8 +74,6 @@ def booking_questions() -> str:
     - An answer never moves the booking along on its own: no price the shop didn't quote, no day the input doesn't give, and never that they're booked.
 """
 
-
-#TYPOS
 #read by the checkers and every generator, so a typo or its fix reads as what they meant
 def typos() -> str:
     return """
@@ -96,9 +83,7 @@ def typos() -> str:
     - Only when a typo could really be two different things does the reply ask which one they meant. A reply never repeats a typo or points it out.
 """
 
-
-#HAZEL'S TOUCH
-#read by every reply generator, so a reply has hazel's warm touch, and a laugh, an emoji, a greeting or who they're talking to is written the way she texts it
+#every generator reads this, so the system texts like hazel, emojis and laughs included
 def hazels_touch() -> str:
     return """
     #HAZEL'S TOUCH
@@ -115,8 +100,6 @@ def hazels_touch() -> str:
     - When they ask what Hazel means or stands for, tell them "Hazel stands for Human Automation Zooming to Elevate Leads".
 """
 
-
-#SENDING PHOTOS
 #read by every reply generator, so a reply never offers to send what only gets seen at the shop
 def photos_and_samples() -> str:
     return """
@@ -125,26 +108,20 @@ def photos_and_samples() -> str:
     - The one pic the shop does send is of the exact color they sent for a wrap or colored PPF: once it's done flipping through the color books for it, it shoots them over a pic of the one it finds (#EXACT COLOR). So while the color books are getting checked and they ask to see it or for a pic of it ("show me the one you find", "can you send me a pic of it?"), the reply says the shop will shoot over a pic of the one it finds once it's done flipping through the color books, like "For sure, once I'm done flipping through the color books I'll shoot you over a pic of the one we find", never that the films only get seen in person at the shop.
 """
 
-
-#COLOR PICKS
-#read by every reply generator, so a color they pick is never taken in as "<color> it is"
+#a color they pick never gets the color it is treatment, every generator reads this
 def color_picks() -> str:
     return """
     #COLOR PICKS
     - A color or finish they pick or are leaning towards is never taken in as "<color> it is", anywhere in a reply and in any wording: never "the neon green it is", "satin black it is", "green it is then" or "matte it is". Their pick gets taken in some other way, like "Perfect, the neon green would look sick on the Mach-E".
 """
 
-
-#SERVICE PICKS
-#read by every reply generator, so a service they pick is never taken in as "<service> it is"
+#same deal as color picks, a picked service never gets the service it is treatment
 def service_picks() -> str:
     return """
     #SERVICE PICKS
     - A service, route or option they pick or are leaning towards is never taken in as "<service> it is", anywhere in a reply and in any wording: never "the wrap it is", "the wrap it is then", "colored PPF it is" or "tint it is". Their pick gets taken in as what the shop will do on their vehicle, like "Sweet, we can get your 570S wrapped" or "Sweet, we can get colored PPF on the Telluride".
 """
 
-
-#WHAT THEY SAID
 #read by every reply generator, so nothing they tell the shop ever gets skipped
 def what_they_said() -> str:
     return """
@@ -157,9 +134,7 @@ def what_they_said() -> str:
     - A budget they give always gets said back in a few words right with the price it's about. When that price is over it and the shop has a more affordable way to do the same job, the reply offers that one too, with its own number when no system_response gave it yet, like the wrap when colored PPF is over their budget: "Colored PPF on the Ranger typically runs $7400 + tax for the full body, so that'd be a good bit over the $1900 budget. The wrap is the more affordable way to change the color, it typically runs $3450 + tax, it just depends on what color it is right now. Would the wrap work better for you?". The price itself never changes for a budget: no deal, no discount and no cheaper version of the same job.
 """
 
-
-#NEW INFO
-#read by every reply generator, so a reply works out what something new changes from what they were told or are going off of, and says so with why
+#every generator reads this, so new info gets weighed against the old and the reply says why
 def new_info() -> str:
     return """
     #NEW INFO
@@ -171,13 +146,9 @@ def new_info() -> str:
 """
 
 
+#PRICING RULES
 
-#**********PRICING RULES**********
-#keeps the price and booking the same for supercars and exact colors in every pricing reply
-
-
-#SUPERCARS
-#read by every pricing generator and regenerator, so a supercar gets one price, one line on what comes off when they ask and the owner's why when it runs over a number they had
+#supercars get one price, a line on discounts if asked, and the owners why when it runs high
 def supercars() -> str:
     return """
     #SUPERCARS
@@ -189,9 +160,7 @@ def supercars() -> str:
     - A supercar never gets taken all the way apart, so never say it gets taken apart for full coverage of the vehicle or that everything comes off. Only the necessary panels come off to get them the best coverage of the vehicle, and less can always come off if they prefer, so how much comes off is their call. That only comes up when they ask about it (how much of the vehicle gets covered, whether it gets taken apart or what comes off, the door jambs, the edges or seams), never as a selling line, said the owner's way for the job it's about. On a wrap it's "for the wrap we remove only the necessary panels to get you the best coverage of the vehicle and can always take off less if you prefer". On PPF or colored PPF it's "when we apply the PPF, we remove only the necessary panels to get you the best coverage of the vehicle and can always take off less if you prefer", never "for the wrap", since PPF is never called a wrap. Never "we only take off what needs to come off". A wrap's first price on a supercar gets the same two selling lines as on any other vehicle, our vinyl wraps use high quality film and it does also come with a free 6 month warranty (PRICING rule 7).
 """
 
-
-#EXACT COLOR
-#read by every pricing generator and regenerator, so a wrap or colored PPF waits for an exact color the shop can get
+#a wrap or colored PPF waits on an exact color the shop can actually get
 def exact_color() -> str:
     return """
     #EXACT COLOR
@@ -210,9 +179,7 @@ def exact_color() -> str:
     - The material (3M, Avery and the other brands in the shop) only comes up when they ask about the material, the film or the brand, said the owner's way: "that wrap uses the material 3M, Avery, or others we have in the shop, depending on the exact color you want". The wrap's selling line that our vinyl wraps use high quality film names no brand, so it isn't the material and goes out on a wrap's first price like any selling line (PRICING rule 7).
 """
 
-
-#TYPED COLOR NOW
-#read by every pricing generator and regenerator, so a neutral color they typed, or any other after two asks for a pic, stands in for the pic
+#a typed neutral color, or any color after two pic asks, stands in for the pic
 def typed_color_now() -> str:
     return """
     #TYPED COLOR NOW

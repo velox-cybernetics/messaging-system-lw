@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared rules that every reply asking for a missing detail is built on
+#IMPORTS
+
 from src.prompts.custom.interrogator import shared as interrogator_shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample removal chats still missing a photo or the film's age, with the replies we want
-
-
-#REPLY EXAMPLES
 #hands back the sample chats and replies, handed to the shared prompt below
 def examples() -> str:
     return r"""
@@ -105,15 +101,11 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#asks how long the old film or wrap has been on and for a photo of it, with the shared asking rules
-
-
-#SYSTEM PROMPT
-#hands back the shared interrogator prompt set up to ask about the old film or wrap coming off
+#shared interrogator prompt set up to ask about the old film or wrap coming off
 def prompt() -> str:
-    #static on purpose, this prompt is the cached prefix of its requests
+    #static on purpose, it lands in the cached prefix of its requests
     whats_missing: str = """
     #WHAT'S MISSING
     - How long the old PPF or wrap on the vehicle now has been on, and a photo of it as it is now. How long it's been on and the shape it's in decide how much work it is to take off, so the owner prices it from both.

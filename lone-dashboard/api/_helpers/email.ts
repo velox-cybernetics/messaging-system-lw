@@ -1,34 +1,27 @@
-//**********GLOBALS**********
-//where flag emails go and who they come from, both set in vercel
+//IMPORTS
+
+import * as shop from "./shop.js";
 
 
-//FLAG EMAIL
+//GLOBALS
+
 //till a domain is verified in resend, has to be the address the resend account signed up with
-export const FLAG_EMAIL: string = process.env.FLAG_EMAIL ?? "";
+export const FLAG_EMAIL: string = shop.setting(process.env.FLAG_EMAIL, "");
 
+const FROM: string = shop.setting(process.env.RESEND_FROM, "Lone Wraps Dashboard <onboarding@resend.dev>");
 
-//FROM
-const FROM: string = process.env.RESEND_FROM ?? "Lone Wraps Dashboard <onboarding@resend.dev>";
-
-
-//RESEND
 const RESEND_URL: string = "https://api.resend.com/emails";
 
 
+//SENDING
 
-//**********SENDING**********
-//flag emails go out through resend's http api
-
-
-//RESEND DETAIL
-//resend's own message when it sent one, else the status text
+//resends own message when it sent one, else the status text
 async function resend_detail(response: Response): Promise<string> {
     let data: unknown = null;
 
     try {
         data = await response.json();
     }
-
     catch {
         data = null;
     }
@@ -40,10 +33,9 @@ async function resend_detail(response: Response): Promise<string> {
     return response.statusText;
 }
 
-
-//SEND EMAIL
+//one email through resend, throws when a setting is missing or resend says no
 export async function send_email(subject: string, text: string, html: string): Promise<void> {
-    const key: string = process.env.RESEND_API_KEY ?? "";
+    const key: string = shop.setting(process.env.RESEND_API_KEY, "");
 
     if(key === "") {
         throw new Error("RESEND_API_KEY isn't set in Vercel, so flags can't be emailed.");

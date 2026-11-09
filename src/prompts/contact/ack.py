@@ -1,15 +1,11 @@
-#**********IMPORTS**********
-#the shop details and texting habits every reply prompt shares
+#IMPORTS
+
 from src.prompts import shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample chats that thank a customer for the name, number and email that lock in their day
-
-
-#REPLY EXAMPLES
-#the sample chats added to the end of the prompt, so the reply sounds like the shop's
+#the sample chats added to the end of the prompt, so the reply sounds like the shops
 def examples() -> str:
     return r"""
     Ex 1:
@@ -56,12 +52,8 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for writing the reply, with the shop details, texting habits and samples added on the end
-
-
-#SYSTEM PROMPT
 #the system prompt for the reply thanking them for the info that locks in their day
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests

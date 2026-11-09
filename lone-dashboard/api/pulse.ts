@@ -1,17 +1,13 @@
-//**********IMPORTS**********
-//the replies, the database and the sign in check
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
 
 
+//PULSE
 
-//**********PULSE**********
-//the one cheap read the pages poll, so they only reload when something changed
-
-
-//READ PULSE
-//feed bumps version on every write, up_last is the system's last check in, one MGET for both
+//feed bumps version on every write, up_last is the systems last check in, one MGET for both
 async function read_pulse(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -25,12 +21,9 @@ async function read_pulse(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for GET /api/pulse
-
-
-//GET
+//the version and the systems last check in, cheap enough to ask for often
 export function GET(request: Request): Promise<Response> {
     return http.guarded(read_pulse, request);
 }

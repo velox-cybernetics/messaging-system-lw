@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample messages for each kind of text the router sorts, so it learns which reply chain gets it
+#EXAMPLES
 
-
-#SERVICE PRICING
 SERVICE_PRICING_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -361,8 +358,6 @@ SERVICE_PRICING_EXAMPLES: str = r"""
     category: service_pricing
 """
 
-
-#BUSINESS OPERATIONS
 BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -430,8 +425,6 @@ BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     category: business_operations
 """
 
-
-#HUMAN SERVICES
 SERVICES_REQ_HUMANS_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -697,8 +690,6 @@ SERVICES_REQ_HUMANS_EXAMPLES: str = r"""
     category: services_req_humans
 """
 
-
-#BOOKING ACKNOWLEDGE
 BOOKING_SERVICE_ACKNOWLEDGE_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -859,8 +850,6 @@ BOOKING_SERVICE_ACKNOWLEDGE_EXAMPLES: str = r"""
     category: service_pricing
 """
 
-
-#ESCALATION
 ESCALATION_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -979,8 +968,6 @@ ESCALATION_EXAMPLES: str = r"""
     category: escalation
 """
 
-
-#GENERAL TEXT
 GENERAL_TEXT_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -1036,8 +1023,6 @@ GENERAL_TEXT_EXAMPLES: str = r"""
     category: general_text
 """
 
-
-#PHONE CALL
 PHONE_CALL_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -1072,8 +1057,6 @@ PHONE_CALL_EXAMPLES: str = r"""
     category: phone_call
 """
 
-
-#END CONVERSATION
 END_CONVERSATION_EXAMPLES: str = r"""
     # Examples showing correct classifications are the following:
 
@@ -1124,13 +1107,9 @@ END_CONVERSATION_EXAMPLES: str = r"""
 """
 
 
+#ALL EXAMPLES
 
-#**********ALL EXAMPLES**********
-#puts every kind's samples together under its name for the router prompt
-
-
-#ROUTER EXAMPLES
-#every route's samples under its name, added under the router question
+#every routes samples under its name, added under the router question
 def examples() -> str:
     return f"""
 

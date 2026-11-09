@@ -1,15 +1,11 @@
-#**********IMPORTS**********
-#the shop details, booking info and texting habits that every reply prompt shares, and the custom price hold every first reply goes by
+#IMPORTS
+
 from src.prompts import shared
 from src.prompts.custom.interrogator import shared as interrogator_shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample custom job texts with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
 #hands back the sample custom job texts and replies, pasted at the end of the system prompt below
 def examples() -> str:
     return r"""
@@ -215,13 +211,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together the rules for answering a custom job that the owner prices himself
-
-
-#SYSTEM PROMPT
-#hands back the system prompt for the reply that goes out once everything the owner needs to price it is on file
+#system prompt for the reply once the owner has everything he needs to price it
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = """

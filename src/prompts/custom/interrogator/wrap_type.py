@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared rules that every reply asking for a missing detail is built on
+#IMPORTS
+
 from src.prompts.custom.interrogator import shared as interrogator_shared
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample chats still missing the kind of wrap, with the replies we want, so the model copies them
-
-
-#REPLY EXAMPLES
 #hands back the sample chats and replies, handed to the shared prompt below
 def examples() -> str:
     return r"""
@@ -179,15 +175,11 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#asks if it's decals, a half wrap or a full wrap, on top of the shared asking rules
-
-
-#SYSTEM PROMPT
-#hands back the shared interrogator prompt set up to ask if a commercial wrap is decals, a half or a full wrap
+#shared interrogator prompt set up to ask if a commercial wrap is decals, half or full
 def prompt() -> str:
-    #static on purpose, this prompt is the cached prefix of its requests
+    #static on purpose, it lands in the cached prefix of its requests
     whats_missing: str = """
     #WHAT'S MISSING
     - Which commercial job it is: decals, a half wrap or a full wrap. A wrap on its own doesn't say which, and the owner prices each one differently, so it's the first thing he needs.

@@ -1,16 +1,12 @@
-#**********IMPORTS**********
-#the new girl's "I'll ask the owner" prompt the rewrite starts from, and the shared regen playbook
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 from src.prompts.business.lack_info import generator as business_lack_info_generator
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the "I'll ask the owner" prompt plus the playbook for fixing a flagged reply, with what a fix can never touch
-
-
-#FIX NOTES
-#the not sure reply has a couple of untouchables, and here's why
+#the not sure reply has a couple of untouchables, and heres why
 def fix_notes() -> str:
     return """
     #NOT SURE FIX NOTES
@@ -22,8 +18,6 @@ def fix_notes() -> str:
         - Rule: nothing gets answered, guessed or hinted while fixing: no yes or no, no hours, no address, no numbers, no "probably".
         - Why: BUSINESS_DETAILS had nothing on what they asked, so any answer would be made up, and a made up answer that turns out wrong costs more trust than not knowing."""
 
-
-#REGEN PROMPT
 #same rules and examples as the not sure generator, then the playbook for fixing what got flagged
 def prompt() -> str:
     #no extra inputs here, just the flagged reply and what to fix

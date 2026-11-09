@@ -1,32 +1,22 @@
-#**********IMPORTS**********
-#the sentence splitter and what finishes an ask, to pull the questions and the asks out of a reply
+#IMPORTS
+
 from helpers.response import spacing
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#the words every question shares and how alike two questions have to be to count as the same
-
-
-#FILLER WORDS
 #words any question can be worded with, so two questions only get compared on what they ask for
 FILLER_WORDS: set[str] = {"a", "an", "the", "this", "that", "these", "those", "it", "its", "itll", "they", "them", "their", "theyre", "you", "your", "youre", "youd", "we", "our", "us", "i", "me", "my", "im", "all", "any", "some", "each", "both", "are", "is", "was", "were", "be", "been", "am", "do", "does", "did", "have", "has", "had", "got", "get", "getting", "go", "going", "can", "could", "would", "will", "should", "want", "wanting", "wanted", "looking", "look", "thinking", "think", "leaning", "towards", "toward", "need", "needing", "like", "know", "done", "what", "whats", "which", "who", "how", "when", "where", "why", "and", "or", "but", "so", "if", "of", "on", "in", "to", "at", "for", "from", "with", "about", "as", "by", "then", "too", "also", "just", "only", "again", "yeah", "yep", "yessir", "sweet", "perfect", "sure", "ok", "okay", "cool", "awesome", "quick", "question", "hey", "well", "now", "right", "there"}
 
-
-#REPEAT COUNTS
-#two questions sharing at least this much of what they ask for are the same question asked the same way
+#two questions sharing at least this much of what they ask for are the same question
 REPEAT_SIMILARITY: float = 0.5
 
-#a short question shares too little to tell, so it only counts as the same when it asks for the very same words
+#a short question shares too little to tell, so only teh very same words count
 MIN_ASKED_WORDS: int = 3
 
 
+#QUESTION WORDS
 
-#**********QUESTION WORDS**********
-#pulls the questions out of a reply and boils each one down to the words of what it asks for
-
-
-#QUESTION SENTENCES
 #the sentences of a reply that end on a question mark
 def question_sentences(reply: str) -> list[str]:
     questions: list[str] = []
@@ -37,33 +27,27 @@ def question_sentences(reply: str) -> list[str]:
 
     return questions
 
-
-#PLAIN WORDS
-#a text's words, lowercase, with its marks taken out
+#a texts words, lowercase, with its marks taken out
 def plain_words(text: str) -> list[str]:
     plain_text: str = ""
 
     for character in text.lower():
-        #an apostrophe joins the word back up, so "what's" reads as whats
+        #an apostrophe joins the word back up, so whats reads as whats
         if(character in "'’"):
             continue
-
         elif(character.isalnum()):
             plain_text = f"{plain_text}{character}"
-
         else:
             plain_text = f"{plain_text} "
 
     return plain_text.split()
 
-
-#ASKED WORDS
 #the words of what a question asks for, every filler word and number left out
 def asked_words(question: str) -> set[str]:
     words: set[str] = set()
 
     for word in plain_words(question):
-        #a number is how many it's for, never what it asks, so "on the 19 vans" asks the same as "on the vans"
+        #a number is how many, never what it asks, so on the 19 vans is the same as on the vans
         if(word in FILLER_WORDS or word.isdigit()):
             continue
 
@@ -77,11 +61,9 @@ def asked_words(question: str) -> set[str]:
 
     return words
 
-
-#SAME QUESTION
 #whether two questions ask for the same thing, the same words or most of them
 def same_question(question: str, asked: str) -> bool:
-    #the very same words always ask the same thing, even a question that's all filler like "What are you looking to get done?"
+    #the very same words always ask the same thing, even a question thats all filler
     if(plain_words(question) == plain_words(asked)):
         return True
 
@@ -102,17 +84,13 @@ def same_question(question: str, asked: str) -> bool:
 
     all_words: set[str] = words | asked_before
 
-    #reworded with the same options, like "full wrap, half wrap or just decals" on them and then on the vans and trucks
+    #mostly the same words is the same question reworded, and the customer would notice
     return len(shared_words) / len(all_words) >= REPEAT_SIMILARITY
 
 
-
-#**********REPEATED QUESTIONS**********
-#finds the questions a reply asks again that the shop already asked, and takes them out of it
-
-
 #REPEATED QUESTIONS
-#a question can go out again until it's answered, never in the words or the manner of one the shop already asked
+
+#a question can go out again until answered, never worded like one the shop already asked
 def repeated_questions(reply: str, earlier_replies: list[str]) -> list[str]:
     asked_before: list[str] = []
 
@@ -130,8 +108,6 @@ def repeated_questions(reply: str, earlier_replies: list[str]) -> list[str]:
 
     return repeated
 
-
-#DROP QUESTIONS
 #the reply with these questions taken out of it
 def drop_questions(reply: str, questions: list[str]) -> str:
     kept_reply: str = ""
@@ -142,9 +118,7 @@ def drop_questions(reply: str, questions: list[str]) -> str:
 
     return kept_reply.strip()
 
-
-#ASKED IN
-#whether the reply that went out asked this question, its first word left off since the opener can get swapped
+#whether the reply that went out asked this, first word skipped since the opener can get swapped
 def asked_in(question: str, reply: str) -> bool:
     words: list[str] = plain_words(question)
 
@@ -161,21 +135,15 @@ def asked_in(question: str, reply: str) -> bool:
     return f" {question_text} " in f" {reply_text} "
 
 
+#ASKS
 
-#**********ASKS**********
-#a question with the pic or the "If you do" that finishes it goes out as one ask, so it gets said again in new words as one
-
-
-#STARTS PART
 #a sentence with a line break in front of it starts another part of the reply
 def starts_part(sentence: str) -> bool:
     lead: str = sentence[:len(sentence) - len(sentence.lstrip())]
 
     return "\n" in lead
 
-
-#ASK END
-#where the ask a question opens ends in the reply's sentences, past the ones right after it that finish it in the same part
+#where a questions ask ends, past the sentences right after it that finish it in the same part
 def ask_end(sentences: list[str], question_position: int) -> int:
     end: int = question_position + 1
 
@@ -184,9 +152,7 @@ def ask_end(sentences: list[str], question_position: int) -> int:
 
     return end
 
-
-#ASKS
-#every ask in a reply, each question with the sentences that finish it, like "Do you have an exact green in mind? If you do, can you shoot a pic of it over"
+#every ask in a reply, each question with the sentences that finish it, like the pic follow up
 def asks(reply: str) -> list[str]:
     sentences: list[str] = spacing.split_sentences(reply)
 
@@ -198,9 +164,7 @@ def asks(reply: str) -> list[str]:
 
     return reply_asks
 
-
-#ASK SPOT
-#where the ask that opens on this question sits in the reply's sentences, its first sentence and the one after its last, None when the reply doesn't ask it
+#the first sentence of the ask and the one after its last, none when the reply doesn't ask it
 def ask_spot(sentences: list[str], question: str) -> tuple[int, int] | None:
     for position, sentence in enumerate(sentences):
         if(sentence.strip() == question):
@@ -208,9 +172,7 @@ def ask_spot(sentences: list[str], question: str) -> tuple[int, int] | None:
 
     return None
 
-
-#SWAP ASK
-#the reply with the ask at that spot said in new words, everything around it as it was, or with the ask taken out when there are no new words
+#the reply with that ask reworded, or taken out when their are no new words
 def swap_ask(sentences: list[str], spot: tuple[int, int], wording: str) -> str:
     before: str = "".join(sentences[:spot[0]])
 
@@ -219,7 +181,7 @@ def swap_ask(sentences: list[str], spot: tuple[int, int], wording: str) -> str:
     if(wording == ""):
         return f"{before}{after}".strip()
 
-    #the new words keep the space or line break the ask had in front of it, so the reply keeps its parts
+    #the new words keep the space or line break the ask had, so the reply keeps its parts
     first_sentence: str = sentences[spot[0]]
 
     lead: str = first_sentence[:len(first_sentence) - len(first_sentence.lstrip())]

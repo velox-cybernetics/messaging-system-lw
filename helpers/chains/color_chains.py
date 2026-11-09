@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#the helpers for the owner's color answers, the closest material pics and the good news
+#IMPORTS
+
 from helpers.chains import booking_chains
 from helpers.channels import notify
 from helpers.channels import replies
@@ -17,12 +17,8 @@ from helpers.state import state_form
 from src import routing
 
 
+#OWNER ANSWERS
 
-#**********OWNER ANSWERS**********
-#takes the owner's Y or M on a color check and tells him what happens next
-
-
-#UNMATCHED ANSWER
 #an answer from the owner that settles no check, so he gets told how to answer
 def color_check_unmatched(answer: tuple) -> None:
     if(answer[0] == "which"):
@@ -30,7 +26,7 @@ def color_check_unmatched(answer: tuple) -> None:
 
         return
 
-    #N was his no before there was an M, the closest materials take its place
+    #an old N from before M existed, the closest materials took its job
     if(answer[1] == owner.NO_ANSWER):
         notify.notify_owner_text(f"Reply Y {answer[2]} if we have that exact color, or M {answer[2]} with pics of the closest materials")
 
@@ -38,9 +34,7 @@ def color_check_unmatched(answer: tuple) -> None:
 
     notify.notify_owner_text(f"No color check #{answer[2]} is waiting")
 
-
-#MATERIAL OPTIONS
-#each pic the owner sent gets described and its color named, so the pick and every reply after it know what went out
+#describes each of the owners pics and names its color, so later replies know what went out
 def material_options(pics: list[str]) -> list[dict[str, str]]:
     prepared_media: list[tuple] = []
 
@@ -63,9 +57,7 @@ def material_options(pics: list[str]) -> list[dict[str, str]]:
 
     return materials
 
-
-#ANSWER MATERIALS
-#an M's pics get read before anything waits on the customer, the slow part of his answer, empty on a Y, None when nothing goes on file
+#reads an Ms pics before anything waits on them, empty on a Y, None when nothing goes on file
 def prepared_materials(id: str, letter: str, code: str, pics: list[str]) -> list[dict[str, str]] | None:
     if(letter == owner.EXACT_ANSWER):
         return []
@@ -78,24 +70,21 @@ def prepared_materials(id: str, letter: str, code: str, pics: list[str]) -> list
 
     try:
         return material_options(pics)
-
     except Exception as error:
         print(f"COLOR CHECK ANSWER ERROR: {error}")
 
-        #no customer message goes with the owner's answer, so the developer's text has no details from one
+        #no customer message here, so the developers text goes out without one
         notify.notify_failure(id, owner.color_check_channel(id), {}, f"COLOR CHECK ANSWER ERROR: {error}")
 
         return None
 
-
-#NEWS NOTICE
-#he hears it's on its way, on its own or with the reply to what they're sending, or with the next reply to them when one was going out as he answered
+#tells the owner his news is on its way, now or with the next reply if one was already going
 def news_notice(id: str, channel: str, code: str, news: str, many: bool, replying: bool) -> None:
     user_name: str = username.username(id, channel)
 
     timing: str = f"going out to {user_name}"
 
-    #a reply of theirs was going out as he answered, so it waits for the next reply to them
+    #a reply was already on its way as he answered, so the news rides the next one
     if(replying):
         timing = f"going out with the next reply to {user_name}"
 
@@ -106,9 +95,7 @@ def news_notice(id: str, channel: str, code: str, news: str, many: bool, replyin
 
     notify.notify_owner_text(f"Got it, {news} for color check #{code} {going} {timing}")
 
-
-#OWNER ANSWER
-#Y means the shop has that exact color, M comes with the closest materials read from his pics, True once what he found is due to go out
+#files a Y or an M with its materials, true once the news is due to go out
 def color_check_answered(id: str, letter: str, code: str, materials: list[dict[str, str]], replying: bool) -> bool:
     channel: str = owner.color_check_channel(id)
 
@@ -124,28 +111,22 @@ def color_check_answered(id: str, letter: str, code: str, materials: list[dict[s
 
         if(len(materials) == 1):
             news_notice(id, channel, code, "the material", False, replying)
-
         else:
             news_notice(id, channel, code, f"the {len(materials)} materials", True, replying)
 
         return True
-
     except Exception as error:
         print(f"COLOR CHECK ANSWER ERROR: {error}")
 
-        #no customer message goes with the owner's answer, so the developer's text has no details from one
+        #no customer message here, so the developers text goes out without one
         notify.notify_failure(id, channel, {}, f"COLOR CHECK ANSWER ERROR: {error}")
 
         return False
 
 
+#MATERIAL PICS
 
-#**********MATERIAL PICS**********
-#sends the owner's pics of the closest materials, asking which one they like
-
-
-#MATERIAL LINES
-#the line the pics go out with, naming the color they asked the shop to check, and the pick question after them
+#the line the pics go out with, naming the color they asked about, plus the pick question
 def materials_lines(id: str, count: int, after_answer: bool) -> tuple[str, str]:
     opener: str = "So"
 
@@ -157,7 +138,7 @@ def materials_lines(id: str, count: int, after_answer: bool) -> tuple[str, str]:
 
     want: str = owner.checked_want(id)
 
-    #named the way the owner texts it, "Satin Black" goes out as satin black while "3M" and "KPMF" stay
+    #lowercased the way the owner would text it, but brand names like 3M keep their caps
     if(want != ""):
         words: list[str] = []
 
@@ -171,9 +152,7 @@ def materials_lines(id: str, count: int, after_answer: bool) -> tuple[str, str]:
 
     return (f"{opener} just checked out the color books and the closest colors we can get to {color} are these right here:", "Which one are you liking?")
 
-
-#MATERIAL COLORS
-#each pic's number and color, the way their history notes them ("1. Satin Black, 2. color not read")
+#each pics number and color, the way there history notes them
 def material_colors(materials: list[dict[str, str]]) -> str:
     color_texts: list[str] = []
 
@@ -187,9 +166,7 @@ def material_colors(materials: list[dict[str, str]]) -> str:
 
     return ", ".join(color_texts)
 
-
-#SEND MATERIALS
-#the answer goes out first, then the pics and the pick question, and what went out comes back with each pic's color
+#sends the answer, then the pics and pick question, and returns what went out with each pics color
 def send_materials(id: str, answer: str, channel: str) -> str:
     materials: list[dict[str, str]] = owner.color_materials(id)
 
@@ -205,7 +182,7 @@ def send_materials(id: str, answer: str, channel: str) -> str:
     for material in materials:
         pic_urls.append(material["url"])
 
-    #the pics go out with the line right after the answer's texts
+    #the pics go out with the line right after the answers texts
     attachments: dict[int, list[str]] = {len(texts): pic_urls}
 
     all_texts: list[str] = texts + [lines[0], lines[1]]
@@ -229,15 +206,13 @@ def send_materials(id: str, answer: str, channel: str) -> str:
 
     return sent
 
-
-#MATERIALS REPLY
-#the materials go out right after the answer to their message, so the pick question is the only question
+#materials go right after the answer to their message, so the pick question is the only question
 def materials_reply(id: str, system_response: str, channel: str, message_history: dict, current_message_batch: list, vehicle_models: list[str]) -> None:
     answer: str = booking_chains.answer_only(system_response)
 
     answer = wording.wording_rules(answer, channel, message_history, current_message_batch, vehicle_models)
 
-    #an answer the final check stops never goes out, and the materials still do on their own
+    #an answer the final check stops stays home, the materials still go out alone
     answer = replies.cleared_reply(id, channel, answer)
 
     sent: str = send_materials(id, answer, channel)
@@ -249,13 +224,9 @@ def materials_reply(id: str, system_response: str, channel: str, message_history
     owner.news_given(id)
 
 
+#GOOD NEWS
 
-#**********GOOD NEWS**********
-#gets the owner's news about their color out, on a reply or on its own when they go quiet
-
-
-#NEWS REPLY
-#the good news goes on the reply to their text, which goes out as it was when the news can't be written
+#puts the good news on the reply to their text, the reply goes out plain if the news won't write
 def good_news_reply(system_response: str, state: dict, id: str, channel: str) -> tuple[str, bool]:
     reply: str = retry.run_chain(routing.with_good_news, state, id, [system_response], channel, "GOOD NEWS CHAIN ERROR")
 
@@ -264,9 +235,7 @@ def good_news_reply(system_response: str, state: dict, id: str, channel: str) ->
 
     return (reply, True)
 
-
-#SEND NEWS
-#nothing new came from them, so the good news is written from the conversation, empty when it couldn't be
+#writes the good news from the conversation when they've said nothing new, empty if it fails
 def send_good_news(id: str, channel: str) -> str:
     empty_message: dict = {"user_media": {}, "user_text": ""}
 
@@ -276,7 +245,7 @@ def send_good_news(id: str, channel: str) -> str:
 
     sent: str = retry.run_chain(routing.with_good_news, state, id, [""], channel, "GOOD NEWS CHAIN ERROR")
 
-    #news the final check stops waits for the reply to their next text, the same as news that couldn't be written
+    #news the final check stops waits for there next text, same as news that never got written
     sent = replies.cleared_reply(id, channel, sent)
 
     if(sent == ""):
@@ -293,9 +262,7 @@ def send_good_news(id: str, channel: str) -> str:
 
     return sent
 
-
-#COLOR NEWS
-#what the owner found goes out on its own, when no reply to a message of theirs went out carrying it
+#sends what the owner found on its own, when no reply of theirs allready carried it
 def send_color_news(id: str) -> None:
     channel: str = owner.color_check_channel(id)
 
@@ -308,7 +275,6 @@ def send_color_news(id: str) -> None:
 
         if(owner.color_check_status(id) == owner.MATERIALS_STATUS):
             sent = send_materials(id, "", channel)
-
         else:
             sent = send_good_news(id, channel)
 
@@ -316,25 +282,20 @@ def send_color_news(id: str) -> None:
         if(sent == ""):
             return
 
-        #nothing of theirs came in before it, so it joins the shop's last reply in their history
+        #nothing of theirs came in first, so it joins the shops last reply in there history
         log.add_to_last_message(f"systemres_{id}", sent)
 
         owner.news_given(id)
-
     except Exception as error:
         print(f"COLOR NEWS ERROR: {error}")
 
-        #no customer message came in, so the developer's text has no details from one
+        #no customer message here, so the developers text goes out without one
         notify.notify_failure(id, channel, {}, f"COLOR NEWS ERROR: {error}")
 
 
+#MISSED CHECKS
 
-#**********MISSED CHECKS**********
-#a reply that tells them the color books are getting checked always has a check the owner gets texted about
-
-
-#MISSED CHECK
-#the reply says the color books are getting checked but no exact color got read off what they sent, so the owner gets their pics to check anyway
+#the reply promised a color book check but nothing got read, so the owner gets their pics anyway
 def check_missed_color(system_response: str, id: str, current_message_batch: list) -> None:
     if(not spacing.promises_color_check(system_response) or owner.color_check_status(id) != ""):
         return
@@ -343,7 +304,7 @@ def check_missed_color(system_response: str, id: str, current_message_batch: lis
 
     links: list[str] = state_form.text_links(current_message_batch)
 
-    #nothing came with their message for him to check, so a person takes it from here
+    #nothing came with there message for him to check, so a person takes it from here
     if(len(media) == 0 and len(links) == 0):
         owner.restrict(id, owner.REASONS["color_check_missed"])
 

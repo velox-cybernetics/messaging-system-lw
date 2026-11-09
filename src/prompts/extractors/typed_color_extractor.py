@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample conversations and the color it is now pulled out of what the customer typed
+#EXAMPLES
 
-
-#EXTRACT EXAMPLES
 #the sample conversations added to the end of the prompt, with what gets pulled out of each
 def examples() -> str:
     return r"""
@@ -78,13 +75,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for pulling out the color it is now they typed, with the samples added on the end
-
-
-#SYSTEM PROMPT
-#the system prompt for pulling the color their vehicle is now out of what they typed
+#the system prompt for pulling the color there vehicle is now out of what they typed
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of every typed color extractor request
     prompt_text: str = """

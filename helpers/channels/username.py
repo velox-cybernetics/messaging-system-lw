@@ -1,32 +1,22 @@
-#**********IMPORTS**********
-#the env keys and web requests that look up a customer's name
+#IMPORTS
+
 import os
 
 import requests
 from dotenv import load_dotenv
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#the keys that let the shop look up who sent a message on instagram and messenger
-
-
-#LOAD ENV
 load_dotenv()
 
-
-#ACCESS TOKENS
 INSTAGRAM_ACCESS_TOKEN: str = os.environ["IG_ACCESS_TOKEN"]
 
 MESSENGER_ACCESS_TOKEN: str = os.environ["MESSENGER_ACCESS_TOKEN"]
 
 
+#USERNAMES
 
-#**********USERNAMES**********
-#finds the name a customer goes by on instagram or messenger, and falls back to their id
-
-
-#INSTAGRAM USERNAME
 #their instagram handle, looked up from the id their messages come in with
 def username_instagram(instagram_id: str) -> str:
     headers: dict[str, str] = {"Authorization": f"Bearer {INSTAGRAM_ACCESS_TOKEN}"}
@@ -35,15 +25,13 @@ def username_instagram(instagram_id: str) -> str:
 
     params: dict[str, str] = {"fields": "username"}
 
-    response: requests.Response = requests.get(profile_url, headers=headers, params=params, timeout=20)
+    response = requests.get(profile_url, headers=headers, params=params, timeout=20)
 
     response.raise_for_status()
 
     return response.json()["username"]
 
-
-#MESSENGER USERNAME
-#messenger has no username, so the name comes from the participants of the page's conversation with them
+#messenger has no usernames, so the name comes from the pages conversation with them
 def username_messenger(messenger_id: str) -> str:
     headers: dict[str, str] = {"Authorization": f"Bearer {MESSENGER_ACCESS_TOKEN}"}
 
@@ -51,7 +39,7 @@ def username_messenger(messenger_id: str) -> str:
 
     params: dict[str, str] = {"user_id": messenger_id, "fields": "participants"}
 
-    response: requests.Response = requests.get(conversations_url, headers=headers, params=params, timeout=20)
+    response = requests.get(conversations_url, headers=headers, params=params, timeout=20)
 
     response.raise_for_status()
 
@@ -67,17 +55,13 @@ def username_messenger(messenger_id: str) -> str:
     #no conversation with them came back, so their messenger id stands in for the name
     return messenger_id
 
-
-#USERNAME
-#the id still identifies them, so a failed lookup never stops an alert or a log, and a blooio id is already their number
+#the id is good enough when the lookup dies, and a blooio id is already there number
 def username(id: str, channel: str) -> str:
     try:
         if(channel == "ig"):
             return username_instagram(id)
-
         elif(channel == "messenger"):
             return username_messenger(id)
-
     except Exception as error:
         print(f"[{channel.upper()}] name lookup for {id} failed: {error}")
 

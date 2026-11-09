@@ -1,23 +1,17 @@
-#**********IMPORTS**********
-#the main reply prompt the rewrite starts from, and the shared regen playbook
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 from src.prompts.pricing import generator as pricing_generator
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the main pricing prompt plus the playbook for fixing a flagged reply, with the pricing quirks spelled out
-
-
-#EXTRA INPUTS
-#the main regen also gets the shop's last reply, and the price hold line on a first reply
+#the main regen also gets the shops last reply, and the price hold line on a first reply
 def extra_inputs() -> str:
     return """
     - SHOP_LAST_REPLY: the last system_response in message_history on its own, empty when none went out yet, so a fix never says one of its lines again.
     - PRICE_HOLD: yes, only on the shop's first reply when they didn't ask what anything costs (#PRICE HOLD above)."""
 
-
-#FIX NOTES
 #the pricing quirks to keep in mind while fixing, each one with why it matters
 def fix_notes() -> str:
     return """
@@ -43,8 +37,6 @@ def fix_notes() -> str:
         - Why: the owner gets them talking before any number comes up (#PRICE HOLD above).
         - How: the question that takes a held price's place is the one #PRICE HOLD gives, so "Front end PPF on the G37 is $1600 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and full body is $5900 + tax, which covers all the painted surfaces. Which option are you leaning towards?" becomes "The front end covers the full hood, fenders, bumper, headlights and mirrors, and the full body covers all the painted surfaces and comes with free side and rear window tint. Are you looking for just the front end or full body on the G37?"."""
 
-
-#REGEN PROMPT
 #same rules and examples as the main generator, then the playbook for fixing what got flagged
 def prompt() -> str:
     playbook: str = regen_guide.guide(extra_inputs(), fix_notes())

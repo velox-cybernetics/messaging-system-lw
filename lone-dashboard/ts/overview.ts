@@ -1,52 +1,30 @@
-//**********IMPORTS**********
-//the api call, page lookups and number formats every page shares
+//IMPORTS
+
 import * as shared from "./shared.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//what the api sends, the chart's sizes, the page's parts and what's picked
-
-
-//RANGE
 type RANGE = "day" | "week" | "month" | "ytd";
 
-
-//CHART KIND
 type CHART_KIND = "messaging" | "booking";
 
-
-//BAR
-//one slot on the chart, see api/overview.ts
+//one slot on the chart, same shape the apis overview sends
 type BAR = {key: string; future: boolean; din: number; dout: number; dquoted: number; hil: number; booked: number};
 
-
-//TOTALS
 type TOTALS = {din: number; dout: number; dquoted: number; hil: number; booked: number; dhil: number; dbooked: number};
 
-
-//CHECK IN
 type CHECK_IN = {last_seen: number; beat_seconds: number};
 
-
-//OVERVIEW
-//keep in step with api/overview.ts
+//keep in step with the apis overview handler
 type OVERVIEW = {range: RANGE; from: string; to: string; today: string; totals: TOTALS; follow_ups_today: number; bars: BAR[]; check_in: CHECK_IN};
 
-
-//SERIES
 type SERIES = {field: "din" | "dout" | "dquoted" | "booked"; name: string; one?: string; class_name: string};
 
-
-//RANGE CHOICE
 type RANGE_CHOICE = {range: RANGE; label: string; period: string};
 
-
-//RANGES
 const RANGES: RANGE_CHOICE[] = [{"range": "day", "label": "Day", "period": "today"}, {"range": "week", "label": "Week", "period": "this week"}, {"range": "month", "label": "Month", "period": "this month"}, {"range": "ytd", "label": "YTD", "period": "this year"}];
 
-
-//CHART SERIES
 const MESSAGING_SERIES: SERIES[] = [{"field": "din", "name": "Messaged in", "class_name": "is-in"}, {"field": "dout", "name": "Got a reply", "class_name": "is-out"}];
 
 //price comes right before booking, side by side shows how many prices turned into jobs
@@ -54,8 +32,6 @@ const BOOKING_SERIES: SERIES[] = [{"field": "dquoted", "name": "Got a price", "c
 
 const CHART_SERIES: Record<CHART_KIND, SERIES[]> = {"messaging": MESSAGING_SERIES, "booking": BOOKING_SERIES};
 
-
-//CHART SIZES
 const SVG: "http://www.w3.org/2000/svg" = "http://www.w3.org/2000/svg";
 
 const CHART_HEIGHT: number = 240;
@@ -64,16 +40,12 @@ const AXIS_WIDTH: number = 36;
 
 const LABEL_HEIGHT: number = 26;
 
-//room for the widest label ("Oct 10", "12 AM") plus a gap, at 12px
+//room for the widest label like Oct 10 or 12 AM plus a gap, at 12px
 const MIN_LABEL_GAP: number = 48;
 
-
-//RELOAD GAP
-//numbers don't need to be to-the-second, a burst of messages reloads at most this often
+//numbers don't need to be to the second, a burst of messages reloads at most this often
 const RELOAD_GAP_MS: number = 30000;
 
-
-//PAGE PARTS
 const RANGE_NAV: HTMLElement = shared.by_id<HTMLElement>("ranges");
 
 const PICKER: HTMLSelectElement = shared.by_id<HTMLSelectElement>("chart-picker");
@@ -88,19 +60,13 @@ const LEGEND: HTMLUListElement = shared.by_id<HTMLUListElement>("legend");
 
 const FOLLOW_UPS_TODAY: HTMLElement = shared.by_id<HTMLElement>("followups-today");
 
-
-//PERCENT
 const PERCENT: Intl.NumberFormat = new Intl.NumberFormat("en-US", {"maximumFractionDigits": 1});
 
-
-//PICKED
 //set from the address at the top of START
 let RANGE_PICKED: RANGE = "day";
 
 let KIND: CHART_KIND = "messaging";
 
-
-//STATE
 let LATEST: OVERVIEW | null = null;
 
 let LAST_LOAD: number = 0;
@@ -111,12 +77,9 @@ let RELOAD_TIMER: number = 0;
 let GROW_NEXT: boolean = true;
 
 
+//ADDRESS
 
-//**********ADDRESS**********
-//the picked range and chart live in the address so a reload keeps them
-
-
-//RANGE FROM ADDRESS
+//the range in the address, day when its missing or made up
 function range_from_address(params: URLSearchParams): RANGE {
     for(const each of RANGES) {
         if(each.range === params.get("range")) {
@@ -127,8 +90,7 @@ function range_from_address(params: URLSearchParams): RANGE {
     return "day";
 }
 
-
-//KIND FROM ADDRESS
+//booking only when the address asks for it, messaging otherwise
 function kind_from_address(params: URLSearchParams): CHART_KIND {
     if(params.get("chart") === "booking") {
         return "booking";
@@ -137,8 +99,7 @@ function kind_from_address(params: URLSearchParams): CHART_KIND {
     return "messaging";
 }
 
-
-//REMEMBER PLACE
+//picks go in the address so a reload shows the same chart, defaults stay out of it
 function remember_place(): void {
     const query: URLSearchParams = new URLSearchParams();
 
@@ -162,12 +123,9 @@ function remember_place(): void {
 }
 
 
+//TEXT
 
-//**********TEXT**********
-//captions, titles and labels
-
-
-//CAPTION TEXT
+//which days the numbers cover, in words
 function caption_text(data: OVERVIEW): string {
     const short: Intl.DateTimeFormatOptions = {"month": "short", "day": "numeric"};
 
@@ -186,9 +144,7 @@ function caption_text(data: OVERVIEW): string {
     }
 }
 
-
-//BAR TITLE
-//day bars are the shop's hours, told on the viewer's own clock
+//day bars are the shops hours, told on the viewers own clock
 function bar_title(bar: BAR, today: string): string {
     switch(RANGE_PICKED) {
         case "day":
@@ -202,8 +158,6 @@ function bar_title(bar: BAR, today: string): string {
     }
 }
 
-
-//MONTH LABEL
 //the 1st and every 5th day only
 function month_label(bar: BAR): string {
     const day: number = Number(bar.key.slice(8));
@@ -215,9 +169,7 @@ function month_label(bar: BAR): string {
     return "";
 }
 
-
-//BAR LABEL
-//empty when labeling every bar would crowd the axis, day bars are the shop's hours on the viewer's own clock
+//empty when a label would crowd the axis, day bars show shop hours on the viewers clock
 function bar_label(bar: BAR, index: number, today: string): string {
     switch(RANGE_PICKED) {
         case "day":
@@ -238,9 +190,7 @@ function bar_label(bar: BAR, index: number, today: string): string {
     }
 }
 
-
-//SHARE
-//en dash when there's nothing to divide by
+//en dash when theres nothing to divide by
 function share(part: number, whole: number): string {
     if(whole > 0) {
         return `${PERCENT.format(Math.min(100, (part / whole) * 100))}%`;
@@ -249,8 +199,7 @@ function share(part: number, whole: number): string {
     return "–";
 }
 
-
-//PERIOD
+//the picked range in words for the end of a sentence, like this week
 function period(): string {
     for(const each of RANGES) {
         if(each.range === RANGE_PICKED) {
@@ -262,12 +211,9 @@ function period(): string {
 }
 
 
+//PICKS
 
-//**********PICKS**********
-//range buttons and the chart picker
-
-
-//PICK RANGE
+//a range button got pressed, so the numbers reload for it
 function pick_range(range: RANGE, button: HTMLButtonElement): void {
     RANGE_PICKED = range;
 
@@ -282,13 +228,11 @@ function pick_range(range: RANGE, button: HTMLButtonElement): void {
     load();
 }
 
-
-//PICK CHART
+//the dropdown swaps charts, same numbers so no reload needed
 function pick_chart(): void {
     if(PICKER.value === "booking") {
         KIND = "booking";
     }
-
     else {
         KIND = "messaging";
     }
@@ -301,12 +245,9 @@ function pick_chart(): void {
 }
 
 
+//HEADLINE
 
-//**********HEADLINE**********
-//system up or down for messaging, booking rate for booking
-
-
-//RENDER HEADLINE
+//booking rate on the booking chart, otherwise whether the systems running
 function render_headline(): void {
     if(LATEST === null) {
         return;
@@ -317,42 +258,37 @@ function render_headline(): void {
     const totals: TOTALS = LATEST.totals;
 
     if(KIND === "booking") {
-        const figure: HTMLParagraphElement = shared.make_element("p", {"class": "headline-figure is-booked"}, shared.make_element("strong", {}, share(totals.dbooked, totals.din)), ` booking rate ${period()}`);
+        const figure: HTMLParagraphElement = shared.make_element("p", {"class": "headline-figure is-booked"}, [shared.make_element("strong", {}, [share(totals.dbooked, totals.din)]), ` booking rate ${period()}`]);
 
-        const note: HTMLParagraphElement = shared.make_element("p", {"class": "caption"}, `${shared.big_number(totals.dbooked).exact} of ${shared.big_number(totals.din).exact} customers who messaged in`);
+        const note: HTMLParagraphElement = shared.make_element("p", {"class": "caption"}, [`${shared.big_number(totals.dbooked).exact} of ${shared.big_number(totals.din).exact} customers who messaged in`]);
 
         HEADLINE.replaceChildren(figure, note);
 
         return;
     }
 
-    //a check-in is due every beat, 2 minutes of slack before it counts as offline
+    //a check in is due every beat, 2 minutes of slack before it counts as offline
     const running: boolean = check_in.last_seen > 0 && Date.now() - check_in.last_seen < (check_in.beat_seconds + 120) * 1000;
 
     let status: HTMLElement;
 
     if(check_in.last_seen === 0) {
-        status = shared.make_element("p", {"class": "status"}, shared.make_element("span", {"class": "dot"}), "Waiting for the system's first check-in");
+        status = shared.make_element("p", {"class": "status"}, [shared.make_element("span", {"class": "dot"}), "Waiting for the system's first check-in"]);
     }
-
     else if(running) {
-        status = shared.make_element("p", {"class": "status is-up"}, shared.make_element("span", {"class": "dot"}), "System running");
+        status = shared.make_element("p", {"class": "status is-up"}, [shared.make_element("span", {"class": "dot"}), "System running"]);
     }
-
     else {
-        status = shared.make_element("p", {"class": "status is-down"}, shared.make_element("span", {"class": "dot"}), `System offline since ${shared.when_short(check_in.last_seen)}`);
+        status = shared.make_element("p", {"class": "status is-down"}, [shared.make_element("span", {"class": "dot"}), `System offline since ${shared.when_short(check_in.last_seen)}`]);
     }
 
     HEADLINE.replaceChildren(status);
 }
 
 
+//CHART
 
-//**********CHART**********
-//plain svg bars, one slot per hour, day or month
-
-
-//MAKE SVG
+//svg needs its own namespace, plain createElement makes duds
 function make_svg<K extends keyof SVGElementTagNameMap>(tag: K, attributes: Record<string, string | number>): SVGElementTagNameMap[K] {
     const element: SVGElementTagNameMap[K] = document.createElementNS(SVG, tag);
 
@@ -363,8 +299,6 @@ function make_svg<K extends keyof SVGElementTagNameMap>(tag: K, attributes: Reco
     return element;
 }
 
-
-//NICE TOP
 //a round axis top that splits into 4 whole steps, like 0, 20, 40, 60, 80
 function nice_top(max: number): number {
     if(max <= 4) {
@@ -386,8 +320,7 @@ function nice_top(max: number): number {
     return 40 * power;
 }
 
-
-//REMOVE TIP
+//takes the tip down if ones up
 function remove_tip(): void {
     const tip: Element | null = CHART.querySelector(".tip");
 
@@ -396,8 +329,7 @@ function remove_tip(): void {
     }
 }
 
-
-//SHOW TIP
+//the numbers for one bar, above it when theres room
 function show_tip(bar: BAR, series: SERIES[], today: string, slot_left: number, slot_width: number, bar_top: number): void {
     const rows: HTMLParagraphElement[] = [];
 
@@ -408,10 +340,12 @@ function show_tip(bar: BAR, series: SERIES[], today: string, slot_left: number, 
             name = each.one;
         }
 
-        rows.push(shared.make_element("p", {"class": `tip-row ${each.class_name}-key`}, shared.make_element("strong", {}, String(bar[each.field])), shared.make_element("span", {}, name)));
+        rows.push(shared.make_element("p", {"class": `tip-row ${each.class_name}-key`}, [shared.make_element("strong", {}, [String(bar[each.field])]), shared.make_element("span", {}, [name])]));
     }
 
-    const tip: HTMLDivElement = shared.make_element("div", {"class": "tip"}, shared.make_element("p", {"class": "tip-title"}, bar_title(bar, today)), ...rows);
+    const title: HTMLParagraphElement = shared.make_element("p", {"class": "tip-title"}, [bar_title(bar, today)]);
+
+    const tip: HTMLDivElement = shared.make_element("div", {"class": "tip"}, [title].concat(rows));
 
     remove_tip();
 
@@ -430,7 +364,6 @@ function show_tip(bar: BAR, series: SERIES[], today: string, slot_left: number, 
         if(slot_left + slot_width + gap + tip.offsetWidth <= CHART.clientWidth) {
             left = slot_left + slot_width + gap;
         }
-
         else {
             left = slot_left - gap - tip.offsetWidth;
         }
@@ -441,8 +374,7 @@ function show_tip(bar: BAR, series: SERIES[], today: string, slot_left: number, 
     tip.style.top = `${top}px`;
 }
 
-
-//HIDE TIP
+//tip down and the bars highlight off
 function hide_tip(): void {
     remove_tip();
 
@@ -453,8 +385,7 @@ function hide_tip(): void {
     }
 }
 
-
-//POINT AT BAR
+//one bar gets the highlight and the tip, whatever had them loses them
 function point_at_bar(group: SVGGElement, bar: BAR, series: SERIES[], today: string, left: number, slot: number, bar_top: number): void {
     hide_tip();
 
@@ -463,8 +394,6 @@ function point_at_bar(group: SVGGElement, bar: BAR, series: SERIES[], today: str
     show_tip(bar, series, today, left, slot, bar_top);
 }
 
-
-//LEAVE CHART
 //a lifted finger counts as leaving, so on touch the numbers stay till another tap
 function leave_chart(event: PointerEvent): void {
     if(event.pointerType === "mouse") {
@@ -472,8 +401,7 @@ function leave_chart(event: PointerEvent): void {
     }
 }
 
-
-//RENDER CHART
+//the whole svg chart, drawn again from scratch on every render or resize
 function render_chart(): void {
     //phones hide the chart so it has no width, the resize observer draws it once it shows
     const width: number = CHART.clientWidth;
@@ -486,18 +414,18 @@ function render_chart(): void {
 
     const bars: BAR[] = LATEST.bars;
 
-    //the shop date the day range's hours are on
+    //the shop date the day ranges hours are on
     const today: string = LATEST.today;
 
-    const values: number[] = [];
+    let tallest: number = 0;
 
     for(const bar of bars) {
         for(const each of series) {
-            values.push(bar[each.field]);
+            tallest = Math.max(tallest, bar[each.field]);
         }
     }
 
-    const top: number = nice_top(Math.max(0, ...values));
+    const top: number = nice_top(tallest);
 
     const plot_height: number = CHART_HEIGHT - 8;
 
@@ -552,7 +480,6 @@ function render_chart(): void {
         if(bar.future) {
             group.append(make_svg("rect", {"x": left + (slot - group_width) / 2, "y": CHART_HEIGHT - 2, "width": group_width, "height": 2, "class": "later"}));
         }
-
         else {
             let position: number = 0;
 
@@ -570,9 +497,14 @@ function render_chart(): void {
 
             const final_top: number = bar_top;
 
-            group.addEventListener("pointerenter", (): void => { point_at_bar(group, bar, series, today, left, slot, final_top); });
+            //hovering or tapping a bar brings up its numbers
+            function point_here(): void {
+                point_at_bar(group, bar, series, today, left, slot, final_top);
+            }
 
-            group.addEventListener("pointerdown", (): void => { point_at_bar(group, bar, series, today, left, slot, final_top); });
+            group.addEventListener("pointerenter", point_here);
+
+            group.addEventListener("pointerdown", point_here);
         }
 
         drawing.append(group);
@@ -613,7 +545,7 @@ function render_chart(): void {
     const picked: HTMLOptionElement | undefined = PICKER.selectedOptions[0];
 
     if(picked !== undefined && picked !== null) {
-        chart_name = picked.text ?? "Activity";
+        chart_name = picked.text;
     }
 
     drawing.setAttribute("aria-label", `${chart_name}, ${CAPTION.textContent}: ${sums.join(", ")}`);
@@ -636,9 +568,8 @@ function render_chart(): void {
 
     //the note only shows when the range has nothing yet
     if(quiet) {
-        CHART.replaceChildren(drawing, shared.make_element("p", {"class": "chart-note"}, note));
+        CHART.replaceChildren(drawing, shared.make_element("p", {"class": "chart-note"}, [note]));
     }
-
     else {
         CHART.replaceChildren(drawing, "");
     }
@@ -646,22 +577,27 @@ function render_chart(): void {
     const keys: HTMLLIElement[] = [];
 
     for(const each of series) {
-        keys.push(shared.make_element("li", {"class": `${each.class_name}-key`}, each.name));
+        keys.push(shared.make_element("li", {"class": `${each.class_name}-key`}, [each.name]));
     }
 
-    LEGEND.replaceChildren(...keys);
+    LEGEND.replaceChildren();
+
+    for(const key of keys) {
+        LEGEND.append(key);
+    }
 }
 
 
+//STRIP
 
-//**********STRIP**********
-//the totals under the chart
-
-
-//RENDER STRIP
+//the totals strip, every element marked data total or data rate gets its number
 function render_strip(totals: TOTALS, follow_ups: number): void {
     for(const element of document.querySelectorAll<HTMLElement>("[data-total]")) {
-        const count: number = totals[element.dataset.total as keyof TOTALS] ?? 0;
+        let count: number = totals[element.dataset.total as keyof TOTALS];
+
+        if(count === undefined || count === null) {
+            count = 0;
+        }
 
         const value: shared.BIG_NUMBER = shared.big_number(count);
 
@@ -669,18 +605,23 @@ function render_strip(totals: TOTALS, follow_ups: number): void {
 
         element.title = value.exact;
 
-        //"1 booked job", "3 booked jobs"
+        //so it reads 1 booked job and 3 booked jobs
         const label: Element | null = element.nextElementSibling;
 
         if(label instanceof HTMLElement && label.dataset.one) {
             if(label.dataset.many === undefined) {
-                label.dataset.many = label.textContent ?? "";
+                let many: string | null = label.textContent;
+
+                if(many === null) {
+                    many = "";
+                }
+
+                label.dataset.many = many;
             }
 
             if(count === 1) {
                 label.textContent = label.dataset.one;
             }
-
             else {
                 label.textContent = label.dataset.many;
             }
@@ -688,10 +629,16 @@ function render_strip(totals: TOTALS, follow_ups: number): void {
     }
 
     for(const element of document.querySelectorAll<HTMLElement>("[data-rate]")) {
-        element.textContent = share(totals[element.dataset.rate as keyof TOTALS] ?? 0, totals.din);
+        let part: number = totals[element.dataset.rate as keyof TOTALS];
+
+        if(part === undefined || part === null) {
+            part = 0;
+        }
+
+        element.textContent = share(part, totals.din);
     }
 
-    //today's, whatever range is picked
+    //todays, whatever range is picked
     const sent: shared.BIG_NUMBER = shared.big_number(follow_ups);
 
     FOLLOW_UPS_TODAY.textContent = sent.short;
@@ -700,12 +647,9 @@ function render_strip(totals: TOTALS, follow_ups: number): void {
 }
 
 
+//LOADING
 
-//**********LOADING**********
-//gets the numbers and draws the whole page
-
-
-//RENDER
+//everything on the page from the last load
 function render(): void {
     if(LATEST === null) {
         return;
@@ -720,8 +664,7 @@ function render(): void {
     render_strip(LATEST.totals, LATEST.follow_ups_today);
 }
 
-
-//LOAD
+//fetches the picked range, an answer for an old pick gets dropped
 async function load(): Promise<void> {
     const asked: RANGE = RANGE_PICKED;
 
@@ -739,11 +682,10 @@ async function load(): Promise<void> {
 
         render();
     }
-
     catch(error: unknown) {
         let message: string = "Couldn't load the numbers. It retries on its own.";
 
-        if(error instanceof shared.ServerError) {
+        if(shared.is_server_error(error)) {
             message = error.message;
         }
 
@@ -751,14 +693,11 @@ async function load(): Promise<void> {
     }
 }
 
-
-//RELOAD NOW
+//the waits over, the numbers reload
 function reload_now(): void {
     load();
 }
 
-
-//RELOAD SOON
 //new messages reload the numbers, at most once every RELOAD_GAP_MS
 function reload_soon(): void {
     window.clearTimeout(RELOAD_TIMER);
@@ -766,14 +705,11 @@ function reload_soon(): void {
     RELOAD_TIMER = window.setTimeout(reload_now, Math.max(0, LAST_LOAD + RELOAD_GAP_MS - Date.now()));
 }
 
-
-//ON RESIZE
+//a new width means new bar sizes, so the chart redraws
 function on_resize(): void {
     render_chart();
 }
 
-
-//TAP OUTSIDE
 //a tap outside the chart puts its numbers away
 function tap_outside(event: PointerEvent): void {
     if(event.target instanceof Node && !CHART.contains(event.target)) {
@@ -781,9 +717,7 @@ function tap_outside(event: PointerEvent): void {
     }
 }
 
-
-//ON BEAT
-//every pulse has the last check-in, so "System running" never goes stale between reloads
+//every pulse has the last check in, so System running never goes stale between reloads
 function on_beat(pulse: shared.PULSE): void {
     if(LATEST === null) {
         return;
@@ -797,52 +731,39 @@ function on_beat(pulse: shared.PULSE): void {
 }
 
 
+//START
 
-//**********START**********
-//read the address, wire the picks, then load and listen for pulses
-
-
-//ADDRESS
 const PARAMS: URLSearchParams = new URLSearchParams(location.search);
 
 RANGE_PICKED = range_from_address(PARAMS);
 
 KIND = kind_from_address(PARAMS);
 
-
-//RANGE BUTTONS
 for(const each of RANGES) {
-    const button: HTMLButtonElement = shared.make_element("button", {"type": "button", "class": "segment", "aria-pressed": String(each.range === RANGE_PICKED)}, each.label);
+    const button: HTMLButtonElement = shared.make_element("button", {"type": "button", "class": "segment", "aria-pressed": String(each.range === RANGE_PICKED)}, [each.label]);
 
-    button.addEventListener("click", (): void => { pick_range(each.range, button); });
+    //each button picks its own range
+    function pick_this_range(): void {
+        pick_range(each.range, button);
+    }
+
+    button.addEventListener("click", pick_this_range);
 
     RANGE_NAV.append(button);
 }
 
-
-//CHART PICKER
 PICKER.value = KIND;
 
 PICKER.addEventListener("change", pick_chart);
 
-
-//RESIZE
 new ResizeObserver(on_resize).observe(CHART);
 
-
-//OUTSIDE TAPS
 document.addEventListener("pointerdown", tap_outside);
 
-
-//HEADLINE TIMER
 window.setInterval(render_headline, 30000);
 
-
-//FIRST LOAD
 remember_place();
 
 load();
 
-
-//PULSE
 shared.on_pulse(reload_soon, on_beat);

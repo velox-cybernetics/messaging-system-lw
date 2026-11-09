@@ -1,9 +1,6 @@
-#**********EXAMPLES**********
-#sample custom job chats with the photo that should be picked out of them, so the model copies them
+#EXAMPLES
 
-
-#EXTRACT EXAMPLES
-#hands back the sample chats and the photo picked out of them, pasted at the end of the system prompt below
+#sample chats and the photo picked out of each, pasted at the end of the system prompt
 def examples() -> str:
     return r"""
     Ex 1:
@@ -100,13 +97,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#picks out the latest photo the customer sent of the job, or notes that they don't have one
-
-
-#SYSTEM PROMPT
-#hands back the system prompt the photo extractor uses to save the photo of a custom job
+#system prompt the photo extractor uses to save the photo of a custom job
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = """

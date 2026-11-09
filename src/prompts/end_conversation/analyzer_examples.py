@@ -1,9 +1,6 @@
-#**********CHECK EXAMPLES**********
-#what opens a conversation back up once they wrapped it up for now, with yes and no samples
+#CHECK EXAMPLES
 
-
-#REOPEN
-#the yes and no rules and samples for whether their message after wrapping up asks about something again
+#yes and no rules plus samples for whether there message after wrapping up opens it back up
 def reopen_examples() -> str:
     return r"""Yes: `current_user_message` opens the conversation back up: it asks a question or asks for something, typed with a question mark or not, about a service, a price, the shop, booking, a problem, a call or anything else ("actually how much would tint be too?", "what are your hours on friday", "is the price still the same?"), goes ahead or asks to get on the schedule ("ok im ready, lets do it", "can I bring it in next week?"), brings up something new for the shop to answer or act on, like another service, their vehicle, a pic or video of their vehicle or of the color they want, a problem with the shop or a lead form they sent ("hello my name is <name>, I am interested in your services, the vehicle I have is <vehicle>"), or reaches out again with a greeting that starts a new conversation ("hey", "hello", "hey you there?", "yo whats up").
 No: it only closes the conversation out or reacts to what the shop said: an ok, okay, k, cool, sounds good, perfect, thanks, thank you, appreciate it, will do, for sure, you too, bye, talk soon, have a good one, a thumbs up, a heart, a laugh, an emoji or a reaction on its own ("👍", "lol", "😂"), or a few of those together, saying again that they'll think it over, talk to someone, check their budget or get back to the shop ("will do, ill let you know", "yeah gonna talk to my wife tonight"), saying they'll send something later without sending it ("ill send pics when I get home"), turning the job down or going with another shop with nothing asked ("nah I think im gonna go with someone else"), or small talk with nothing asked ("long week lol").

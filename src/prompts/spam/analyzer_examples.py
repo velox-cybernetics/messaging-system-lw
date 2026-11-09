@@ -1,9 +1,6 @@
-#**********CHECK EXAMPLES**********
-#what makes a message spam the moment it comes in, with yes and no samples
+#CHECK EXAMPLES
 
-
-#SPAM
-#the yes and no rules and samples for whether a business, a service or a bot sent their message instead of a person writing to the shop
+#yes and no rules plus samples for whether a business or a bot sent it instead of a person
 def spam_examples() -> str:
     return r"""Yes: `current_user_message` is spam, a text a business, a service or a bot sent out instead of a person writing to the shop: ads and offers for whoever has the number (a loan, cash, credit, insurance, an auto warranty or a vehicle coverage plan), alerts and notices (a settlement or claim, an account, a payment, an approval, a delivery, a document to sign or review, a verification code), a notice or offer written to someone else by name like "Kim" or "Dana", a link to click to claim, confirm, sign, review, apply or update something, or anything with an opt out on it like "Reply STOP to opt out", "Reply Stop to Stop" or "Txt STOP to end". It's Yes even when it names a vehicle, and even when the shop already answered one like it in `message_history`.
 No: a person writing to the shop: asking about or wanting work done on a vehicle, asking about the shop, a price or booking, sending a pic, a video or a link of their vehicle or of a color they want, small talk, a thanks or a reaction, saying it's a wrong number or texting someone else about their own plans ("hey kim its jess, we still on for lunch?"), telling the shop to stop texting them ("STOP", "stop texting me", "unsubscribe"), a business that wants work done on its own vehicles, someone pitching the shop itself something for its business (marketing, leads, a website, supplies, a collab) or asking about a job there, which a person at the shop answers, and anything from someone already talking with the shop about a job in `message_history`.

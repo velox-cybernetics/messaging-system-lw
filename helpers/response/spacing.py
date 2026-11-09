@@ -1,160 +1,128 @@
-#**********IMPORTS**********
-#python's patterns, and the sentence cleanup, to start a reply clean once an opener comes off
+#IMPORTS
+
 import re
 
 from helpers.response import cleaners
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#the booking and pic words, the booking question, the asks that are never the shop's, the drop off days only the booking chain offers, and the openers a reply gets spaced out with
-
-
-#BOOKING WORDS
 #a question with one of these in it asks them to get on the schedule
 BOOKING_WORDS: list[str] = ["schedule", "scheduled", "book", "booked", "booking", "books"]
 
-
-#PIC WORDS
-#a reply that asks them for one of these is waiting on a pic ("Send me a pic if you can", "Do you have a photo of it?")
+#a reply asking them for one of these is waiting on a pic
 PIC_WORDS: list[str] = ["pic", "pics", "photo", "photos", "picture", "pictures", "video"]
 
+#how a reply says the color books are getting checked for the color they sent
+COLOR_CHECK_PATTERN = re.compile(r"\b(let me|i'll|i will) check the color books\b|\bcheck the color books to see\b", re.IGNORECASE)
 
-#COLOR CHECK PROMISE
-#the way a reply tells them the color books are getting checked for the color they sent ("Let me check the color books to see if we can get something like that done")
-COLOR_CHECK_PATTERN: re.Pattern = re.compile(r"\b(let me|i'll|i will) check the color books\b|\bcheck the color books to see\b", re.IGNORECASE)
+#a sentence that only says the books are still getting checked and they'll hear back, nothing else
+STILL_CHECKING_PATTERN = re.compile(r"^(?:(?:and|also),?\s+)?(?:(?:i'm|im|we're)\s+)?still (?:checking|flipping through|going through|looking through) the colou?r books?(?:\s+(?:on|for)(?:\s+[\w'-]+){1,6})?(?:,?\s+(?:and\s+)?(?:i'll|ill|we'll|i will|we will|will)\s+let you know (?:what|once|when|as soon as|if) (?:i|we) (?:find|hear)(?:\s+(?:out|one|it|back))?)?[^\w?]*$", re.IGNORECASE)
 
+#the i'll let you know what i find line, said on its own
+FIND_LINE_PATTERN = re.compile(r"^(?:(?:and|also),?\s+)?(?:i'll|ill|we'll|i will|we will|will)\s+let you know (?:what|once|when|as soon as|if) (?:i|we) (?:find|hear)(?:\s+(?:out|one|it|back))?[^\w?]*$", re.IGNORECASE)
 
-#STILL CHECKING
-#a sentence that only says the color books are still getting checked, with what's getting checked and that they'll hear what the shop finds ("Still checking the color books on that grey, I'll let you know what I find", "Still flipping through the color books on that satin black, I'll let you know once I find one"), never "Let me check the color books", "As soon as I'm done checking the color books", "once I'm done flipping through the color books" or a sentence that says anything else with it
-STILL_CHECKING_PATTERN: re.Pattern = re.compile(r"^(?:(?:and|also),?\s+)?(?:(?:i'm|im|we're)\s+)?still (?:checking|flipping through|going through|looking through) the colou?r books?(?:\s+(?:on|for)(?:\s+[\w'-]+){1,6})?(?:,?\s+(?:and\s+)?(?:i'll|ill|we'll|i will|we will|will)\s+let you know (?:what|once|when|as soon as|if) (?:i|we) (?:find|hear)(?:\s+(?:out|one|it|back))?)?[^\w?]*$", re.IGNORECASE)
-
-#that they'll hear what the shop finds, said on its own ("I'll let you know what I find", "I'll let you know once I find one")
-FIND_LINE_PATTERN: re.Pattern = re.compile(r"^(?:(?:and|also),?\s+)?(?:i'll|ill|we'll|i will|we will|will)\s+let you know (?:what|once|when|as soon as|if) (?:i|we) (?:find|hear)(?:\s+(?:out|one|it|back))?[^\w?]*$", re.IGNORECASE)
-
-
-#COLOR WANT ASKS
-#the colors a customer names, so an ask naming one reads as an ask for the color they want ("Do you have an exact green in mind?")
+#colors a customer names, so an ask naming one reads as asking for the color they want
 COLOR_NAMES: str = r"black|white|gr[ae]y|silver|red|blue|green|yellow|orange|purple|pink|brown|gold|bronze|teal|maroon|burgundy|navy|lime|olive|violet|copper|champagne|nardo"
 
 #the word color on its own, never colored PPF, a color change or the color books
 COLOR_WORD: str = r"\bcolou?rs?\b(?!\s+(?:change|changes|book|books)\b)"
 
-COLOR_WORD_PATTERN: re.Pattern = re.compile(COLOR_WORD, re.IGNORECASE)
+COLOR_WORD_PATTERN = re.compile(COLOR_WORD, re.IGNORECASE)
 
 #the word color or a color they could name
-COLOR_REF_PATTERN: re.Pattern = re.compile(rf"{COLOR_WORD}|\b(?:{COLOR_NAMES})\b", re.IGNORECASE)
+COLOR_REF_PATTERN = re.compile(rf"{COLOR_WORD}|\b(?:{COLOR_NAMES})\b", re.IGNORECASE)
 
-#a part of a question with the word color and one of these asks for the color they want ("What color are you thinking?", "Have you picked a color yet?")
-COLOR_WANT_PATTERN: re.Pattern = re.compile(r"\b(?:want|wants|wanting|wanted|thinking|thought|thoughts|like|liking|love|prefer|preference|go|going|leaning|looking|planning|pick|picked|picking|choose|choosing|chose|decide|decided|deciding|considering|favorite|favourite|after)\b", re.IGNORECASE)
+#the word color plus one of these asks for the color they want, like what color are you thinking
+COLOR_WANT_PATTERN = re.compile(r"\b(?:want|wants|wanting|wanted|thinking|thought|thoughts|like|liking|love|prefer|preference|go|going|leaning|looking|planning|pick|picked|picking|choose|choosing|chose|decide|decided|deciding|considering|favorite|favourite|after)\b", re.IGNORECASE)
 
-#one of these makes it the color it is now instead ("What color is it right now?", "What color's the Camry at right now?")
-COLOR_NOW_PATTERN: re.Pattern = re.compile(r"\b(?:is it|it is|it's|was it|it was|is the|is your|currently|current|right now|at the moment)\b|'s (?:it|the|your)\b", re.IGNORECASE)
+#one of these makes it the color it is now instead, like what color is it right now
+COLOR_NOW_PATTERN = re.compile(r"\b(?:is it|it is|it's|was it|it was|is the|is your|currently|current|right now|at the moment)\b|'s (?:it|the|your)\b", re.IGNORECASE)
 
-#the color they want asked without the word color, next to the color it is now ("what color it is now and what you're wanting to go with")
-GO_WITH_PATTERN: re.Pattern = re.compile(r"\b(?:go with|going with|go for|going for|to go)\b", re.IGNORECASE)
+#the color they want asked without the word color, like what you're wanting to go with
+GO_WITH_PATTERN = re.compile(r"\b(?:go with|going with|go for|going for|to go)\b", re.IGNORECASE)
 
-#only with them wanting it, never "there's two ways to go" or "you're good to go"
-GO_WANT_PATTERN: re.Pattern = re.compile(r"\b(?:want|wanting|wanted|wanna|thinking|looking|planning|leaning|like|hoping)\b", re.IGNORECASE)
+#only with them wanting it, never theres two ways to go or you're good to go
+GO_WANT_PATTERN = re.compile(r"\b(?:want|wanting|wanted|wanna|thinking|looking|planning|leaning|like|hoping)\b", re.IGNORECASE)
 
-#never the film or service they're going with ("are you wanting to go with the wrap")
-SERVICE_WORD_PATTERN: re.Pattern = re.compile(r"\b(?:wrap|wrapped|ppf|tint|coating|ceramic|route|film)\b", re.IGNORECASE)
+#never the film or service they're going with, like going with the wrap
+SERVICE_WORD_PATTERN = re.compile(r"\b(?:wrap|wrapped|ppf|tint|coating|ceramic|route|film)\b", re.IGNORECASE)
 
-#a tint shade is never the color they want ("what color tint are you thinking?")
-SHADE_PATTERN: re.Pattern = re.compile(r"\b(?:tint|tints|shade|shades)\b|%", re.IGNORECASE)
+#a tint shade is never the color they want, tint has its own drama
+SHADE_PATTERN = re.compile(r"\b(?:tint|tints|shade|shades)\b|%", re.IGNORECASE)
 
-#any color they want is the price staying the same, never an ask ("it's the same price in any color you want"), unless it asks them ("have you seen any colors you like?")
-ANY_COLOR_PATTERN: re.Pattern = re.compile(r"\bany\s+(?:\w+\s+)?colou?rs?\b", re.IGNORECASE)
+#any color you want is the price staying the same, never an ask, unless it asks them
+ANY_COLOR_PATTERN = re.compile(r"\bany\s+(?:\w+\s+)?colou?rs?\b", re.IGNORECASE)
 
-ASKS_YOU_PATTERN: re.Pattern = re.compile(r"\b(?:have|did|do|are|were|got)\s+you\b", re.IGNORECASE)
+ASKS_YOU_PATTERN = re.compile(r"\b(?:have|did|do|are|were|got)\s+you\b", re.IGNORECASE)
 
-#a sentence with no question mark still asks for what it says the price needs ("I'll need the make and model and the color you want")
-SOLICIT_PATTERN: re.Pattern = re.compile(r"\b(?:need|needs|depends on|depend on|let me know|lmk)\b", re.IGNORECASE)
+#no question mark but still asking, like i'll need the make and model and the color
+SOLICIT_PATTERN = re.compile(r"\b(?:need|needs|depends on|depend on|let me know|lmk)\b", re.IGNORECASE)
 
-#the exact color ask's own words: in mind, the green you're thinking, a pic or link of the exact one
-IN_MIND_PATTERN: re.Pattern = re.compile(r"\bin mind\b", re.IGNORECASE)
+#the exact color asks own words, in mind, the green you're thinking, a pic of the exact one
+IN_MIND_PATTERN = re.compile(r"\bin mind\b", re.IGNORECASE)
 
-#in mind only asks with a question mark or have or got in front of it, never "just keep in mind a wrap won't match the factory red"
-HAVE_IN_MIND_PATTERN: re.Pattern = re.compile(r"\b(?:have|has|had|got)\b.*\bin mind\b", re.IGNORECASE)
+#in mind only asks with have or got in front, never keep in mind a wrap won't match factory red
+HAVE_IN_MIND_PATTERN = re.compile(r"\b(?:have|has|had|got)\b.*\bin mind\b", re.IGNORECASE)
 
-ONE_PATTERN: re.Pattern = re.compile(r"\bones?\b", re.IGNORECASE)
+ONE_PATTERN = re.compile(r"\bones?\b", re.IGNORECASE)
 
-NAMED_WANT_PATTERN: re.Pattern = re.compile(rf"(?<!\bany\s)\b(?:colou?rs?|{COLOR_NAMES})\s+(?:that\s+)?(?:you're|you are|youre|you were|you'd|you|u)\s+(?:(?:still|really)\s+)?(?:thinking|wanting|want|wanted|like|liking|picked|leaning|have in mind|had in mind)\b", re.IGNORECASE)
+NAMED_WANT_PATTERN = re.compile(rf"(?<!\bany\s)\b(?:colou?rs?|{COLOR_NAMES})\s+(?:that\s+)?(?:you're|you are|youre|you were|you'd|you|u)\s+(?:(?:still|really)\s+)?(?:thinking|wanting|want|wanted|like|liking|picked|leaning|have in mind|had in mind)\b", re.IGNORECASE)
 
-EXACT_ASK_PATTERN: re.Pattern = re.compile(r"\b(?:pics?|photos?|pictures?|screenshots?|links?)\s+(?:or\s+(?:a\s+)?(?:pics?|photos?|pictures?|screenshots?|links?)\s+)?of\s+(?:the|an?|that|your)\s+exact\b", re.IGNORECASE)
+EXACT_ASK_PATTERN = re.compile(r"\b(?:pics?|photos?|pictures?|screenshots?|links?)\s+(?:or\s+(?:a\s+)?(?:pics?|photos?|pictures?|screenshots?|links?)\s+)?of\s+(?:the|an?|that|your)\s+exact\b", re.IGNORECASE)
 
-#the shop only ever sends them online to find the exact color, so a question about one they like online asks for it ("Did you find one you like online?")
-ONLINE_PATTERN: re.Pattern = re.compile(r"\bonline\b", re.IGNORECASE)
+#the shop only sends them online for the exact color, so liking one online is that ask
+ONLINE_PATTERN = re.compile(r"\bonline\b", re.IGNORECASE)
 
-LIKING_PATTERN: re.Pattern = re.compile(r"\byou(?:'re|'ve been|'ve| are| were| have been)?\s+(?:(?:still|really)\s+)?(?:want|wanting|wanted|like|liking|love|loving|eyeing)\b", re.IGNORECASE)
+LIKING_PATTERN = re.compile(r"\byou(?:'re|'ve been|'ve| are| were| have been)?\s+(?:(?:still|really)\s+)?(?:want|wanting|wanted|like|liking|love|loving|eyeing)\b", re.IGNORECASE)
 
-#a question asking two things splits into its parts here ("What color is it now, and what color are you wanting to go?")
-CLAUSE_BREAK_PATTERN: re.Pattern = re.compile(r"[,;:]|\b(?:and|or|but|so|plus)\b", re.IGNORECASE)
+#a question asking two things splits into its parts here, color now and color wanted
+CLAUSE_BREAK_PATTERN = re.compile(r"[,;:]|\b(?:and|or|but|so|plus)\b", re.IGNORECASE)
 
-#the second half of the exact color ask, after "Do you have an exact green in mind?"
+#the second half of the exact color ask, right after the in mind question
 IF_YOU_DO: str = "if you do"
 
-
-#BOOKING QUESTION
-#the way the owner asks it, a held booking's reply ends on it once its price goes out
+#the way the owner asks it, a held bookings reply ends on it once its price goes out
 BOOKING_QUESTION: str = "Did you want to hop on the schedule?"
 
+#a customers text that opens with a yes, however many ss they felt like typing
+BOOKING_YES_PATTERN = re.compile(r"^\W*(y+e+s+(\s*sir)?|y+e+a+h*|y+a+h*|y+e+p+|y+u+p+|bet|sure|for sure|sounds good|i'?m down|absolutely|definitely)\b", re.IGNORECASE)
 
-#BOOKING YES
-#a customer's text that opens with a yes, the way they text one ("yessir", "yeah!", "yesss", "bet", "for sure")
-BOOKING_YES_PATTERN: re.Pattern = re.compile(r"^\W*(y+e+s+(\s*sir)?|y+e+a+h*|y+a+h*|y+e+p+|y+u+p+|bet|sure|for sure|sounds good|i'?m down|absolutely|definitely)\b", re.IGNORECASE)
+#asking what else they want to know is never one of the shops questions, like does that help
+OFF_LIST_ASK_PATTERN = re.compile(r"\b(?:any|other|more)\s+(?:other\s+|more\s+)?questions?\b|\b(?:anything|something|what)\s+else\b.*\b(?:know|ask|help|need|curious|wonder\w*)\b|\b(?:anything|something)\s+else\s*\?|\bdoes\s+that\s+(?:help|make\s+sense)\b", re.IGNORECASE)
 
+#a let me know sign off hands it back to them, same ask with no question mark
+LET_ME_KNOW_PATTERN = re.compile(r"^(?:let me know|lmk|feel free)\b", re.IGNORECASE)
 
-#OFF LIST ASKS
-#asking what else they want to know is never one of the shop's questions ("Any other questions on the front end?", "Anything else you wanted to know about the full body?", "Does that help?")
-OFF_LIST_ASK_PATTERN: re.Pattern = re.compile(r"\b(?:any|other|more)\s+(?:other\s+|more\s+)?questions?\b|\b(?:anything|something|what)\s+else\b.*\b(?:know|ask|help|need|curious|wonder\w*)\b|\b(?:anything|something)\s+else\s*\?|\bdoes\s+that\s+(?:help|make\s+sense)\b", re.IGNORECASE)
+#a drop off day the way the booking chain offers it, only that chain reads the calendar
+DAY_OFFER_PATTERN = re.compile(r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday),? (the|january|february|march|april|may|june|july|august|september|october|november|december) \d{1,2}(st|nd|rd|th)?\b|\bopen for drop ?-?offs?\b", re.IGNORECASE)
 
-#a sign off that hands it back to them asks the same thing with no question mark ("Let me know if you have any other questions")
-LET_ME_KNOW_PATTERN: re.Pattern = re.compile(r"^(?:let me know|lmk|feel free)\b", re.IGNORECASE)
-
-
-#DAY OFFERS
-#a drop off day the way the booking chain offers it ("Monday the 2nd", "Tuesday, November 3rd") or its "open for drop off", only it reads the calendar
-DAY_OFFER_PATTERN: re.Pattern = re.compile(r"\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday),? (the|january|february|march|april|may|june|july|august|september|october|november|december) \d{1,2}(st|nd|rd|th)?\b|\bopen for drop ?-?offs?\b", re.IGNORECASE)
-
-
-#SPACING COUNTS
 #a reply can't open with the same word as one of the last this many replies
 REPLIES_BETWEEN_OPENER: int = 2
 
 #a text holds at most this many sentences, the rest of the reply goes out in the texts after it
 TEXT_SENTENCES: int = 3
 
-
-#YES OPENERS
-#the ways a reply opens with a yes, yeah first since it's the usual one and the others stand in for it
+#the ways a reply opens with a yes, yeah first since its the usual one
 YES_OPENERS: list[str] = ["Yeah", "Yess", "Yep"]
 
-
-#ACK OPENERS
-#the ways a reply opens acknowledging them, sweet first since it's the usual one and perfect stands in for it
+#the ways a reply opens acknowledging them, sweet first since its the usual one
 ACK_OPENERS: list[str] = ["Sweet", "Perfect"]
 
-#an ack opener only ever opens the reply, a later part or sentence picks up from what came before with this instead
+#ack openers only open the reply, later parts or sentences pick up with this instead
 FLOW_OPENER: str = "And"
 
-
-#WORRIES OPENER
-#the owner's "No worries" lets something go, and "It's all good" stands in for it when one of the last couple of replies already opened with it
+#the owners no worries, swapped for its all good when a recent reply already opened with it
 WORRIES_OPENER: str = "No worries"
 
 WORRIES_SWAP: str = "It's all good"
 
-#"No worries at all" goes out whole as "It's all good", never "It's all good at all"
+#no worries at all goes out whole as its all good, never its all good at all
 WORRIES_TAIL: str = " at all"
 
 
-
-#**********SENT REPLIES**********
-#pulls the replies that already went out from the conversation
-
-
 #SENT REPLIES
+
 #every reply the shop already sent in the conversation, oldest first
 def sent_replies(message_history: dict) -> list[str]:
     replies: list[str] = []
@@ -166,8 +134,6 @@ def sent_replies(message_history: dict) -> list[str]:
 
     return replies
 
-
-#LAST REPLY
 #the reply the shop sent last, empty when it hasn't sent one yet
 def last_sent_reply(message_history: dict) -> str:
     replies: list[str] = sent_replies(message_history)
@@ -178,13 +144,9 @@ def last_sent_reply(message_history: dict) -> str:
     return replies[-1]
 
 
+#TEXT SPLITTING
 
-#**********TEXT SPLITTING**********
-#cuts a reply into sentences, then into the texts it goes out as, a question always in its own text
-
-
-#SPLIT SENTENCES
-#cuts a reply into its sentences, each one keeping its marks and the spaces or line break in front of it
+#cuts a reply into sentences, each keeping its marks and the space or line break in front of it
 def split_sentences(reply: str) -> list[str]:
     sentences: list[str] = []
 
@@ -193,7 +155,7 @@ def split_sentences(reply: str) -> list[str]:
     for position, character in enumerate(reply):
         next_character: str = reply[position + 1:position + 2]
 
-        #a line break ends the sentence before it, so a line with no mark at its end never runs into the next line
+        #a line break ends the sentence before it, so a markless line never runs into the next one
         if(character == "\n" and sentence.strip() != ""):
             sentences.append(sentence)
 
@@ -201,7 +163,7 @@ def split_sentences(reply: str) -> list[str]:
 
         sentence = f"{sentence}{character}"
 
-        #a mark only ends a sentence before a space or the end, so "17.5%" stays whole
+        #a mark only ends a sentence before a space or the end, so a decimal price stays whole
         if(character in ".!?" and next_character in ["", " ", "\n"]):
             sentences.append(sentence)
 
@@ -212,9 +174,7 @@ def split_sentences(reply: str) -> list[str]:
 
     return sentences
 
-
-#END SENTENCE
-#a reply that gets more put after it ends its last sentence first, never "full body Did you want"
+#ends the last sentence before more gets put after it, so it never runs into the next one
 def end_sentence(text: str) -> str:
     text = text.strip()
 
@@ -223,9 +183,7 @@ def end_sentence(text: str) -> str:
 
     return text
 
-
-#JOIN TEXT
-#the sentences of one text, with a blank line in front of each one that starts a new part when the reply keeps its parts
+#the sentences of one text, a blank line before each new part when the reply keeps its parts
 def join_text(sentences: list[str], new_part: list[bool], group: list[int], keep_parts: bool) -> str:
     text: str = sentences[group[0]]
 
@@ -240,9 +198,7 @@ def join_text(sentences: list[str], new_part: list[bool], group: list[int], keep
 
     return text
 
-
-#SPLIT TEXTS
-#a question always starts its own text and takes what follows it, the sentences before it go out a few to a text
+#a question always starts its own text and takes what follows, the rest go out a few to a text
 def split_texts(reply: str) -> list[str]:
     pieces: list[str] = []
 
@@ -257,7 +213,7 @@ def split_texts(reply: str) -> list[str]:
 
     new_part: list[bool] = []
 
-    #split_sentences leaves the line break in front of the sentence after it, so that sentence starts a new part
+    #split_sentences leaves the line break in front of the next sentence, so that one starts a part
     for position, piece in enumerate(pieces):
         new_part.append(position > 0 and piece.lstrip(" ").startswith("\n"))
 
@@ -272,15 +228,13 @@ def split_texts(reply: str) -> list[str]:
             groups.append([position])
 
             after_question = True
-
-        #anything after a question goes out with it, like the pic ask that finishes it, before one a text fills up
         elif(after_question or (len(groups) > 0 and len(groups[-1]) < TEXT_SENTENCES)):
+            #anything after a question rides along with it, like the pic ask that finishes it
             groups[-1].append(position)
-
         else:
             groups.append([position])
 
-    #a reply cut into texts already reads in pieces, only one that goes out as a single text spaces its parts out
+    #several texts already read in pieces, only a single text spaces its parts out
     keep_parts: bool = len(groups) == 1
 
     texts: list[str] = []
@@ -288,7 +242,7 @@ def split_texts(reply: str) -> list[str]:
     for position, group in enumerate(groups):
         text: str = join_text(sentences, new_part, group, keep_parts)
 
-        #a text the reply was cut at never ends on a period, the way the shop texts, the last one stays as written
+        #every text but the last drops its period, thats how the shop texts
         if(position < len(groups) - 1):
             text = text.removesuffix(".")
 
@@ -296,20 +250,14 @@ def split_texts(reply: str) -> list[str]:
 
     return texts
 
-
-#ONE TEXT
-#the texts a reply was cut into put back together as one, a blank line apart so it still reads in the same pieces, for a chat where every text counts toward blooio's cap
+#the texts back together a blank line apart, for a chat where every text counts toward blooios cap
 def one_text(texts: list[str]) -> str:
     return "\n\n".join(texts)
 
 
+#OPENER SPACING
 
-#**********OPENER SPACING**********
-#keeps a reply from opening with the same word as the last couple of replies, swapping or cutting it
-
-
-#OPENS WITH
-#whether the reply's first word is this word
+#whether the replys first word is this word
 def opens_with(reply: str, word: str) -> bool:
     start: str = reply.strip().lower()
 
@@ -318,31 +266,25 @@ def opens_with(reply: str, word: str) -> bool:
 
     character_after: str = start[len(word):len(word) + 1]
 
-    #"sweetest" does not open with the word sweet
+    #sweetest doesn't open with sweet, no matter how sweet it is
     return not character_after.isalpha()
 
-
-#OPENED RECENTLY
 #whether one of the last couple of replies the shop sent opened with this word
 def opened_recently(message_history: dict, word: str) -> bool:
     recent_replies: list[str] = sent_replies(message_history)[-REPLIES_BETWEEN_OPENER:]
 
-    #the word at reply N means N+1 and N+2 open without it
+    #the word at one reply means the next two open without it
     for recent_reply in recent_replies:
         if(opens_with(recent_reply, word)):
             return True
 
     return False
 
-
-#REPEATS OPENER
 #whether the reply opens with a word the last couple of replies already opened with
 def repeats_opener(reply: str, message_history: dict, word: str) -> bool:
     return opens_with(reply, word) and opened_recently(message_history, word)
 
-
-#OPENER REST
-#what an opener leads into, "Sweet, so the price is" leads into "the price is"
+#what an opener leads into, so sweet so the price is leads into the price is
 def opener_rest(reply: str, word: str) -> str:
     rest: str = reply.strip()[len(word):].lstrip(" ,.!")
 
@@ -354,14 +296,12 @@ def opener_rest(reply: str, word: str) -> str:
 
     return rest
 
-
-#CUT OPENER
 #cuts a repeated opener off the front of the reply, so it starts with what the opener led into
 def cut_opener(reply: str, message_history: dict, word: str) -> str:
     if(not repeats_opener(reply, message_history, word)):
         return reply
 
-    #"Sweet, so the price is" reads as "The price is" once sweet is cut
+    #sweet so the price is reads as the price is once sweet is cut
     rest: str = opener_rest(reply, word)
 
     #a reply that is only the word keeps it, so something still goes out
@@ -372,9 +312,7 @@ def cut_opener(reply: str, message_history: dict, word: str) -> str:
 
     return cleaners.sentence_start(rest)
 
-
-#SWAP OPENER
-#a reply opening with the same word as a recent one gets another opener from its group, or loses it when they all went out lately
+#a repeated opener gets another from its group, or gets cut when they all went out lately
 def swap_opener(reply: str, message_history: dict, openers: list[str]) -> str:
     for opener in openers:
         word: str = opener.lower()
@@ -382,7 +320,7 @@ def swap_opener(reply: str, message_history: dict, openers: list[str]) -> str:
         if(not repeats_opener(reply, message_history, word)):
             continue
 
-        #a repeated opener swaps for the first one in its group not used lately, "Perfect, so" goes out as "Sweet, so"
+        #swaps for the first one in its group not used lately
         for swap in openers:
             if(not opened_recently(message_history, swap.lower())):
                 print(f"{word.upper()} SWAPPED FOR {swap.upper()}: {reply}")
@@ -394,9 +332,7 @@ def swap_opener(reply: str, message_history: dict, openers: list[str]) -> str:
 
     return reply
 
-
-#SWAP WORRIES
-#"No worries" opening a reply like one of the last couple did goes out as "It's all good", and comes off when that went out lately too
+#a repeated no worries goes out as its all good, and comes off when that went out lately too
 def swap_worries(reply: str, message_history: dict) -> str:
     word: str = WORRIES_OPENER.lower()
 
@@ -405,7 +341,7 @@ def swap_worries(reply: str, message_history: dict) -> str:
 
     rest: str = reply.strip()[len(word):].removeprefix(WORRIES_TAIL)
 
-    #it's all good opened a recent reply too, so the reply starts with what no worries led into
+    #its all good opened a recent reply too, so the reply starts with what no worries led into
     if(opened_recently(message_history, WORRIES_SWAP.lower())):
         cut_rest: str = rest.lstrip(" ,.!")
 
@@ -422,13 +358,9 @@ def swap_worries(reply: str, message_history: dict) -> str:
     return f"{WORRIES_SWAP}{rest}"
 
 
+#FLOW OPENERS
 
-#**********FLOW OPENERS**********
-#turns a later sweet or perfect into "And", so only the reply's first word acknowledges them
-
-
-#ACK OPENER
-#the ack opener a sentence opens with ("Sweet, so", "Perfect!"), never one that's part of what it says ("Perfect for")
+#the ack opener a sentence opens with, never one thats part of what it says like perfect for
 def ack_opener(sentence: str) -> str:
     start: str = sentence.strip().lower()
 
@@ -442,9 +374,7 @@ def ack_opener(sentence: str) -> str:
 
     return ""
 
-
-#FLOW CASE
-#a word capitalized only for starting its sentence goes lowercase after "And", while "PPF", "I'll" and "McLaren" stay
+#a word capitalized just for starting the sentence goes lowercase after and, PPF and McLaren stay
 def flow_case(text: str) -> str:
     first_word: str = text.split(" ", 1)[0]
 
@@ -453,13 +383,11 @@ def flow_case(text: str) -> str:
 
     return text
 
-
-#FLOW OPENERS
-#a sweet or perfect opening a later part or sentence goes out as "And", picking up from what the reply just said
+#a sweet or perfect opening a later part or sentence goes out as and, picking up from before
 def flow_openers(reply: str) -> str:
     flowed: str = ""
 
-    #a lone "Sweet!" goes with the sentence after it, and one with nothing after it comes off
+    #a lone sweet goes with the sentence after it, and one with nothing after it comes off
     carried: str = ""
 
     for piece in split_sentences(reply):
@@ -469,7 +397,7 @@ def flow_openers(reply: str) -> str:
 
         word: str = ack_opener(sentence)
 
-        #the reply's first sentence keeps its opener, swap_opener spaces those out
+        #the replys first sentence keeps its opener, swap_opener spaces those out
         if(word == "" or flowed.strip() == ""):
             flowed = f"{flowed}{sentence}"
 
@@ -484,7 +412,7 @@ def flow_openers(reply: str) -> str:
 
         body: str = sentence.lstrip()
 
-        #what came after "Sweet!" started its own sentence, after "And" it's the same one
+        #what came after a sweet with a mark started its own sentence, after and its the same one
         if(body[len(word):len(word) + 1] in [".", "!"]):
             rest = flow_case(rest)
 
@@ -495,9 +423,7 @@ def flow_openers(reply: str) -> str:
 
     return flowed
 
-
-#DOUBLE AND
-#"And" never opens two sentences in a row, so the second one starts clean, whether flow_openers put it in or the model wrote it
+#and never opens two sentences in a row, whether flow_openers put it there or the model did
 def no_double_and(reply: str) -> str:
     kept_reply: str = ""
 
@@ -521,12 +447,8 @@ def no_double_and(reply: str) -> str:
     return kept_reply
 
 
+#BOOKING ASKS
 
-#**********BOOKING ASKS**********
-#spots the booking and pic asks and a color books check in a reply, drops or adds the booking question, and cuts drop off days no calendar gave
-
-
-#ASKS BOOKING
 #whether the sentence is a question asking them to get on the schedule
 def asks_booking(sentence: str) -> bool:
     if(not sentence.strip().endswith("?")):
@@ -538,8 +460,6 @@ def asks_booking(sentence: str) -> bool:
 
     return False
 
-
-#PIC ASK
 #a reply that asks them for a pic, a photo or a video anywhere in it, as a question or not
 def asks_for_pic(reply: str) -> bool:
     for word in reply.lower().split():
@@ -548,15 +468,11 @@ def asks_for_pic(reply: str) -> bool:
 
     return False
 
-
-#COLOR CHECK PROMISED
 #a reply that tells them the color books are getting checked for the color they sent
 def promises_color_check(reply: str) -> bool:
     return COLOR_CHECK_PATTERN.search(reply) is not None
 
-
-#BOOKING LEAD IN
-#a sweet or perfect taking something in with no price ("Perfect, we can get the 750S wrapped in that one") only leads into the booking question, while "Sweet, so" leads into an answer
+#a sweet or perfect with no price just leads into the booking question, sweet so leads to an answer
 def booking_lead_in(sentence: str) -> bool:
     word: str = ack_opener(sentence)
 
@@ -567,8 +483,6 @@ def booking_lead_in(sentence: str) -> bool:
 
     return not rest.lower().startswith("so ")
 
-
-#DROP BOOKING
 #takes the booking question out of a reply, and what only led into it
 def drop_booking_question(reply: str) -> str:
     kept_sentences: list[str] = []
@@ -585,13 +499,13 @@ def drop_booking_question(reply: str) -> str:
 
         cut_questions.append(sentence.strip())
 
-        #what only led into the question comes off with it, unless it's all the reply has left
+        #what only led into the question comes off with it, unless its all the reply has left
         if(len(kept_sentences) > 0 and booking_lead_in(kept_sentences[-1]) and "".join(kept_sentences[:-1]).strip() != ""):
             cut_lead_ins.append(kept_sentences.pop().strip())
 
     kept_reply: str = "".join(kept_sentences)
 
-    #a reply that is only the booking question is how a go ahead gets answered, so it stays and something goes out
+    #only the booking question is how a go ahead gets answered, so it stays and something goes out
     if(kept_reply.strip() == ""):
         return reply
 
@@ -603,8 +517,6 @@ def drop_booking_question(reply: str) -> str:
 
     return kept_reply.strip()
 
-
-#BOOKING ASKED
 #whether any sentence of the reply asks them to get on the schedule
 def asks_booking_question(reply: str) -> bool:
     for sentence in split_sentences(reply):
@@ -613,14 +525,10 @@ def asks_booking_question(reply: str) -> bool:
 
     return False
 
-
-#BOOKING YES
-#their text opens with a yes and the shop's last reply asked whether they want to get on the schedule
+#their text opens with a yes and the shops last reply asked about getting on the schedule
 def yes_to_booking_question(user_text: str, message_history: dict) -> bool:
     return BOOKING_YES_PATTERN.match(user_text) is not None and asks_booking_question(last_sent_reply(message_history))
 
-
-#BOOKING END
 #a reply that has to end on the booking question gets it put at its end
 def end_on_booking_question(reply: str) -> str:
     if(asks_booking_question(reply)):
@@ -628,22 +536,18 @@ def end_on_booking_question(reply: str) -> str:
 
     kept_reply: str = ""
 
-    #the booking question is the one question it ends on, so any other comes off unless a price is in it
+    #the booking question is the one question it ends on, others go unless a price is in them
     for sentence in split_sentences(reply):
         if(not sentence.strip().endswith("?") or "$" in sentence):
             kept_reply = f"{kept_reply}{sentence}"
 
     return f"{end_sentence(kept_reply)} {BOOKING_QUESTION}"
 
-
-#OFFERS DAYS
 #whether the sentence offers a drop off day
 def offers_days(sentence: str) -> bool:
     return DAY_OFFER_PATTERN.search(sentence) is not None
 
-
-#DROP DAYS
-#only the booking chain reads the calendar, so a drop off day any other reply offers is made up and its sentence comes off
+#only the booking chain reads the calendar, any other day offer is made up and its sentence goes
 def drop_day_offers(reply: str) -> str:
     if(not offers_days(reply)):
         return reply
@@ -653,20 +557,15 @@ def drop_day_offers(reply: str) -> str:
     for sentence in split_sentences(reply):
         if(offers_days(sentence)):
             print(f"MADE UP DAYS CUT: {sentence.strip()}")
-
         else:
             kept_reply = f"{kept_reply}{sentence}"
 
     return kept_reply.strip()
 
 
+#HELD PRICES
 
-#**********HELD PRICES**********
-#the shop's first reply holds every price unless they asked for one, so a price that got past the hold never goes out
-
-
-#DROP PRICES
-#a sentence with a $ in it gives a price (replies.write_price_sent), so on a first reply that holds every price it comes off and the rest stays as written
+#on a first reply that holds every price, any sentence with a dollar sign comes off
 def drop_prices(reply: str) -> str:
     if("$" not in reply):
         return reply
@@ -676,20 +575,15 @@ def drop_prices(reply: str) -> str:
     for sentence in split_sentences(reply):
         if("$" in sentence):
             print(f"HELD PRICE CUT: {sentence.strip()}")
-
         else:
             kept_reply = f"{kept_reply}{sentence}"
 
     return kept_reply.strip()
 
 
+#WANTED COLOR
 
-#**********COLOR WANT ASKS**********
-#spots an ask for the color they want, never one for the color it is now, so one written before the exact price has what it needs can come off
-
-
-#COLOR WANT PART
-#whether one part of an ask goes after the color they want, never the color it is now or any color they can have
+#whether part of an ask goes after the color they want, never the color now or any color
 def wants_color_part(part: str, about_color: bool) -> bool:
     if(COLOR_NOW_PATTERN.search(part) is not None or SHADE_PATTERN.search(part) is not None):
         return False
@@ -700,20 +594,17 @@ def wants_color_part(part: str, about_color: bool) -> bool:
     if(COLOR_WORD_PATTERN.search(part) is not None and COLOR_WANT_PATTERN.search(part) is not None):
         return True
 
-    #"what you're wanting to go with" only goes after the color in a sentence about the color, never the film they're going with
+    #wanting to go with only counts in a sentence about color, never the film they're going with
     if(not about_color or GO_WITH_PATTERN.search(part) is None or SERVICE_WORD_PATTERN.search(part) is not None):
         return False
 
     return GO_WANT_PATTERN.search(part) is not None
 
-
-#ASKS COLOR WANTED
-#whether the sentence asks for the color they want, as a question, as something it says the price needs, or in the exact color ask's own words
-#sentence_before is the sentence in front of it, so "Do you have one in mind?" after one about the color reads as asking it
+#whether the sentence asks for the color they want, sentence_before gives a bare one its color
 def asks_color_wanted(sentence: str, sentence_before: str) -> bool:
     text: str = sentence.replace("’", "'").strip()
 
-    #"a pic or link of the exact one", never a pic showing the color it is now
+    #a pic or link of the exact one, never a pic showing the color it is now
     if(EXACT_ASK_PATTERN.search(text) is not None and COLOR_NOW_PATTERN.search(text) is None):
         return True
 
@@ -724,16 +615,19 @@ def asks_color_wanted(sentence: str, sentence_before: str) -> bool:
         if(ONE_PATTERN.search(text) is not None and COLOR_WORD_PATTERN.search(sentence_before) is not None):
             return True
 
-    asking: bool = text.endswith("?") or SOLICIT_PATTERN.search(text) is not None
+    asking: bool = False
 
-    #"the exact matte black you're thinking" asks for it in a question or a pic ask
+    if(text.endswith("?") or SOLICIT_PATTERN.search(text) is not None):
+        asking = True
+
+    #the exact matte black you're thinking asks for it in a question or a pic ask
     if((asking or asks_for_pic(text)) and NAMED_WANT_PATTERN.search(text) is not None):
         return True
 
     if(not asking):
         return False
 
-    #"Have you found a green online you're liking yet?", the online hunt is always for the exact color, never a tint shade
+    #the online hunt is always for the exact color, never a tint shade
     if(ONLINE_PATTERN.search(text) is not None and LIKING_PATTERN.search(text) is not None):
         if(COLOR_NOW_PATTERN.search(text) is None and SHADE_PATTERN.search(text) is None):
             return True
@@ -746,15 +640,11 @@ def asks_color_wanted(sentence: str, sentence_before: str) -> bool:
 
     return False
 
-
-#FINISHES ASK
-#"Send me a pic if you can" or "If you do, can you shoot a pic of it over" finishes the question right before it as the same ask, never a question of its own
+#a pic ask or an if you do right after a question finishes that ask, never its own question
 def finishes_ask(text: str) -> bool:
     return not text.endswith("?") and (text.lower().startswith(IF_YOU_DO) or asks_for_pic(text))
 
-
-#COLOR WANT ASKS
-#the sentences of the reply asking for the color they want, with the pic or the "If you do" that finishes each one
+#the sentences asking for the color they want, plus the pic or if you do that finishes each
 def color_want_asks(reply: str) -> list[str]:
     asks: list[str] = []
 
@@ -768,10 +658,13 @@ def color_want_asks(reply: str) -> list[str]:
         if(text == ""):
             continue
 
-        #"Send me a pic if you can" or "If you do, can you shoot a pic of it over" right after it is part of the same ask
+        #a pic ask or an if you do right after it is part of the same ask
         finishing: bool = ask_before and finishes_ask(text)
 
-        ask_before = finishing or asks_color_wanted(text, sentence_before)
+        if(finishing or asks_color_wanted(text, sentence_before)):
+            ask_before = True
+        else:
+            ask_before = False
 
         if(ask_before):
             asks.append(text)
@@ -781,35 +674,29 @@ def color_want_asks(reply: str) -> list[str]:
     return asks
 
 
+#CURRENT COLOR
 
-#**********COLOR NOW ASKS**********
-#spots an ask for the color their vehicle is right now or a pic of it, so one the job still waits on stays the color ask logic's call
-
-
-#ASKS COLOR NOW
-#whether the sentence asks what color their vehicle is right now or for a pic of it, any pic ask counts the same way the asks for one get counted
+#whether the sentence asks what color there vehicle is now or for a pic of it, any pic ask counts
 def asks_color_now(sentence: str) -> bool:
     text: str = sentence.replace("’", "'").strip()
 
-    #"Send me a pic if you can" or "Did you get a chance to snap a pic of the Tahoe?"
+    #any pic ask counts, they're all after the same thing
     if(asks_for_pic(text)):
         return True
 
     if(not text.endswith("?")):
         return False
 
-    #"What color is it right now?", one part with the word color and what makes it the color it is now
+    #one part with both the word color and what makes it the color it is now
     for part in CLAUSE_BREAK_PATTERN.split(text):
         if(COLOR_WORD_PATTERN.search(part) is not None and COLOR_NOW_PATTERN.search(part) is not None):
             return True
 
     return False
 
-
-#COLOR NOW ASKS
-#the sentences of the reply asking for the color it is now or a pic of it, never the exact color ask or the pic ask that finishes it
+#the sentences asking for the color now or a pic of it, never the exact color ask or its pic
 def color_now_asks(reply: str) -> list[str]:
-    #"If you do, can you shoot a pic of it over" goes after the color they want, so the whole exact color ask stays out of here
+    #the if you do pic ask belongs to the color they want, so the whole exact color ask stays out
     want_asks: list[str] = color_want_asks(reply)
 
     asks: list[str] = []
@@ -823,20 +710,19 @@ def color_now_asks(reply: str) -> list[str]:
     return asks
 
 
+#ANYTHING ELSE
 
-#**********OFF LIST ASKS**********
-#spots an ask for what else they want to know, so it never goes out in place of one of the shop's questions
-
-
-#OFF LIST ASKS
-#the sentences of the reply asking what else they want to know, as a question or a let me know, never "Were you looking to get anything else done on your vehicle?"
+#the sentences asking what else they want to know, as a question or a let me know sign off
 def off_list_asks(reply: str) -> list[str]:
     asks: list[str] = []
 
     for sentence in split_sentences(reply):
         text: str = sentence.replace("’", "'").strip()
 
-        asks_them: bool = text.endswith("?") or LET_ME_KNOW_PATTERN.match(text) is not None
+        asks_them: bool = False
+
+        if(text.endswith("?") or LET_ME_KNOW_PATTERN.match(text) is not None):
+            asks_them = True
 
         if(asks_them and OFF_LIST_ASK_PATTERN.search(text) is not None):
             asks.append(sentence.strip())
@@ -844,13 +730,9 @@ def off_list_asks(reply: str) -> list[str]:
     return asks
 
 
+#STILL CHECKING
 
-#**********STILL CHECKING**********
-#spots the line saying the color books are still getting checked, so a later reply only says it again when they ask about the color they sent
-
-
-#STILL CHECKING LINES
-#the sentences of the reply that only say the color books are still getting checked or that they'll hear what the shop finds
+#the sentences that only say the books are still getting checked or that they'll hear back
 def still_checking_lines(reply: str) -> list[str]:
     lines: list[str] = []
 
@@ -862,9 +744,7 @@ def still_checking_lines(reply: str) -> list[str]:
 
     return lines
 
-
-#COLOR CHECK SENT
-#whether a reply the shop already sent told them the color books are getting checked for the color they sent, the first time or since
+#whether the shop already told them the color books are getting checked, the first time or since
 def color_check_sent(message_history: dict) -> bool:
     for reply in sent_replies(message_history):
         if(promises_color_check(reply) or len(still_checking_lines(reply)) > 0):

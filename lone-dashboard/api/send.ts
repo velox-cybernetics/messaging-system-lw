@@ -1,44 +1,32 @@
-//**********IMPORTS**********
-//the replies, the database, the sign in check and the feed's shapes
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
 import * as shop from "./_helpers/shop.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//the system and how much of a thread the feed keeps, keep in step with servers/dashboard_texts.py and helpers/state/dashboard.py
+//the system on render sends it as hazel, same secret as DASH_SEND_SECRET over there
+const SYSTEM_URL: string = shop.setting(process.env.SYSTEM_URL, "").replace(/\/$/, "");
 
-
-//SYSTEM
-//the bot on render sends it as hazel, so it's in her memory and in ghl like she wrote it, same secret as DASH_SEND_SECRET on render
-const SYSTEM_URL: string = (process.env.SYSTEM_URL ?? "").replace(/\/$/, "");
-
-const DASH_SEND_SECRET: string = process.env.DASH_SEND_SECRET ?? "";
+const DASH_SEND_SECRET: string = shop.setting(process.env.DASH_SEND_SECRET, "");
 
 //one blooio send and a few writes on file, a system taking longer than this is having a day
 const SYSTEM_TIMEOUT_MS: number = 25000;
 
-
-//THREAD LIMITS
 const THREAD_MAX: number = 500;
 
 const CONVO_SECONDS: number = 365 * 86400;
 
 const PREVIEW_CHARS: number = 140;
 
-
-//TEXT MAX
 const TEXT_MAX: number = 2000;
 
 
+//SEND
 
-//**********SEND**********
-//a text typed in the dashboard goes out through the system as hazel on the blooio line, so only a forms tab conversation can get one
-
-
-//SEND TO SYSTEM
 //null when the system sent it, the reason when it didn't
 async function send_to_system(id: string, text: string): Promise<string | null> {
     try {
@@ -49,7 +37,7 @@ async function send_to_system(id: string, text: string): Promise<string | null> 
 
             console.error(`[SYSTEM] dashboard send to ${id} failed ${response.status}: ${String(reason)}`);
 
-            //the system says why in its own words, like hazel being mid-reply for them
+            //the system says why in its own words, like hazel being mid reply for them
             if(typeof reason === "string") {
                 return reason;
             }
@@ -59,7 +47,6 @@ async function send_to_system(id: string, text: string): Promise<string | null> 
 
         return null;
     }
-
     catch(error: unknown) {
         console.error(`[SYSTEM] dashboard send to ${id} errored:`, error);
 
@@ -67,9 +54,7 @@ async function send_to_system(id: string, text: string): Promise<string | null> 
     }
 }
 
-
-//SEND TEXT
-//the text shows in their thread either way, marked failed when the system didn't send it
+//the text shows in there thread either way, marked failed when the system didn't send it
 async function send_text(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -83,7 +68,11 @@ async function send_text(request: Request): Promise<Response> {
 
     const body: Record<string, unknown> | null = await http.read_body(request);
 
-    const id: unknown = body?.id;
+    let id: unknown = undefined;
+
+    if(body !== null) {
+        id = body.id;
+    }
 
     if(body === null || !shop.valid_id(id) || typeof body.text !== "string") {
         return http.fail(400, "Send the conversation id and the text.");
@@ -132,12 +121,9 @@ async function send_text(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for POST /api/send
-
-
-//POST
+//a text from the dashboard, only on the blooio line
 export function POST(request: Request): Promise<Response> {
     return http.guarded(send_text, request);
 }

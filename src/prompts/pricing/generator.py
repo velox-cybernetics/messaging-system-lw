@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shop's shared notes that go into every reply prompt
+#IMPORTS
+
 from src.prompts import shared
 
 
-
-#**********EXAMPLES**********
-#sample replies that answer questions and give prices in Hazel's warm, plain voice
-
-
 #EXAMPLES
+
 #go in last in the main reply prompt, after the rules, so the rules always win over them
 def examples() -> str:
     return r"""
@@ -2833,13 +2829,9 @@ def examples() -> str:
 """
 
 
+#CONTEXT RULES
 
-#**********CONTEXT AND RULES**********
-#how to read the input and the rules every price reply follows, shared with the waiting replies
-
-
-#CONTEXT
-#shared with the replies still waiting on something, so every price reply reads the input the same way
+#shared with the waiting replies, so every price reply reads the input the same way
 def context() -> str:
     return """
     #CONTEXT
@@ -2858,9 +2850,7 @@ def context() -> str:
     - user_media: the customer's text says what the media is. A photo they say is their car confirms the vehicle and its current color. Media with a post_description is the shop's own post or ad, the car in it is not the customer's car, and "I want this" or "this color" means the look they want, not a car they own. Every media_description ends on bright_vehicle, yes or no, whether the vehicle in it is a bright color. On a pic or video of their own vehicle it's what says whether it's a bright color right now: yes puts the bright color upcharge in (PRICING rule 3, COLORED PPF rule 2) whatever shade its brief_description names, a plain red included, and no keeps it out, never with a word about a fee like that there's no extra fee (TONE rule 12): the price goes out plainly, and when it's the same number a system_response already gave as what it typically runs for that vehicle, it goes out with the standard price line PRICING rule 6 gives, so it never reads like the number is just being said again. When more than one pic or video of their own vehicle comes in, they're the same vehicle from different sides or in different light, so the reply takes them in as that one vehicle, and it's a bright color right now when any one of them says bright_vehicle: yes, whatever shade the others name. On anything else, like the shop's post, a look they want or a color sample, it never changes a price, the same as the color they want never does. A media_description with no bright_vehicle line goes by the color its brief_description names.
 """
 
-
-#PRICE HOLD
-#the shop's first reply gives no price unless their message asks what something costs, shared with the replies still waiting on something
+#no price on the shops first reply unless they asked, shared with the waiting replies
 def price_hold() -> str:
     return """
     #PRICE HOLD
@@ -2870,9 +2860,7 @@ def price_hold() -> str:
     - The hold is only ever on that first reply. Every reply after it gives prices by the rules like any other, and a first reply that held them counts as no system_response giving a number yet: the first reply after it about that service is the first one that can give its number, so it goes out there the way the rules give it for what they said, even when their message doesn't ask what it costs, like what a wrap or colored PPF typically runs when they write back without the pic, or the price of the coverage or windows they picked. A selling line the first reply already said isn't said again with it (CONVERSATION rule 15).
 """
 
-
-#RULES
-#shared with the replies still waiting on something, so every price reply follows the same rules and tone
+#shared with the waiting replies, so every price reply follows the same rules and tone
 def rules() -> str:
     return """
     #SERVICE RULES
@@ -3033,13 +3021,9 @@ def rules() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together the full prompt for the main reply that answers questions and prices the job
-
-
-#SYSTEM PROMPT
-#static on purpose, this prompt is the cached prefix of every main generator request and the regenerator's
+#static on purpose, its the cached prefix of every main generator and regenerator request
 def prompt() -> str:
     prompt_text: str = """
     #ROLE

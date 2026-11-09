@@ -1,9 +1,6 @@
-#**********SELLING POINTS**********
-#the lines a follow up or a wrap up reply is allowed to brag with, all straight out of the service details
-
-
 #SELLING POINTS
-#both follow up prompts and the wrap up reply read this, so every brag is one the shop can actually back up
+
+#both follow up prompts and the wrap up reply read this, so every brag is one the shop can back
 def selling_points() -> str:
     return """
     #SELLING POINTS

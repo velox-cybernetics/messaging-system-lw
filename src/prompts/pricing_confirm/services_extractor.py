@@ -1,8 +1,5 @@
-#**********EXAMPLES**********
-#sample conversations that show which jobs and prices get pulled out
-
-
 #EXAMPLES
+
 #go in last in the prompt, after what to pull out and how
 def examples() -> str:
     return r"""
@@ -164,12 +161,8 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together the prompt that pulls out the jobs and prices they said yes to
-
-
-#SYSTEM PROMPT
 #static on purpose, this prompt is the cached prefix of its requests
 def prompt() -> str:
     prompt_text: str = """

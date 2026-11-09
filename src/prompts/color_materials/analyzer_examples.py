@@ -1,8 +1,5 @@
-#**********PICK EXAMPLES**********
-#example replies to the closest materials the shop sent: which one they picked, and if they ask more
+#PICK EXAMPLES
 
-
-#MATERIAL PICK
 MATERIAL_PICK_EXAMPLES_TEXT: str = r"""
     # Examples showing correct classifications are the following, each with the materials the shop sent numbered the way the categories are:
 
@@ -91,8 +88,6 @@ MATERIAL_PICK_EXAMPLES_TEXT: str = r"""
     category: other
 """
 
-
-#ASKS MORE
 MATERIAL_ASKS_EXAMPLES_TEXT: str = r"""
     # Examples showing correct answers are the following:
 
@@ -119,30 +114,20 @@ MATERIAL_ASKS_EXAMPLES_TEXT: str = r"""
 """
 
 
+#PICK PROMPTS
 
-#**********PICK PROMPTS**********
-#the questions the decisions model answers about their reply to the materials, and their examples
-
-
-#PICK EXAMPLES
 #the samples for the question of which of the closest materials they picked
 def material_pick_examples() -> str:
     return MATERIAL_PICK_EXAMPLES_TEXT
 
-
-#ASKS EXAMPLES
 #the samples for the question of whether they asked something next to their pick
 def material_asks_examples() -> str:
     return MATERIAL_ASKS_EXAMPLES_TEXT
 
-
-#PICK QUESTION
-#which of the closest materials they picked, none when they turned them all down and other when they did neither
+#which closest material they picked, none when they turned them all down, other for neither
 def material_pick_instructions() -> str:
     return "Which of the closest materials the shop sent does the customer pick, if any? Read the message history first: the shop couldn't get the exact color they sent for their wrap or colored PPF, so a reply of the shop's sent pics of the closest materials it can order, noted in order in brackets ('[pics: 1. 3M Gloss Dark Green, 2. Avery Satin Dark Green]'), and asked which one they're liking, or whether the one it sent works. A later reply can ask it again, or make sure of the one they're going with ('just to make sure, you're wanting to go with that one for the wrap?'), and the current message answers the shop's last ask: a yes to it picks it, and a maybe or not sure yet is other, whatever an earlier message said. Classify the current message in light of it. Pointing to one of them is that material: where it is in the order ('the first one', 'the 2nd', 'the last one', '#3', '2') or its color or finish ('the satin one', 'the darker green'). When only one was sent, the shop asked if that one works for them, so any yes to it picks it, even one whose color wasn't read: a yes, a bare 'yeah', 'yep' or 'ok' included, 'that works', saying they like it ('I like it', 'love it', 'looks clean'), a short or slang yes ('k', 'bet', 'down'), or going ahead with it or saying to do it, even when it asks something too, about the wrap or colored PPF itself included ('yes, how long does it take?', 'yeah I like it, whats the warranty on the wrap?'). A number the message opens with, with or without a #, is the material with that number, never a numbered question or a list, since the shop just asked which one they're liking ('#1 do you guys take card?' picks material 1, '2 how long does it take' picks material 2). The pick counts even when the message also asks or says something else ('the second one, how long does the wrap take?'). Not wanting any of them is none: none of them work, they don't like them, they want a different color than all of them, or none are close enough. Anything that neither picks one nor turns them all down is other: a question, a maybe, still deciding, asking which one the shop would go with, a thanks or an ok when more than one was sent, or anything else."
 
-
-#ASKS QUESTION
-#whether they asked or said something next to their pick that needs its own answer
+#whether they asked or said something next to there pick that needs its own answer
 def material_asks_instructions() -> str:
     return "Besides picking one of the closest materials the shop sent or turning them down, does the customer ask or say something in `current_user_message` that needs its own answer? Read the message history first: the shop's last reply sent pics of the closest materials it can order for their wrap or colored PPF and asked which one they're liking. A question about a service, a price, how long it takes, the warranty, care or the shop itself is Yes ('the second one, how long would it take?'). A pick or turning them down with a few words about it ('the 2nd one looks sick', 'none of those, they're all too light'), a thanks, an emoji, or asking to get on the schedule or when they can bring it in is No, since the reply to a pick asks about the schedule."

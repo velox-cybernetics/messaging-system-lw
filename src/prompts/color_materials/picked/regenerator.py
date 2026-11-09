@@ -1,22 +1,16 @@
-#**********IMPORTS**********
-#the material pick prompt the rewrite starts from, and the shared regen playbook
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 from src.prompts.color_materials.picked import generator as color_picked_generator
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the material pick prompt plus the playbook for fixing a flagged reply, without saying the last reply all over again
-
-
-#EXTRA INPUTS
-#this regen also gets the shop's last reply, the one their pick answers
+#this regen also gets the shops last reply, the one their pick answers
 def extra_inputs() -> str:
     return """
     - SHOP_LAST_REPLY: the shop's last reply on its own, so a fix never says its lines again."""
 
-
-#FIX NOTES
 #what a material pick reply has to keep straight while it gets fixed
 def fix_notes() -> str:
     return """
@@ -31,9 +25,7 @@ def fix_notes() -> str:
         - Rule: the reply can come in parts with a line break (\\n) between them. Keep the parts as FLAGGED_RESPONSE has them, and a part a fix empties comes out with its line break.
         - Why: each part goes out as its own text, so an empty part would send them a blank text."""
 
-
-#REGEN PROMPT
-#same rules and examples as the material pick generator, then the playbook for fixing what got flagged
+#same rules and examples as the material pick generator, plus the playbook for the fix
 def prompt() -> str:
     playbook: str = regen_guide.guide(extra_inputs(), fix_notes())
 

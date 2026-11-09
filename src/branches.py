@@ -1,10 +1,8 @@
-#**********IMPORTS**********
-#the reply and decision models, the conversation's saved info, the calendar and every prompt
+#IMPORTS
+
 import json
-from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from typing import TypeAlias
 
 from helpers.models import models
 from helpers.state import log
@@ -78,21 +76,15 @@ from src.prompts.side_ask import analyzer_examples as side_ask_examples
 from src.prompts.asked_again import generator as asked_again_generator
 
 
+#DETAILS FILES
 
-#**********DETAILS FILES**********
-#the shop's service, business and custom job details, read from their files once when the bot starts
-
-
-#READ DETAILS
-#reads one of the shop's details files into a dict
+#reads one of the shops details files into a dict
 def read_details(path: str) -> dict:
     with open(path, "r") as file:
         details: dict = json.load(file)
 
     return details
 
-
-#DETAILS DICTS
 PRICING_DETAILS: dict = read_details("details_json/service_pricing_details.json")
 
 BUSINESS_DETAILS: dict = read_details("details_json/business_operations_details.json")
@@ -100,40 +92,30 @@ BUSINESS_DETAILS: dict = read_details("details_json/business_operations_details.
 CUSTOM_DETAILS: dict = read_details("details_json/custom_service_details.json")
 
 
+#ANALYZER CODES
 
-#**********ANALYZER CODES**********
-#the codes the analyzers give the services, and which of them change the vehicle's color
-
-
-#GENERAL CODES
-#the code for a message about the services or the business in general, it carries every detail
+#a message about the services or the business in general, these carry every detail
 PRICING_GENERAL_CODE: str = "s6"
 
 BUSINESS_GENERAL_CODE: str = "b15"
 
-
-#COLOR CODES
 #a color change in vinyl, and colored PPF, the other way to change the color
 COLOR_CHANGE_CODE: str = "s1"
 
 COLORED_PPF_CODE: str = "s3"
 
-#the services whose price needs the color it is now, a follow up that names no service keeps the ones on file
+#the services whose price hangs on the color it is now
 COLOR_CODES: list[str] = [COLOR_CHANGE_CODE, COLORED_PPF_CODE]
 
-#clear PPF and a ceramic coating don't change the color, so in a pair with them the wrap is the only route
+#clear PPF and ceramic don't change the color, so with them the wrap is the only route
 PPF_CODE: str = "s2"
 
 CERAMIC_COATING_CODE: str = "s5"
 
 
+#COLOR PICKS
 
-#**********COLOR PICKS**********
-#the two films that change the color, and how their pick of the closest materials reads
-
-
-#COLOR ROUTES
-#the film they pick is kept on file as the route, and the route comes before any color question
+#the film they pick goes on file as the route, asked before any color question
 WRAP_ROUTE: str = "wrap"
 
 COLORED_PPF_ROUTE: str = "colored_ppf"
@@ -143,9 +125,7 @@ COLOR_ROUTES: list[str] = [WRAP_ROUTE, COLORED_PPF_ROUTE]
 #what the route decision answers when they haven't picked or named either film yet
 UNDECIDED_ROUTE: str = "undecided"
 
-
-#MATERIAL PICKS
-#a pick reads as this prefix and where the material was in the owner's pics, counting from 1
+#a pick is this prefix plus the materials spot in the owners pics, counting from 1
 MATERIAL_PICK_PREFIX: str = "material_"
 
 #they don't want any of them
@@ -155,33 +135,23 @@ NO_PICK: str = "none"
 OTHER_PICK: str = "other"
 
 
+#COLOR NOW
 
-#**********COLOR NOW**********
-#when a color they type stands in for a pic of their vehicle: right away when it's neutral, any other after enough asks for one
-
-
-#PIC ASKS
-#after this many replies asked for a pic of their vehicle with none coming, any color it is now they type goes on file in its place
+#pic asks with nothing back before we settle for the color now they typed
 COLOR_PIC_ASK_LIMIT: int = 2
 
-#a color it is now on file from their text is marked with this, since no pic's bright_vehicle says whether it's a bright color
+#marks a color now that came from their text, no pic means no bright_vehicle read
 TYPED_COLOR_SOURCE: str = "text"
 
-
-#TYPED COLOR FIELDS
-#what the typed color extractor reads: the color it is now they typed, whether it's a bright color and whether it's a neutral one
+#what the typed color extractor pulls, the color now they typed, bright and neutral
 TYPED_COLOR_FIELD_NAMES: list[str] = ["color", "bright", "neutral"]
 
-#next to the color on file, a color they typed says so, with whether it's bright since no pic's bright_vehicle says it
+#a typed color says so on file, plus whether its bright since no pic said it
 TYPED_COLOR_INFO_NAMES: list[str] = ["color_from", "color_bright"]
 
 
+#PRICE FIRST
 
-#**********PRICE FIRST**********
-#what the exact price waits on gets asked before the color they want, and the ask that goes out in place of one for that color too early
-
-
-#PRICE NEEDS
 #what the exact price still waits on from them, in the order it gets asked
 VEHICLE_NEED: str = "vehicle"
 
@@ -189,12 +159,10 @@ ROUTE_NEED: str = "route"
 
 COLOR_NOW_NEED: str = "color_now"
 
-#the exact color they want comes after every price need, so it's never one, but the job still waits on it all the same
+#asked after every price need so its never one, but the job still waits on it
 COLOR_WANT_NEED: str = "color_want"
 
-
-#PRICE ASKS
-#the owner's first ask for each, then the ways he asks it again, so an ask the shop already sent goes out in new words
+#the owners first ask, then how he words it again, so a repeat ask goes out in new words
 VEHICLE_COLOR_NOW_ASKS: list[str] = ["What car is it, and what color is it right now? Send me a pic if you can", "What are you driving, and what color's it at right now? Shoot me a quick pic of it when you get a sec", "Which car is it, and what color's it at the moment? Snap a pic of it and send it over whenever you get a chance"]
 
 VEHICLE_ROUTE_ASKS: list[str] = ["What vehicle is it, and which route are you leaning towards?", "What are you driving, and are you leaning more towards the wrap or the colored PPF?"]
@@ -203,133 +171,97 @@ VEHICLE_ASKS: list[str] = ["What car is it?", "What are you driving?", "Which ca
 
 ROUTE_ASKS: list[str] = ["Which route are you leaning towards?", "Are you leaning more towards the wrap or the colored PPF?"]
 
-#{vehicle} is the model on file, or the make when only it is
+#the vehicle slot is the model on file, or just the make when thats all there is
 COLOR_NOW_ASKS: list[str] = ["What color is the {vehicle} right now? Send me a pic if you can", "What color's the {vehicle} at right now? Shoot me a quick pic of it when you get a sec", "When you get a chance, can you snap a pic of the {vehicle} and send it over, that way I can see the exact color on it"]
 
 
+#ASKED AGAIN
 
-#**********ASKED AGAIN**********
-#a question the shop already asked goes out again in new words, other than the one the owner asks again in his same words
-
-
-#SAME WORDS ASKS
-#after they ask about the tint law, the owner asks how dark they want to go again in his same words (TINT rule 4)
+#after a tint law question the owner asks how dark again in his exact words, TINT rule 4
 SAME_WORDS_ASKS: list[str] = ["Do you know how dark you're wanting to go?"]
 
 
+#SIDE ASKS
 
-#**********SIDE ASKS**********
-#the new girl's line says she isn't sure and will ask the owner, and the branches whose checker flag is that line
-
-
-#NEW GIRL LINE
-#the 😅 only ever goes out on her line, and the line always says she'll ask the owner
+#the sweat smile only goes out on her line, and her line always says she'll ask the owner
 NEW_GIRL_EMOJI: str = "😅"
 
 OWNER_ASK_WORDS: str = "ask the owner"
 
-
-#LACK INFO BRANCHES
-#their checker flag means the reply is the lack info one with her line, any other branch's flag always hands them to the owner
+#flagged here means the lack info reply with her line, any other flag goes to the owner
 LACK_INFO_BRANCHES: list[str] = ["service_pricing", "business_operations"]
 
 
+#THRESHOLDS
 
-#**********THRESHOLDS**********
-#how sure each decision has to be before the bot goes with it
-
-
-#ROUTING
-#a route under this falls back to the branch its best guess points to (see torn_route)
+#a route under this falls back to where its best guess points, see torn_route
 ROUTE_THRESHOLD: float = 0.75
 
-#a yes over this lets the bot answer a restricted customer, high on purpose since a wrong answer reaches them
+#lets the system answer a restricted customer, high since a wrong answer reaches them
 RESTRICTED_THRESHOLD: float = 0.65
 
-#a yes over this opens a conversation they wrapped up back up, low on purpose since leaving a real ask on read costs more than answering one more ok
+#reopens a wrapped up chat, low since ghosting a real ask costs more than one extra reply
 REOPEN_THRESHOLD: float = 0.4
 
-
-#ANALYZERS
-#a yes over this means a service or question was asked about and its details get used, in every analyzer
+#over this a service or question counts as asked and its details get used, every analyzer
 ANALYZER_THRESHOLD: float = 0.75
 
-#a yes over this holds the price for a pic, low on purpose since a held price costs less than one without the color
+#holds the price for a pic, low since a held price beats one without the color
 COLOR_JOB_THRESHOLD: float = 0.5
 
-#a yes over this means they asked to book too, so the reply with the price ends on the schedule question
+#they asked to book too, so the price reply ends on the schedule question
 BOOKING_INTENT_THRESHOLD: float = 0.5
 
-#a yes over this means they just nodded along to what we told them, so the schedule question finally gets its shot
+#they just nodded along to what we said, so the schedule question finally gets its shot
 ACKS_INFO_THRESHOLD: float = 0.5
 
-#a yes over this lets a price into the shop's first reply, over half since the owner never wants one there they didn't ask for
+#lets a price into the first reply, over half since the owner never wants an unasked one their
 PRICE_QUESTION_THRESHOLD: float = 0.6
 
-#a pick over this puts the route on file, high on purpose since a route on file never gets asked again
+#puts the route on file, high since a route on file never gets asked again
 COLOR_ROUTE_THRESHOLD: float = 0.75
 
-
-#REPLY CHECKS
-#a yes over this means the details can't answer it, low enough that a question they have nothing on goes to a person instead of getting a made up answer, answered messages stay under it
+#the details can't answer it, low so a person gets it instead of a made up answer
 CHECKER_THRESHOLD: float = 0.65
 
-
-#ENFORCERS
-#jev has to be more than this sure a question rule broke before the draft gets rewritten, real breaks scored 0.89 and up in testing while noise hung around 0.5
+#how sure jev has to be a question rule broke, real breaks tested way above the noise
 QUESTION_ENFORCER_THRESHOLD: float = 0.6
 
-#same slack for tone, perfectly fine replies were landing as high as 0.6 in testing
+#same slack for tone, perfectly fine replies were scoring right up near this in testing
 TONE_ENFORCER_THRESHOLD: float = 0.6
 
 #same cutoff the old enforcer had, so notes in a draft get caught as often as before
 LEAK_THRESHOLD: float = 0.7
 
-
-#BOOKING DAYS
-#a yes over this means they asked for that open day, so it goes out before the next ones not turned down
+#they asked for that open day, so it goes ahead of the next ones not turned down
 ASKED_DATE_THRESHOLD: float = 0.5
 
-
-#MATERIAL ASKS
-#a yes over this means they asked more with their pick, over half since a miss only waits for their next text
+#they asked more with their pick, over half since a miss just waits for their next text
 MATERIAL_ASKS_THRESHOLD: float = 0.6
 
-
-#SIDE ASKS
-#a yes over this means everything the reply said she'd ask the owner about is small, like the wifi or parking, so the developer gets it on the side and the bot keeps the chat
+#her owner asks are all small, like wifi, so the dev gets them and the system keeps the chat
 SMALL_ASK_THRESHOLD: float = 0.6
 
-#a yes over this means they asked about that small thing again, so the owner takes it from here
+#they asked about that small thing again, so the owner takes it from here
 SIDE_ASK_PERSIST_THRESHOLD: float = 0.6
 
-
-#COLOR CHECK ASKS
-#a yes over this means they asked about the color they sent, so the line saying the color books are still getting checked stays, under half on purpose since cutting the answer to their ask costs more than saying it once more
+#they asked about there color, so the still checking line stays, low since dodging costs more
 COLOR_CHECK_ASKED_THRESHOLD: float = 0.4
 
 
+#GENERATION LIMITS
 
-#**********GENERATION LIMITS**********
-#how long each reply can get and how hard its model thinks before it writes
-
-
-#REGEN ATTEMPTS
-#a flagged reply gets fixed at most this many times, each fix checked like the first reply before it can go out
+#fix tries for a flagged reply, each fix gets checked like the first one
 REGEN_MAX_ATTEMPTS: int = 2
 
-
-#ASKED AGAIN LIMITS
-#flashx says an ask the shop already sent again in new words at high, and a wording that still repeats one or stops asking what it did gets written again, up to this many tries in all
+#flashx rewords a repeat ask at high, a wording that repeats or drops the ask gets redone
 ASKED_AGAIN_MAX_TOKENS: int = 10*100
 
 ASKED_AGAIN_EFFORT: str = "high"
 
 ASKED_AGAIN_MAX_ATTEMPTS: int = 3
 
-
-#PRICING LIMITS
-#every pricing reply and rewrite gets these token limits, and flashx writes the lack info reply and its rewrite at high, one notch under max (glm-5.3-flashx takes max, high, medium or low), so they go out sooner
+#pricing token limits, and flashx writes lack info at high, a notch under max so its quicker
 PRICING_MAX_TOKENS: int = 10*100
 
 PRICING_EFFORT: str = "high"
@@ -348,8 +280,6 @@ PRICING_INTERROGATOR_EFFORT: str = "high"
 
 PRICING_INTERROGATOR_REGEN_EFFORT: str = "high"
 
-
-#BUSINESS LIMITS
 BUSINESS_MAX_TOKENS: int = 10*100
 
 BUSINESS_EFFORT: str = "high"
@@ -358,8 +288,6 @@ BUSINESS_REGEN_MAX_TOKENS: int = 10*100
 
 BUSINESS_REGEN_EFFORT: str = "high"
 
-
-#CUSTOM LIMITS
 CUSTOM_MAX_TOKENS: int = 10*100
 
 CUSTOM_EFFORT: str = "high"
@@ -376,27 +304,19 @@ CUSTOM_COMMERCIAL_REGEN_EFFORT: str = "high"
 #flashx writes the photo and removal interrogators at high too
 CUSTOM_INTERROGATOR_EFFORT: str = "high"
 
-
-#PRICING CONFIRM LIMITS
 PRICING_CONFIRM_MAX_TOKENS: int = 10*100
 
 PRICING_CONFIRM_EFFORT: str = "high"
 
-
-#BOOKING DATE LIMITS
 BOOKING_DATE_MAX_TOKENS: int = 10*100
 
 #flashx writes the drop off day replies at high
 BOOKING_DATE_EFFORT: str = "high"
 
-
-#CONTACT LIMITS
 CONTACT_MAX_TOKENS: int = 10*100
 
 CONTACT_EFFORT: str = "high"
 
-
-#ESCALATION LIMITS
 ESCALATION_MAX_TOKENS: int = 10*100
 
 ESCALATION_EFFORT: str = "high"
@@ -405,8 +325,6 @@ ESCALATION_REGEN_MAX_TOKENS: int = 10*100
 
 ESCALATION_REGEN_EFFORT: str = "high"
 
-
-#GENERAL TEXT LIMITS
 GENERAL_TEXT_MAX_TOKENS: int = 10*100
 
 GENERAL_TEXT_EFFORT: str = "high"
@@ -415,32 +333,22 @@ GENERAL_TEXT_REGEN_MAX_TOKENS: int = 10*100
 
 GENERAL_TEXT_REGEN_EFFORT: str = "high"
 
-
-#HOLD LIMITS
 HOLD_MAX_TOKENS: int = 10*100
 
 HOLD_EFFORT: str = "high"
 
-
-#PHONE CALL LIMITS
 PHONE_CALL_MAX_TOKENS: int = 10*100
 
 PHONE_CALL_EFFORT: str = "high"
 
-
-#END CONVERSATION LIMITS
 END_CONVERSATION_MAX_TOKENS: int = 10*100
 
 END_CONVERSATION_EFFORT: str = "high"
 
-
-#COLOR APPROVED LIMITS
 COLOR_APPROVED_MAX_TOKENS: int = 10*100
 
 COLOR_APPROVED_EFFORT: str = "high"
 
-
-#COLOR PICKED LIMITS
 COLOR_PICKED_MAX_TOKENS: int = 10*100
 
 COLOR_PICKED_EFFORT: str = "high"
@@ -450,34 +358,21 @@ COLOR_PICKED_REGEN_MAX_TOKENS: int = 10*100
 COLOR_PICKED_REGEN_EFFORT: str = "high"
 
 
+#SHOP HOURS
 
-#**********SHOP HOURS**********
-#when the shop is open, so a price promised for later lands while it's open
-
-
-#OPEN HOURS
-#copied from the business details (Monday to Friday, 9AM to 5PM), so an hours change goes here too
-SHOP_OPENS: time = time(9, 0)
+#copied from the business details, 9AM to 5PM weekdays, so an hours change goes here too
+SHOP_OPENS = time(9, 0)
 
 #a price promised in about 30 minutes has to land before the shop closes at 5PM
-PRICE_BACK_CUTOFF: time = time(16, 30)
+PRICE_BACK_CUTOFF = time(16, 30)
 
 #the last day of the week the shop is open, datetime counts Monday as 0 so Friday is 4
 LAST_OPEN_WEEKDAY: int = 4
 
 
+#COMMERCIAL ASKS
 
-#**********COMMERCIAL ASKS**********
-#what a commercial wrap's price still needs, and the words that show a question asks for it
-
-
-#COMMERCIAL ASK
-#one thing the price still needs: what it is, its interrogator prompt and the one line on what it asks for
-COMMERCIAL_ASK: TypeAlias = tuple[str, Callable[[], str], str]
-
-
-#GROUP FIELDS
-#the fields on file each one fills, the make and model are one ask since they come in together
+#the fields on file each commercial ask fills, make and model come in together so they're one
 COMMERCIAL_GROUP_FIELDS: dict[str, list[str]] = {}
 
 COMMERCIAL_GROUP_FIELDS["wrap_type"] = ["wrap_type"]
@@ -488,9 +383,7 @@ COMMERCIAL_GROUP_FIELDS["vehicles"] = ["makes", "models"]
 
 COMMERCIAL_GROUP_FIELDS["vector_files"] = ["vector_files"]
 
-
-#GROUP WORDS
-#words a question asking for each one has, so one skipped for a later reply gets caught however it's reworded
+#words that give each ask away, so a pushed ask gets caught however its reworded
 COMMERCIAL_GROUP_WORDS: dict[str, list[str]] = {}
 
 COMMERCIAL_GROUP_WORDS["wrap_type"] = ["full wrap", "half wrap", "partial wrap", "decal", "decals", "kind of wrap", "type of wrap", "what wrap", "which job", "leaning towards", "leaning toward"]
@@ -502,74 +395,54 @@ COMMERCIAL_GROUP_WORDS["vehicles"] = ["make", "makes", "model", "models", "what 
 COMMERCIAL_GROUP_WORDS["vector_files"] = ["vector", "logo file", "logo files", "ai file", "eps", "svg", "pdf", "artwork", "print files", "logo that goes", "just the lettering"]
 
 
+#INVOICE
 
-#**********INVOICE**********
-#the deposit, and how the drop off day gets said in the replies about the invoice
+#the deposit that locks in their spot, a fifth of there confirmed services before tax
+DEPOSIT_RATE = Decimal("0.2")
 
-
-#DEPOSIT RATE
-#the deposit that locks in their spot is a fifth of what the services they confirmed come out to before tax
-DEPOSIT_RATE: Decimal = Decimal("0.2")
-
-
-#DAY WRITING
-#a drop off day under this many days out is just its weekday ("Thursday"), further out it gets its date too
+#a drop off day closer than this is just its weekday, further out it gets its date too
 WEEKDAY_ONLY_DAYS: int = 7
 
-#a drop off day is written with no year, so one more than this many days behind today is next year's
+#drop off days have no year, so one more than this many days behind today is next years
 HALF_YEAR_DAYS: int = 182
 
 
+#JUST BOOKED
 
-#**********JUST BOOKED**********
-#how long what they booked stays on file, so every reply till then knows they just booked
-
-
-#BOOKED KEEP
 #what they booked stays on file till this many days after its drop off day
 BOOKED_KEEP_DAYS: int = 2
 
 
-
-#**********CONTACT FIELDS**********
-#what the owner needs from them to send the invoice for the deposit
-
-
 #CONTACT FIELDS
+
 #all three come in before the owner gets texted to send the estimate
 CONTACT_FIELDS: list[str] = ["name", "number", "email"]
 
-#a number they point to instead of typing it out comes out of the contact extractor as this, the one they text from
+#they pointed at the number they text from instead of typing one out
 TEXTING_NUMBER: str = "texting"
 
 
+#ROUTING
 
-#**********ROUTING**********
-#decides which branch answers the customer's message, and where a torn decision goes
-
-
-#TORN ROUTE
 #the branch a route decision goes to when the router wasn't sure enough about its pick
 def torn_route(category: str, probabilities: dict[str, float]) -> str:
     #torn, but its best guess is a branch that can take it on its own, so it goes there
     if(category in ["service_pricing", "business_operations", "services_req_humans", "escalation", "general_text", "phone_call", "end_conversation"]):
         return category
 
-    #a booking only kicks off its confirm chain on a clear pick, so when torn its chance counts toward the service, and main_route still books it once they asked to get on the schedule
+    #a booking only confirms on a clear pick, so when torn it counts toward the service
     service_probability: float = probabilities["service_pricing"] + probabilities["booking_service_acknowledge"]
 
     if(service_probability >= ROUTE_THRESHOLD):
         return "service_pricing"
 
-    #torn between the service and the shop, the pricing branch takes it since its replies carry the shop's info too
+    #torn between service and shop, pricing takes it since its replies carry the shops info too
     if(probabilities["services_req_humans"] < min(service_probability, probabilities["business_operations"])):
         return "service_pricing"
 
     return "general_text"
 
-
-#ROUTE
-#the branch that answers it, with the model's chance for that branch and its own pick, which is a different branch only when it was torn
+#the branch that answers, its chance, and the routers own pick, which differs only when torn
 def pick_route(state: dict) -> tuple[str, float, str]:
     route_criteria: dict[str, str] = {}
 
@@ -604,9 +477,12 @@ def pick_route(state: dict) -> tuple[str, float, str]:
     probabilities: dict[str, float] = route_answer["probabilities"]
 
     if(confidence < ROUTE_THRESHOLD):
-        #a yes to the shop's schedule question with a question on it can land just under the cutoff, and the booking reply answers the question
-        user_text: str = state["current_user_message"].get("user_text") or ""
+        user_text: str | None = state["current_user_message"].get("user_text")
 
+        if(not user_text):
+            user_text = ""
+
+        #a schedule yes plus a question can land just under, the booking reply answers it
         if(category == "booking_service_acknowledge" and spacing.yes_to_booking_question(user_text, state["message_history"])):
             print(f"ROUTE: a yes to the schedule question, torn at {confidence:.2f}, so it books")
 
@@ -621,13 +497,9 @@ def pick_route(state: dict) -> tuple[str, float, str]:
     return (category, probabilities[category], category)
 
 
+#RESTRICTED ROUTING
 
-#**********RESTRICTED ROUTING**********
-#while a person has the conversation, the bot only answers what the details can answer on their own, and someone at the shop always hears to come on in
-
-
-#RESTRICTED QUESTIONS
-#the yes or no questions that decide whether a restricted customer's message is still the bot's to answer
+#yes or no questions on whether a restricted customer is still the systems to answer
 def restricted_analyzer_questions() -> dict[str, dict]:
     questions: dict[str, dict] = {}
 
@@ -639,11 +511,9 @@ def restricted_analyzer_questions() -> dict[str, dict]:
 
     return questions
 
-
-#RESTRICTED ROUTE
-#the branch that answers it with the model's chance for it, restricted has none since no question picked it
+#the branch that answers and its chance, restricted gets None since no question picked it
 def pick_restricted_route(state: dict) -> tuple[str, float | None]:
-    #a person has the conversation, so the bot only answers what the service or business details can answer on their own
+    #a person has the chat, so the system only takes what the details can answer alone
     classified: tuple[list[str], dict[str, float]] = models.classifier(restricted_analyzer_questions(), state, RESTRICTED_THRESHOLD)
 
     asked: list[str] = classified[0]
@@ -652,7 +522,7 @@ def pick_restricted_route(state: dict) -> tuple[str, float | None]:
 
     print(f"RESTRICTED ANALYZER: {models.codes_with_probabilities(asked, probabilities)}")
 
-    #a service question with a shop question in it goes to the pricing branch, its replies carry the shop's info too
+    #service plus shop questions go to pricing, its replies carry the shops info too
     if("service_pricing" in asked):
         return ("service_pricing", probabilities["service_pricing"])
 
@@ -667,13 +537,9 @@ def pick_restricted_route(state: dict) -> tuple[str, float | None]:
     return ("restricted", None)
 
 
+#ENDED CONVERSATIONS
 
-#**********ENDED CONVERSATIONS**********
-#once they wrap up for now and the shop takes it in, the bot leaves them be until they ask about something again, with nobody taking them over
-
-
-#REOPENS
-#True when their message asks about something again after they wrapped up, a closing ok, thanks or emoji never does
+#true when they ask something new after wrapping up, a closing ok or thanks never counts
 def reopens_conversation(state: dict) -> bool:
     reopen_question: dict = {"type": "noul", "instructions": f"Does the customer open the conversation back up in `current_user_message`, asking about something or bringing up something new for the shop to answer, after they wrapped it up for now?\n{end_conversation_examples.reopen_examples()}"}
 
@@ -684,12 +550,8 @@ def reopens_conversation(state: dict) -> bool:
     return probability_yes > REOPEN_THRESHOLD
 
 
+#REPLY CHECKS
 
-#**********REPLY CHECKS**********
-#lays out the details a reply gets written from
-
-
-#DETAILS TEXT
 #one json line per detail, the way the generators like it
 def details_text(analyzed_details: dict[str, dict], general_code: str | None) -> str:
     #the general code already holds every detail, so nothing goes in twice
@@ -703,13 +565,9 @@ def details_text(analyzed_details: dict[str, dict], general_code: str | None) ->
     return details
 
 
+#ENFORCERS
 
-#**********ENFORCERS**********
-#each check only sees its own slice of the state, and whatever breaks tells the regen exactly what to fix
-
-
-#LAST QUESTION
-#the last thing we asked them, digging back one reply at a time, "" if we never asked anything
+#the last thing we asked them, digging back a reply at a time, empty if we never asked
 def last_question_asked(message_history: dict) -> str:
     sent_replies: list[str] = spacing.sent_replies(message_history)
 
@@ -721,17 +579,13 @@ def last_question_asked(message_history: dict) -> str:
 
     return ""
 
-
-#ASKED LAST REPLY
-#our last reply asked them something, a pic ask counts, so the next one gets the every other reply breather
+#our last reply asked them something, a pic ask counts, so the next one gets a breather
 def asked_last_reply(message_history: dict) -> bool:
     last_reply: str = spacing.last_sent_reply(message_history)
 
     return len(repeats.question_sentences(last_reply)) > 0 or spacing.asks_for_pic(last_reply)
 
-
-#COLOR NEEDS
-#the colors the job still waits on from them, read off file the same way the color ask logic reads them, empty off a wrap or colored PPF
+#colors the job still waits on, read like the color asks read them, empty without a color job
 def color_needs(id: str) -> list[str]:
     needs: list[str] = []
 
@@ -740,19 +594,17 @@ def color_needs(id: str) -> list[str]:
 
     critical_info: dict[str, str] = log.read_info(f"criticalInfo_{id}")
 
-    #only a pic or link of it puts the color they want on file, a color they typed is just the idea
+    #only a pic or link puts the color they want on file, a typed color is just the idea
     if(critical_info.get("want") is None):
         needs.append(COLOR_WANT_NEED)
 
-    #the color it is now stops being needed once a pic of it came in or the asks for one ran out
+    #the color now stops being needed once a pic came in or the pic asks ran out
     if(COLOR_NOW_NEED in price_needs(critical_info, id)):
         needs.append(COLOR_NOW_NEED)
 
     return needs
 
-
-#NEEDED COLOR ASKS
-#the draft's asks for a color the job still waits on, only the color ask logic ever takes these out, never an enforcer
+#the drafts asks for a color the job still needs, only the color ask logic may cut these
 def needed_color_asks(draft_reply: str, needs: list[str]) -> list[str]:
     asks: list[str] = []
 
@@ -767,44 +619,34 @@ def needed_color_asks(draft_reply: str, needs: list[str]) -> list[str]:
 
     return asks
 
-
-#ASKS BESIDES
-#whether the draft still asks a question once its color asks come out, jev only ever judges questions and the words that finish them
+#the draft still asks something once its color asks come out, jev only ever judges questions
 def asks_besides(draft_reply: str, color_asks: list[str]) -> bool:
     rest: str = repeats.drop_questions(draft_reply, color_asks)
 
     return len(repeats.question_sentences(rest)) > 0
 
-
-#COLOR ASK DROPPED
-#the draft asked for a color the job still waits on and the regen asks for none, so that regen never goes out
+#the draft asked for a needed color and the regen asks for none, so that regen gets tossed
 def color_ask_dropped(draft_reply: str, regen_reply: str, needs: list[str]) -> bool:
     if(len(needed_color_asks(draft_reply, needs)) == 0):
         return False
 
     return len(needed_color_asks(regen_reply, needs)) == 0
 
-
-#QUESTION STATE
-#the question enforcer's slice: what we last asked, the chat so far, what they just said, and the draft
+#the question enforcers slice, our last question, the chat, their message, and the draft
 def question_enforcer_state(state: dict, draft_reply: str) -> dict:
     last_question: str = last_question_asked(state["message_history"])
 
     return {"last_question_asked": last_question, "message_context": state["message_history"], "current_customer_message": state["current_user_message"], "draft_reply": draft_reply}
 
-
-#TONE STATE
-#tone only needs the chat so far and the draft, what they just said doesn't change how we sound
+#tone only needs the chat and the draft, their latest message doesn't change how we sound
 def tone_enforcer_state(state: dict, draft_reply: str) -> dict:
     return {"message_context": state["message_history"], "draft_reply": draft_reply}
 
-
-#BROKEN RULE
 #the rule jev leans on most, and how sure it is the draft broke anything at all
 def broken_rule(answer: dict, follows_pick: str) -> tuple[str, float]:
     probabilities: dict[str, float] = answer["probabilities"]
 
-    #anything jev didn't put on "follows" is it betting the draft broke something
+    #anything jev didn't put on follows is it betting the draft broke something
     broke_probability: float = 1.0 - probabilities.get(follows_pick, 0.0)
 
     top_rule: str = ""
@@ -822,11 +664,9 @@ def broken_rule(answer: dict, follows_pick: str) -> tuple[str, float]:
 
     return (top_rule, broke_probability)
 
-
-#QUESTION ENFORCER
-#jev eyeballs the draft's questions, what to fix comes back "" when they're fine, color_asks are the ones it never gets a say on
+#jev eyeballs the drafts questions, empty fix means fine, and color_asks are off limits
 def question_enforcer(state: dict, draft_reply: str, color_asks: list[str]) -> tuple[str, float]:
-    #all it asks is a color the job still waits on, that's the color ask logic's call, so jev sits this one out
+    #all it asks for is a needed color, thats the color logics call, so jev sits this out
     if(len(color_asks) > 0 and not asks_besides(draft_reply, color_asks)):
         color_ask_text: str = " ".join(color_asks)
 
@@ -846,13 +686,13 @@ def question_enforcer(state: dict, draft_reply: str, color_asks: list[str]) -> t
 
     broke_probability: float = broken[1]
 
-    #a blank rule name only happens when jev's rounding ate every rule, so that counts as a pass
+    #a blank rule name means jevs rounding ate every rule, so it counts as a pass
     if(broke_probability <= QUESTION_ENFORCER_THRESHOLD or rule_name == ""):
         print(f"QUESTION ENFORCER: False({broke_probability:.2f})")
 
         return ("", broke_probability)
 
-    #asked again only counts right after the reply that asked it, so a nod to an answer in between hands the schedule question back
+    #asked again only counts right after the reply that asked, a nod since then frees it up
     if(rule_name == "schedule_asked_again" and not asked_last_reply(state["message_history"]) and acks_info(state)):
         print(f"QUESTION ENFORCER: False({broke_probability:.2f}) schedule_asked_again waved off, they just nodded along to our answer")
 
@@ -864,9 +704,7 @@ def question_enforcer(state: dict, draft_reply: str, color_asks: list[str]) -> t
 
     return (f"QUESTION ({rule_name}): {fix}", broke_probability)
 
-
-#TONE ENFORCER
-#jev listens to how the draft sounds, what to fix comes back "" when it sounds like us
+#jev listens to how the draft sounds, empty fix means it sounds like us
 def tone_enforcer(state: dict, draft_reply: str) -> tuple[str, float]:
     question: dict = {"type": "choice", "instructions": f"{tone_enforcer_prompt.question()}\n{tone_enforcer_prompt.examples()}", "criteria": tone_enforcer_prompt.criteria()}
 
@@ -880,7 +718,7 @@ def tone_enforcer(state: dict, draft_reply: str) -> tuple[str, float]:
 
     broke_probability: float = broken[1]
 
-    #a blank rule name only happens when jev's rounding ate every rule, so that counts as a pass
+    #a blank rule name means jevs rounding ate every rule, so it counts as a pass
     if(broke_probability <= TONE_ENFORCER_THRESHOLD or rule_name == ""):
         print(f"TONE ENFORCER: False({broke_probability:.2f})")
 
@@ -892,8 +730,6 @@ def tone_enforcer(state: dict, draft_reply: str) -> tuple[str, float]:
 
     return (f"TONE ({rule_name}): {fix}", broke_probability)
 
-
-#LEAK CHECK
 #the old safety net, jev reads just the draft for notes the writer forgot to take out
 def leak_check(draft_reply: str) -> tuple[str, float]:
     leak_question: dict = {"type": "noul", "instructions": f"{leak_check_prompt.question()}\n{leak_check_prompt.examples()}"}
@@ -909,16 +745,14 @@ def leak_check(draft_reply: str) -> tuple[str, float]:
 
     return (leak_check_prompt.fix(), leak_probability)
 
-
-#ENFORCE
-#runs every check on the draft, what to fix comes back "" when it's clean, plus how worried the most worried check was
+#runs every check, empty fix when clean, plus how worried the most worried check was
 def enforce(state: dict, draft_reply: str, held: bool, needs: list[str]) -> tuple[str, float]:
-    #the draft's asks for a color the job still waits on, no check ever gets to take these out
+    #no check ever gets to cut the asks for a color the job still needs
     color_asks: list[str] = needed_color_asks(draft_reply, needs)
 
     checks: list[tuple[str, float]] = []
 
-    #a $ on a first reply that holds every price is busted, no model needed for that one
+    #a dollar sign on a first reply that holds every price is busted, no model needed
     if(held and "$" in draft_reply):
         print("PRICE HOLD BROKEN: the reply gave a price on the shop's first reply")
 
@@ -953,19 +787,15 @@ def enforce(state: dict, draft_reply: str, held: bool, needs: list[str]) -> tupl
 
     return (what_to_fix.strip(), worst_probability)
 
-
-#REGEN TEXT
-#same input the draft was written from, then the flagged draft, then what to fix dead last so it's fresh on the regen's mind
+#same input as the draft, then the flagged draft, then what to fix last so its fresh in mind
 def regen_text(text: str, response: str, what_to_fix: str, shop_last_reply: str | None) -> str:
     if(shop_last_reply is None):
         return f"{text}\n FLAGGED_RESPONSE: {response}\n WHAT_TO_FIX:\n{what_to_fix}"
 
     return f"{text}\n SHOP_LAST_REPLY: {shop_last_reply}\n FLAGGED_RESPONSE: {response}\n WHAT_TO_FIX:\n{what_to_fix}"
 
-
-#ENFORCED REPLY
-#checks the draft, rewrites it around what broke, and the least flagged one goes out if every rewrite flunks too
-def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: str, regen_prompt: str, regen_generator: Callable[..., str], max_tokens: int, effort: str, line_breaks: bool, shop_last_reply: str | None, held: bool = False) -> str:
+#checks and rewrites the draft, if every rewrite flunks too the least flagged one goes out
+def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: str, regen_prompt: str, regen_generator, max_tokens: int, effort: str, line_breaks: bool, shop_last_reply: str | None, held: bool = False) -> str:
     #the colors the job still waits on, nothing in here changes them so they're read once
     needs: list[str] = color_needs(id)
 
@@ -977,7 +807,6 @@ def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: 
     what_to_fix: str = ""
 
     for attempt in range(REGEN_MAX_ATTEMPTS + 1):
-        #every try after the first one is a regen of the last flagged draft
         if(attempt > 0):
             #shop_last_reply stays None for the regens that never read it
             regen_input: str = regen_text(text, response, what_to_fix, shop_last_reply)
@@ -994,7 +823,7 @@ def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: 
 
                 break
 
-            #the regen tossed the color ask the job still waits on, so the regen gets tossed instead and the next try fixes the same draft
+            #the regen tossed a needed color ask, so the regen gets tossed instead
             if(color_ask_dropped(response, regen_response, needs)):
                 print(f"{regen_label} DROPPED THE COLOR ASK: {regen_response}")
 
@@ -1023,25 +852,19 @@ def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: 
     return least_flagged_reply
 
 
+#HAND OFFS
 
-#**********HAND OFFS**********
-#who hears about a reply: nobody, the developer on the side for something small the new girl said she'd ask the owner about, or the owner, who takes the chat
-
-
-#OWNER ASK
-#the reply has the new girl's line, where she isn't sure on something and says she'll ask the owner
+#the reply has the new girls line, where she isn't sure and says she'll ask the owner
 def owner_ask(reply: str) -> bool:
     return NEW_GIRL_EMOJI in reply or OWNER_ASK_WORDS in reply.lower()
 
-
-#SMALL ASK
-#True when everything the reply said she'd ask the owner about is small, like the wifi, the waiting area or parking
+#true when everything she'd ask the owner about is small, like the wifi or parking
 def small_ask(state: dict, reply: str) -> bool:
     small_question: dict = {"type": "noul", "instructions": f"Is everything SYSTEM_RESPONSE says she isn't sure on and will ask the owner about something small about coming to the shop, like the wifi, the waiting area or parking?\n{side_ask_examples.small_ask_examples()}"}
 
     state_as_text: str = state_form.state_to_text(state)
 
-    #the reply goes in with the conversation, since what she said she'd ask the owner about is what gets judged
+    #the reply rides along with the chat, since what she'd ask the owner is what gets judged
     small_state: str = f"STATE: {state_as_text}\nSYSTEM_RESPONSE: {reply}"
 
     probability_yes: float = models.decision_answer("small_ask", small_question, small_state)["noul"]
@@ -1050,9 +873,7 @@ def small_ask(state: dict, reply: str) -> bool:
 
     return probability_yes > SMALL_ASK_THRESHOLD
 
-
-#SIDE ASK PERSISTS
-#True when they ask again about the small thing the new girl said she'd ask the owner about
+#true when they ask again about the small thing the new girl said she'd ask the owner
 def side_ask_persists(state: dict) -> bool:
     persist_question: dict = {"type": "noul", "instructions": f"Is the customer asking again about, following up on or pushing for an answer on something small a system_response in `message_history` said she wasn't sure on and would ask the owner about, in `current_user_message`?\n{side_ask_examples.persist_examples()}"}
 
@@ -1062,18 +883,16 @@ def side_ask_persists(state: dict) -> bool:
 
     return probability_yes > SIDE_ASK_PERSIST_THRESHOLD
 
-
-#HAND OFF
-#the reply that goes out, with something small she said she'd ask the owner about sent to the developer on the side, and the owner taking the chat for a flagged reply or anything bigger
+#small asks go to the dev on the side, a flagged reply or anything bigger goes to the owner
 def hand_off(branch_return: tuple[str, bool], state: dict, id: str, branch: str) -> str:
     reply: str = branch_return[0]
 
     flagged: bool = branch_return[1]
 
-    #her line in a reply that wasn't flagged, or in the lack info reply a pricing or business flag writes
+    #her line in an unflagged reply, or in the lack info reply a pricing or business flag writes
     asked_owner: bool = owner_ask(reply) and (not flagged or branch in LACK_INFO_BRANCHES)
 
-    #something small like the wifi or parking goes to the developer on the side, and the bot keeps the chat
+    #small stuff like wifi goes to the dev on the side, and the system keeps the chat
     if(asked_owner and small_ask(state, reply)):
         print("SIDE ASK: the reply told them she'd ask the owner about something small, so the developer gets it on the side and nobody takes the chat")
 
@@ -1081,24 +900,19 @@ def hand_off(branch_return: tuple[str, bool], state: dict, id: str, branch: str)
 
         return reply
 
-    #the checker flagged the reply, so a person takes it from here and the owner gets texted why
+    #flagged by the checker, so a person takes over and the owner gets texted why
     if(flagged):
         owner.restrict(id, owner.REASONS[branch])
-
-    #the reply told them she'd ask the owner about something bigger, so he takes it from here
     elif(asked_owner):
+        #she said she'd ask the owner about something bigger, so he takes it from here
         owner.restrict(id, owner.REASONS["owner_ask"])
 
     return reply
 
 
+#COLOR JOB
 
-#**********COLOR JOB**********
-#keeps track of a wrap or colored PPF job, the jobs whose price waits on a pic of the vehicle
-
-
-#CONVERSATION JOB
-#True when a wrap, a color change or colored PPF is still the job they want, read from the whole conversation
+#true when a wrap or colored PPF is still the job they want, read from the whole chat
 def conversation_color_job(state: dict) -> bool:
     color_job_question: dict = {"type": "noul", "instructions": f"Is a vinyl wrap, a color change or colored PPF the job the customer wants in this conversation, asked about in `current_user_message` or earlier in `message_history` and not moved off of or turned down?\n{pricing_examples.color_job_examples()}"}
 
@@ -1110,8 +924,6 @@ def conversation_color_job(state: dict) -> bool:
 
     return color_job_now
 
-
-#NAMED CODES
 #the services the analyzer named, the general code names none
 def named_codes(codes: list[str]) -> list[str]:
     named: list[str] = []
@@ -1122,36 +934,26 @@ def named_codes(codes: list[str]) -> list[str]:
 
     return named
 
-
-#SAVED CODES
-#the color codes on file, a file from before the codes went on it only has the on flag, so it's both
+#the color codes on file, an old file with just the on flag means both
 def color_codes_in(on_file: dict) -> list[str]:
     if("codes" not in on_file and on_file.get("on", False)):
         return COLOR_CODES
 
     return on_file.get("codes", [])
 
-
-#SAVED JOB
 #the color codes the conversation is on, empty when it isn't on a wrap or colored PPF
 def color_job_on_file(id: str) -> list[str]:
     return color_codes_in(log.read_state(f"s_p_color_job_{id}"))
 
-
-#COLOR NOW MISSING
-#a wrap or colored PPF job still waiting on the color it is now, the only time a pic of their vehicle gets asked for
+#a color job still missing the color it is now, the only time a vehicle pic gets asked for
 def color_now_missing(id: str) -> bool:
     return len(color_job_on_file(id)) > 0 and log.read_info(f"criticalInfo_{id}").get("color") is None
 
-
-#PIC ASKS
-#how many replies asked for a pic of their vehicle while the color it is now wasn't on file
+#how many replies asked for a pic of there vehicle while the color it is now wasn't on file
 def color_pic_asks(id: str) -> int:
     return log.read_count(f"color_pic_asks_{id}")
 
-
-#PIC ASKED
-#a reply that went out asking for a pic while the job still waits on the color it is now is one more ask for it, never the exact color they want
+#a sent pic ask while the color now is missing is one more ask for it
 def note_color_pic_ask(id: str, reply: str) -> None:
     if(not spacing.asks_for_pic(reply) or not color_now_missing(id)):
         return
@@ -1160,11 +962,9 @@ def note_color_pic_ask(id: str, reply: str) -> None:
 
     print(f"COLOR PIC ASKS: {asks}")
 
-
-#TYPED COLOR READ
-#the color it is now they typed anywhere in the conversation, whether it's bright and whether it's neutral, the color empty when they never typed it
+#the color now they typed anywhere in the chat, plus bright and neutral, empty if never typed
 def typed_color_read(user_message: dict, message_history: dict) -> tuple[str, bool, bool]:
-    #the whole conversation, since they may have typed the color before the shop asked for it
+    #the whole chat, since they may have typed the color before we ever asked
     conversation: dict = {"current_user_message": user_message, "message_history": message_history}
 
     typed_output: str = models.extract_typed_color(state_form.state_to_text(conversation))
@@ -1178,9 +978,7 @@ def typed_color_read(user_message: dict, message_history: dict) -> tuple[str, bo
 
     return (typed_values[TYPED_COLOR_FIELD_NAMES.index("color")], bright, neutral)
 
-
-#TYPED COLOR CHECK
-#a neutral color they typed goes on file as the color it is now right away, since it's never a bright one, any other once the asks for a pic ran out, "" when nothing went on file
+#a typed neutral goes on file right away, any other color once the pic asks ran out
 def typed_color_check(user_message: dict, message_history: dict, id: str) -> str:
     typed_read: tuple[str, bool, bool] = typed_color_read(user_message, message_history)
 
@@ -1192,23 +990,33 @@ def typed_color_check(user_message: dict, message_history: dict, id: str) -> str
 
     neutral: bool = typed_read[2]
 
-    #before the asks ran out only a neutral color goes by what they typed, any other still waits on the pic
+    #till the pic asks run out only a neutral color goes by what they typed
     if(not neutral and color_pic_asks(id) < COLOR_PIC_ASK_LIMIT):
         print(f"TYPED COLOR: {typed_color} isn't neutral, so the pic of it still gets asked for")
 
         return ""
 
-    bright: str = "yes" if typed_read[1] else "no"
+    bright: str = ""
 
-    log.write_info(f"criticalInfo_{id}", [typed_color, TYPED_COLOR_SOURCE, bright], ["color", *TYPED_COLOR_INFO_NAMES])
+    if(typed_read[1]):
+        bright = "yes"
+    else:
+        bright = "no"
 
-    print(f"TYPED COLOR: {typed_color} (bright: {bright}, neutral: {'yes' if neutral else 'no'}) goes on file in place of a pic of it")
+    log.write_info(f"criticalInfo_{id}", [typed_color, TYPED_COLOR_SOURCE, bright], ["color"] + TYPED_COLOR_INFO_NAMES)
+
+    neutral_text: str = ""
+
+    if(neutral):
+        neutral_text = "yes"
+    else:
+        neutral_text = "no"
+
+    print(f"TYPED COLOR: {typed_color} (bright: {bright}, neutral: {neutral_text}) goes on file in place of a pic of it")
 
     return typed_color
 
-
-#COLOR NOW STATE
-#a color they typed in place of a pic goes in the state with whether it's bright, so every reply prices it like a pic of it
+#a typed color goes in the state with its bright flag, so replies price it like a pic
 def add_color_now(state: dict, critical_info: dict[str, str]) -> dict:
     if(critical_info.get("color_from") != TYPED_COLOR_SOURCE):
         return state
@@ -1217,17 +1025,13 @@ def add_color_now(state: dict, critical_info: dict[str, str]) -> dict:
 
     return state
 
-
-#FIRST COLOR FILL
-#the state build only reads a color they typed once the job is on file, so a neutral one typed with the job when it first comes up goes on file here
-#a read that fails only leaves the pic to be asked for, so it never stops the reply
+#catches a color typed as the job first comes up, a failed read just leaves the pic ask
 def first_color_fill(state: dict, id: str) -> None:
     if(not color_now_missing(id)):
         return
 
     try:
         typed_color_check(state["current_user_message"], state["message_history"], id)
-
     except Exception as error:
         print(f"TYPED COLOR ERROR: {error}")
 
@@ -1235,9 +1039,7 @@ def first_color_fill(state: dict, id: str) -> None:
 
     add_color_now(state, log.read_info(f"criticalInfo_{id}"))
 
-
-#MARK JOB
-#a booking held for the color goes back to the pricing branch on the job on file, both codes when none is named yet
+#a booking held for the color goes back to pricing on its job, both codes if none is named
 def turn_color_job_on(id: str) -> None:
     codes: list[str] = color_job_on_file(id)
 
@@ -1246,53 +1048,46 @@ def turn_color_job_on(id: str) -> None:
 
     log.write_state(f"s_p_color_job_{id}", {"codes": codes})
 
-
-#COLOR JOB
-#the color codes the conversation is on, a wrap and colored PPF are the jobs whose price needs the color it is now
+#works out which color jobs the chat is on and puts that on file
 def color_job(codes: list[str], state: dict, id: str) -> list[str]:
     named: list[str] = named_codes(codes)
 
     color_codes: list[str] = []
 
-    #kept as their latest message names the job
+    #kept as there latest message names the job
     if(len(named) > 0):
         for code in named:
             if(code in COLOR_CODES):
                 color_codes.append(code)
 
-        #another service asked about on top of the job on file ("also for window tint I can do any shade right?") only ends it when they moved off it
+        #another service on top of the job on file only ends it once they moved off it
         job_on_file: list[str] = color_job_on_file(id)
 
         if(len(color_codes) == 0 and len(job_on_file) > 0 and conversation_color_job(state)):
             return job_on_file
-
     else:
-        #a follow up that names no service ("no pics on this phone", a pic, "lets do it") keeps going on the job on file
+        #a follow up that names no service, like a pic or lets do it, keeps the job on file
         on_file: dict = log.read_state(f"s_p_color_job_{id}")
 
         if(len(on_file) > 0):
             return color_codes_in(on_file)
 
-        #nothing on file yet, like a job asked about in a message another branch answered, so it's read for once
+        #nothing on file yet, maybe another branch took the job ask, so read the chat
         if(conversation_color_job(state)):
             color_codes = COLOR_CODES
 
     log.write_state(f"s_p_color_job_{id}", {"codes": color_codes})
 
-    #the route belongs to the color job, so moving off it clears it and a color change later gets asked again
+    #the route belongs to the color job, so moving off it clears the route too
     if(len(color_codes) == 0):
         log.clear_info(f"criticalInfo_{id}", ["route"])
 
     return color_codes
 
 
+#COLOR ROUTE
 
-#**********COLOR ROUTE**********
-#works out which film they want for the color change, and when the owner checks the color they sent
-
-
-#DECIDED ROUTE
-#the route the decisions model picks, with how sure it is and its chance for that route, going by the whole conversation
+#the route picked from the whole chat, how sure the model is, and its chance for that route
 def decided_route(state: dict) -> tuple[str, float, float]:
     route_criteria: dict[str, str] = {}
 
@@ -1314,11 +1109,9 @@ def decided_route(state: dict) -> tuple[str, float, float]:
 
     return (choice, route_answer["confidence"], route_answer["probabilities"][choice])
 
-
-#COLOR ROUTE
-#the film they pick for the color change goes on file, so every follow up goes by it and it never gets asked again
+#the film they pick goes on file, so follow ups go by it and it never gets asked again
 def color_route(state: dict, codes: list[str], id: str) -> None:
-    #a wrap weighed against clear PPF or a coating has one way to change the color in it, so there's nothing to decide
+    #a wrap next to clear PPF or a coating is the only color change in play, nothing to decide
     wrap_only: bool = COLOR_CHANGE_CODE in codes and COLORED_PPF_CODE not in codes and (PPF_CODE in codes or CERAMIC_COATING_CODE in codes)
 
     if(wrap_only):
@@ -1327,7 +1120,6 @@ def color_route(state: dict, codes: list[str], id: str) -> None:
         confidence: float = 1.0
 
         probability: float = 1.0
-
     else:
         decided: tuple[str, float, float] = decided_route(state)
 
@@ -1339,17 +1131,15 @@ def color_route(state: dict, codes: list[str], id: str) -> None:
 
     print(f"COLOR ROUTE: {picked}({probability:.2f})")
 
-    #only a clear pick goes on file, so a follow up that names no film never loses the one they picked
+    #only a clear pick goes on file, so a vague follow up never loses the one they picked
     if(picked in COLOR_ROUTES and confidence >= COLOR_ROUTE_THRESHOLD):
         log.write_info(f"criticalInfo_{id}", [picked], ["route"])
 
-
-#COLOR CHECK
-#the vehicle, the route, a pic and the exact color are in, and the owner hasn't been asked about that color yet
+#vehicle, route, pic and exact color are in, and the owner hasn't been asked about it yet
 def color_check_due(color_job_on: bool, critical_info: dict[str, str], color_check: str) -> bool:
     vehicle_known: bool = critical_info.get("make") is not None or critical_info.get("model") is not None
 
-    #the owner checks the color in the film they picked, so the check waits for the route like the color questions do
+    #the owner checks the color in there picked film, so the check waits on the route too
     route_picked: bool = critical_info.get("route") is not None
 
     exact_color_in: bool = critical_info.get("color") is not None and critical_info.get("want") is not None
@@ -1357,21 +1147,16 @@ def color_check_due(color_job_on: bool, critical_info: dict[str, str], color_che
     return color_job_on and vehicle_known and route_picked and exact_color_in and color_check == ""
 
 
+#EARLY ASKS
 
-#**********EARLY COLOR ASKS**********
-#what the exact price waits on gets asked before the color they want, so the ask for it goes out in place of one for that color too early
-
-
-#PRICE NEEDS
-#what the exact price still waits on from them, in the order it gets asked, empty once the color they want is next
-#the color it is now counts as in once the asks for a pic of it ran out, the same way a color they type stands in for the pic then
+#what the price still waits on in ask order, the color now drops out once the pic asks run out
 def price_needs(critical_info: dict[str, str], id: str) -> list[str]:
     needs: list[str] = []
 
     if(critical_info.get("make") is None and critical_info.get("model") is None):
         needs.append(VEHICLE_NEED)
 
-    #a color change with no film picked waits on the route before any color question, the same as the pricing branch asks it
+    #a color change with no film picked needs the route before any color question
     if(len(color_job_on_file(id)) > 0 and critical_info.get("route") is None):
         needs.append(ROUTE_NEED)
 
@@ -1380,12 +1165,10 @@ def price_needs(critical_info: dict[str, str], id: str) -> list[str]:
 
     return needs
 
-
-#PRICE ASK WORDS
 #the ways to ask for the first thing the price waits on, grouped the way the owner asks them
 def price_ask_words(needs: list[str]) -> list[str]:
     if(needs[0] == VEHICLE_NEED):
-        #a color change with no film picked asks the vehicle with which route, the color it is now waits for the route
+        #no film picked yet, so the vehicle ask comes with the route ask and the color waits
         if(ROUTE_NEED in needs):
             return VEHICLE_ROUTE_ASKS
 
@@ -1399,11 +1182,15 @@ def price_ask_words(needs: list[str]) -> list[str]:
 
     return COLOR_NOW_ASKS
 
-
-#PRICE ASK
-#the one question for what the exact price waits on, in words the shop hasn't asked it in yet, the last way it's asked once it used them all
+#the price ask in words we haven't used yet, or the last wording once they're all used
 def price_ask(critical_info: dict[str, str], needs: list[str], message_history: dict) -> str:
-    vehicle: str = critical_info.get("model") or critical_info.get("make") or ""
+    vehicle: str | None = critical_info.get("model")
+
+    if(not vehicle):
+        vehicle = critical_info.get("make")
+
+    if(not vehicle):
+        vehicle = ""
 
     asks: list[str] = []
 
@@ -1419,18 +1206,12 @@ def price_ask(critical_info: dict[str, str], needs: list[str], message_history: 
     return asks[-1]
 
 
+#PRICE HOLD
 
-#**********PRICE HOLD**********
-#the shop's first reply never gives a price unless their message asks what something costs, a lead form included, so they're talking first
-
-
-#HOLD LINE
-#goes on the input of a reply written while it holds every price, the prompts and their regens go by #PRICE HOLD when they see it
+#goes on a replys input while every price is held, the prompts and regens watch for it
 PRICE_HOLD_LINE: str = "PRICE_HOLD: yes"
 
-
-#PRICE QUESTION
-#True when their message asks what something costs, the one thing that lets a price into the shop's first reply
+#true when they ask what something costs, the only way a price gets into the first reply
 def price_question(state: dict) -> bool:
     question: dict = {"type": "noul", "instructions": f"Is the customer asking what something costs, or about its price, in `current_user_message`?\n{pricing_examples.price_question_examples()}"}
 
@@ -1440,9 +1221,7 @@ def price_question(state: dict) -> bool:
 
     return probability_yes > PRICE_QUESTION_THRESHOLD
 
-
-#PRICE HELD
-#True on the shop's first reply when their message doesn't ask what anything costs, the reply the form intro goes on counts as the first one too
+#true on the first reply unless they asked a price, the form intros reply counts as first too
 def price_held(state: dict) -> bool:
     #a reply already went out, so every price goes by the rules like any other reply
     if(greeting.replied_before(state["message_history"])):
@@ -1454,18 +1233,14 @@ def price_held(state: dict) -> bool:
 
     return held
 
-
-#HELD TEXT
-#the input a reply gets written from, with the hold line on it while the reply holds every price
+#the replys input, with the hold line tacked on while every price is held
 def held_text(text: str, held: bool) -> str:
     if(not held):
         return text
 
     return f"{text}\n {PRICE_HOLD_LINE}"
 
-
-#HELD PRICE CUT
-#a price that got past the hold comes off with its sentence, and when every sentence had one a person answers them instead
+#a price that slipped past the hold gets cut with its sentence, all cut means a person answers
 def held_price_cut(reply: str, held: bool, id: str) -> str:
     if(not held):
         return reply
@@ -1478,12 +1253,8 @@ def held_price_cut(reply: str, held: bool, id: str) -> str:
     return kept_reply
 
 
+#PRICING
 
-#**********PRICING**********
-#answers questions about the shop's services and their prices, asking for what a price still needs
-
-
-#PRICING QUESTIONS
 #the yes or no questions that find which services their message asks about, one code each
 def pricing_analyzer_questions() -> dict[str, dict]:
     questions: dict[str, dict] = {}
@@ -1502,9 +1273,7 @@ def pricing_analyzer_questions() -> dict[str, dict]:
 
     return questions
 
-
-#PRICING SERVICES
-#the services the message is about (the job on file when it names none), and the color codes it's on
+#the services the message is about, the job on file if it names none, and its color codes
 def pricing_services(state: dict, id: str) -> tuple[list[str], list[str]]:
     classified: tuple[list[str], dict[str, float]] = models.classifier(pricing_analyzer_questions(), state, ANALYZER_THRESHOLD)
 
@@ -1512,20 +1281,17 @@ def pricing_services(state: dict, id: str) -> tuple[list[str], list[str]]:
 
     probabilities: dict[str, float] = classified[1]
 
-    #kept before the check, so every analyzed message updates the job the conversation is on
+    #runs before the check, so every analyzed message updates the job the chat is on
     color_codes: list[str] = color_job(codes, state, id)
 
-    #a message no question picked up ("no pics on this phone", a pic with no text) carries on with the job on file
+    #a message no question picked up, like a bare pic, carries on with the job on file
     if(codes == []):
         if(len(color_codes) > 0):
             codes = color_codes
-
-        #with no job on, it's a general one
         else:
             codes = [PRICING_GENERAL_CODE]
-
-    #another service asked about while the color job stays on gets the job's details next to its own
     else:
+        #another service asked mid color job gets the jobs details next to its own
         for code in color_codes:
             if(code not in codes):
                 codes.append(code)
@@ -1534,8 +1300,6 @@ def pricing_services(state: dict, id: str) -> tuple[list[str], list[str]]:
 
     return (codes, color_codes)
 
-
-#PRICING LACK INFO
 #the details have nothing on it, so she owns up and says she'll ask the owner
 def pricing_lack_info(state: dict, id: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
@@ -1551,9 +1315,7 @@ def pricing_lack_info(state: dict, id: str) -> str:
 
     return enforced_reply(state, id, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
-
-#INTERROGATOR PROMPT
-#the prompt that asks for whatever the price or booking still waits on, None when nothing's missing
+#the prompt that asks for what the price or booking still waits on, None when nothings missing
 def pricing_interrogator(color_job_on: bool, critical_info: dict[str, str], color_check: str) -> str | None:
     make: str | None = critical_info.get("make")
 
@@ -1577,46 +1339,37 @@ def pricing_interrogator(color_job_on: bool, critical_info: dict[str, str], colo
             return vehicle_color.prompt()
 
         return vehicle.prompt()
-
-    #both routes go out first and they pick one, colors can wait
     elif(route_needed):
+        #both routes go out first and they pick one, colors can wait
         return which_route.prompt()
-
     elif(color_needed):
         return color_now.prompt()
-
-    #price can go out, but booking waits on a pic or link of the exact color
     elif(color_job_on and want is None):
+        #price can go out, but booking waits on a pic or link of the exact color
         return exact_color.prompt()
-
-    #they sent it, now the owner makes sure we can actually get it
     elif(color_job_on and color_check in ["", owner.PENDING_STATUS]):
+        #they sent it, now the owner makes sure we can actually get it
         return color_checking.prompt()
-
-    #can't get that exact color, so they pick from the closest ones we can order
     elif(color_check == owner.MATERIALS_STATUS):
+        #can't get that exact color, so they pick from the closest ones we can order
         return closest_materials.prompt()
 
     #nothing missing, the main generator takes it from here
     return None
 
-
-#PRICING INTERROGATE
 #flashx writes the ask, held is True on a first reply that holds every price
 def pricing_interrogate(state: dict, id: str, user_text: str, interrogator_prompt: str, held: bool) -> str:
     response: str = models.generator("INTERROGATOR", interrogator_prompt, user_text, PRICING_MAX_TOKENS, PRICING_INTERROGATOR_EFFORT, line_breaks=True)
 
-    #the regen reads the shop's last reply on its own, so nothing from it goes out twice
+    #the regen reads the shops last reply on its own, so nothing from it goes out twice
     shop_last_reply: str = spacing.last_sent_reply(state["message_history"])
 
-    #the regen gets the whole interrogator prompt, so it fixes the draft with the same what's missing
+    #the regen gets the whole interrogator prompt, so it knows whats missing too
     regen_prompt: str = interrogator_regenerator.prompt(interrogator_prompt)
 
     return enforced_reply(state, id, user_text, response, "INTERROGATOR REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_INTERROGATOR_REGEN_EFFORT, line_breaks=True, shop_last_reply=shop_last_reply, held=held)
 
-
-#BOOKING INTENT
-#a booking ask sent here with a job question still has to end on the schedule question once the price is out
+#a booking ask that landed here with a job question still ends on the schedule question
 def booking_intent(state: dict) -> bool:
     booking_question: dict = {"type": "noul", "instructions": f"Is the customer asking to get on the schedule or the books, to book it, or when they can get in or bring it in, in `current_user_message`?\n{pricing_examples.booking_intent_examples()}"}
 
@@ -1626,9 +1379,7 @@ def booking_intent(state: dict) -> bool:
 
     return probability_yes > BOOKING_INTENT_THRESHOLD
 
-
-#ACKS INFO
-#"alright sounds good" to what we just told them is a nod, not a dead end, so the booking question is up next
+#a sounds good to what we told them is a nod, not a dead end, so the booking question is next
 def acks_info(state: dict) -> bool:
     ack_question: dict = {"type": "noul", "instructions": f"Is the customer only taking in or agreeing with what the shop's last reply told them in `current_user_message`, with nothing asked, picked, turned down or put off, and nothing in `message_history` saying they're still deciding, waiting on the vehicle or getting back to the shop?\n{pricing_examples.acks_info_examples()}"}
 
@@ -1638,9 +1389,7 @@ def acks_info(state: dict) -> bool:
 
     return probability_yes > ACKS_INFO_THRESHOLD
 
-
-#PRICING REPLY
-#the reply, plus whether the details came up empty (the lack info reply goes out then)
+#the reply, plus whether the details came up empty, the lack info reply goes out then
 def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
     #the state build only grabbed a typed color if the color job was already going
     job_was_on: bool = len(color_job_on_file(id)) > 0
@@ -1657,11 +1406,11 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
     if(COLOR_CHANGE_CODE in service_details and COLORED_PPF_CODE not in service_details):
         service_details[COLORED_PPF_CODE] = PRICING_DETAILS[COLORED_PPF_CODE]
 
-    #colored PPF brings the wrap's details too, handy when it blows their budget
+    #colored PPF brings the wraps details too, handy when it blows there budget
     if(COLORED_PPF_CODE in service_details and COLOR_CHANGE_CODE not in service_details):
         service_details[COLOR_CHANGE_CODE] = PRICING_DETAILS[COLOR_CHANGE_CODE]
 
-    #their film pick goes on file first, so the route gets asked before any color question
+    #there film pick goes on file first, so teh route gets asked before any color question
     if(color_job_on):
         color_route(state, services[0], id)
 
@@ -1699,7 +1448,7 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
     if(color_check_due(color_job_on, critical_info, color_check)):
         owner.request_color_check(id, critical_info.get("route", ""))
 
-    #something's still missing, so the reply answers what it can and asks for the rest
+    #somethings still missing, so the reply answers what it can and asks for the rest
     if(interrogator_prompt is not None):
         interrogated: str = pricing_interrogate(state, id, user_text, interrogator_prompt, held)
 
@@ -1709,7 +1458,7 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
 
     response: str = models.s_p_generator("MAIN GENERATOR", system_prompt, user_text, PRICING_MAX_TOKENS, PRICING_MAIN_EFFORT, line_breaks=True)
 
-    #the regen reads the shop's last reply on its own, so nothing from it goes out twice
+    #the regen reads the shops last reply on its own, so nothing from it goes out twice
     shop_last_reply: str = spacing.last_sent_reply(state["message_history"])
 
     regen_prompt: str = pricing_regenerator.prompt()
@@ -1720,12 +1469,8 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
     return (held_price_cut(reply, held, id), service_check)
 
 
+#BUSINESS
 
-#**********BUSINESS**********
-#answers questions about the shop itself, like its hours, where it is and how to pay
-
-
-#BUSINESS QUESTIONS
 #the yes or no questions that find what their message asks about the shop, one code each
 def business_analyzer_questions() -> dict[str, dict]:
     questions: dict[str, dict] = {}
@@ -1762,8 +1507,6 @@ def business_analyzer_questions() -> dict[str, dict]:
 
     return questions
 
-
-#BUSINESS LACK INFO
 #the business details have nothing on it, so she says she'll ask the owner
 def business_lack_info(state: dict, id: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
@@ -1779,9 +1522,7 @@ def business_lack_info(state: dict, id: str) -> str:
 
     return enforced_reply(state, id, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, BUSINESS_REGEN_MAX_TOKENS, BUSINESS_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
-
-#BUSINESS REPLY
-#the reply, plus whether the details came up empty (the lack info reply goes out then)
+#the reply, plus whether the details came up empty, the lack info reply goes out then
 def business_reply(state: dict, id: str) -> tuple:
     business_details: dict[str, dict] = models.analyzer(business_analyzer_questions(), state, BUSINESS_DETAILS, BUSINESS_GENERAL_CODE, ANALYZER_THRESHOLD)
 
@@ -1811,13 +1552,9 @@ def business_reply(state: dict, id: str) -> tuple:
     return (reply, business_check)
 
 
+#CUSTOM INFO
 
-#**********CUSTOM JOB INFO**********
-#pulls what they gave for a custom job out of their message and saves it to the job's file
-
-
-#CUSTOM VALUES
-#the values out of the extractor's line, raises when it isn't the format
+#the values out of the extractors line, raises when it isn't the format
 def custom_values(extractor_output: str, field_names: list[str]) -> list[str]:
     #only the first line is the format, anything the model adds under it is never info
     extracted_line: str = extractor_output.strip().splitlines()[0]
@@ -1837,15 +1574,13 @@ def custom_values(extractor_output: str, field_names: list[str]) -> list[str]:
 
     return extracted_values
 
-
-#STALE VEHICLES
-#takes the makes and models off file when they gave a new vehicle count, so the vehicles get asked again for it
+#a new vehicle count means the makes and models get asked again
 def clear_stale_vehicles(id: str, extracted_values: list[str], field_names: list[str]) -> None:
     extracted_info: dict[str, str] = dict(zip(field_names, extracted_values))
 
     car_amount: str = extracted_info["car_amount"]
 
-    #a new amount can outgrow the vehicles on file, so makes and models it left empty come off and get asked again
+    #a new amount can outgrow the vehicles on file, so the ones it left empty come off
     if(car_amount != "" and car_amount != log.read_info(f"custom_service_{id}").get("car_amount")):
         stale_fields: list[str] = []
 
@@ -1855,11 +1590,9 @@ def clear_stale_vehicles(id: str, extracted_values: list[str], field_names: list
 
         log.clear_info(f"custom_service_{id}", stale_fields)
 
-
-#CUSTOM SAVE
 #puts the custom job info the extractor pulled out of their message on file
 def save_custom_info(id: str, extractor_output: str, field_names: list[str], commercial_wrap: bool) -> None:
-    #a reply that talks instead of giving the format is never saved, the reply still asks for what isn't on file
+    #extractor chatter saves nothing, the reply still asks for what isn't on file
     try:
         extracted_values: list[str] = custom_values(extractor_output, field_names)
 
@@ -1867,28 +1600,23 @@ def save_custom_info(id: str, extractor_output: str, field_names: list[str], com
             clear_stale_vehicles(id, extracted_values, field_names)
 
         log.write_info(f"custom_service_{id}", extracted_values, field_names)
-
     except Exception as error:
         print(f"C_S EXTRACTOR ERROR: {error}")
 
-
-#CUSTOM EXTRACT
-#saves what their message gave for the job and hands back the fields this job needs
+#saves what there message gave for the job and hands back the fields this job needs
 def custom_extract_and_save(id: str, user_text: str, commercial_wrap: bool, removal: bool) -> list[str]:
     #a commercial wrap needs the wrap type, the vehicles and the logo files
     if(commercial_wrap):
         field_names: list[str] = ["wrap_type", "car_amount", "makes", "models", "vector_files"]
 
         extractor_output: str = models.extract_commercial_wrap(user_text)
-
-    #old PPF or an old wrap coming off needs a photo and how long it's been on
     elif(removal):
+        #old PPF or an old wrap coming off needs a photo and how long its been on
         field_names: list[str] = ["media", "time_on"]
 
         extractor_output: str = models.extract_removal(user_text)
-
-    #every other custom job needs a photo
     else:
+        #every other custom job needs a photo
         field_names: list[str] = ["media"]
 
         extractor_output: str = models.extract_photo(user_text)
@@ -1898,19 +1626,15 @@ def custom_extract_and_save(id: str, user_text: str, commercial_wrap: bool, remo
     return field_names
 
 
+#CUSTOM ACK
 
-#**********CUSTOM ACK**********
-#lets them know a person has everything to price the job, and when the price comes back
-
-
-#PRICE BACK
-#when the owner gets back to them with the custom price, said the way the shop says it from its hours
+#when the owner gets back with the custom price, worked out from the shops hours
 def custom_price_back(current_date_time: str) -> str:
-    shop_time: datetime = datetime.strptime(current_date_time, state_form.CURRENT_DATE_TIME_FORMAT)
+    shop_time = datetime.strptime(current_date_time, state_form.CURRENT_DATE_TIME_FORMAT)
 
     weekday: int = shop_time.weekday()
 
-    clock: time = shop_time.time()
+    clock = shop_time.time()
 
     #open, and the 30 minutes lands before close
     if(weekday <= LAST_OPEN_WEEKDAY and SHOP_OPENS <= clock < PRICE_BACK_CUTOFF):
@@ -1927,11 +1651,9 @@ def custom_price_back(current_date_time: str) -> str:
     #friday after hours and the weekend
     return "Monday morning"
 
-
-#CUSTOM ACK
 #the reply that lets them know a person prices the custom job and when they'll hear back
 def custom_ack_reply(state: dict, user_text: str, custom_service_info: dict[str, str], field_names: list[str]) -> str:
-    #only the fields this job needed, so info on file for another custom job never gets read back
+    #only this jobs fields, so info on file for another custom job never gets read back
     info_on_file: dict[str, str] = {}
 
     for field_name in field_names:
@@ -1941,7 +1663,6 @@ def custom_ack_reply(state: dict, user_text: str, custom_service_info: dict[str,
 
     price_back: str = custom_price_back(state["current_date_time"])
 
-    #what's on file goes in with when the price comes back
     ack_text: str = f"{user_text}\n INFO_ON_FILE: {info_text}\n PRICE_BACK: {price_back}"
 
     system_prompt: str = custom_ack.prompt()
@@ -1949,13 +1670,9 @@ def custom_ack_reply(state: dict, user_text: str, custom_service_info: dict[str,
     return models.generator("ACK GENERATOR", system_prompt, ack_text, CUSTOM_MAX_TOKENS, CUSTOM_EFFORT, line_breaks=False)
 
 
+#ASKED AGAIN
 
-#**********ASKED AGAIN**********
-#every reply's question the shop already asked goes out again in new words, whichever branch wrote it, since the enforcer can miss one asked the same way twice
-
-
-#SAME WORDS ASK
-#the how dark question after they ask about the tint law is the one ask that goes out again in the owner's same words
+#the how dark question after a tint law ask is the one ask allowed out again word for word
 def same_words_ask(question: str) -> bool:
     for ask in SAME_WORDS_ASKS:
         if(repeats.asked_words(question) == repeats.asked_words(ask)):
@@ -1963,9 +1680,7 @@ def same_words_ask(question: str) -> bool:
 
     return False
 
-
-#KEEPS ASK
-#new words still ask what the ask did and nothing else: a question, a pic only when it asked for one and the schedule only when it asked about it, since the pic wait and the yes to the schedule question read the reply that went out, and no price it didn't have
+#new words still ask just what the ask did, pic and schedule asks match, and no new price
 def keeps_ask(ask: str, wording: str) -> bool:
     if(wording == "" or "\n" in wording or len(repeats.question_sentences(wording)) == 0):
         return False
@@ -1978,9 +1693,7 @@ def keeps_ask(ask: str, wording: str) -> bool:
 
     return spacing.asks_booking_question(wording) == spacing.asks_booking_question(ask)
 
-
-#ASKED AGAIN TEXT
-#what the new words get written from: the conversation, the reply with the ask in it, and every wording they can't go out in
+#the rewordings input, the chat, the reply with the ask, and every wording thats off limits
 def asked_again_text(state: dict, reply: str, ask: str, used_wordings: list[str]) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
@@ -1988,11 +1701,9 @@ def asked_again_text(state: dict, reply: str, ask: str, used_wordings: list[str]
 
     return f"STATE: {state_as_text}\n REPLY: {reply}\n ASK: {ask}\n ASKED_BEFORE:\n{used_text}"
 
-
-#NEW WORDING
-#the ask in words no ask the shop already sent used, still asking what it did, "" when every try repeated one or stopped asking it
+#the ask in fresh words that still ask the same thing, empty string when every try flunks
 def new_wording(state: dict, reply: str, ask: str, earlier_replies: list[str]) -> str:
-    #every ask the shop already sent, then each try that couldn't go out, so the next try steers clear of it too
+    #asks we already sent plus each failed try, so the next try steers clear of them all
     used_wordings: list[str] = []
 
     for earlier_reply in earlier_replies:
@@ -2015,10 +1726,7 @@ def new_wording(state: dict, reply: str, ask: str, earlier_replies: list[str]) -
 
     return ""
 
-
-#ASKED AGAIN REPLY
-#the reply with every question the shop already asked in the same words, or close to them, asked again in new words
-#one that never got new words comes off rather than go out again, unless it's all the reply says, so something still goes out
+#repeat questions get new words, or get cut unless they're all the reply says
 def asked_again_reply(state: dict, reply: str) -> str:
     earlier_replies: list[str] = spacing.sent_replies(state["message_history"])
 
@@ -2049,7 +1757,6 @@ def asked_again_reply(state: dict, reply: str) -> str:
 
         if(wording == ""):
             print(f"ASKED AGAIN CUT: {ask}")
-
         else:
             print(f"ASKED AGAIN IN NEW WORDS: {wording}")
 
@@ -2058,13 +1765,9 @@ def asked_again_reply(state: dict, reply: str) -> str:
     return reply
 
 
+#CHECK REPEATS
 
-#**********COLOR CHECK REPEATS**********
-#the color books getting checked goes out once, so a later reply only says it again when they ask about the color they sent, whichever branch wrote the reply
-
-
-#COLOR CHECK ASKED
-#True when their message asks about the exact color they sent: whether the shop found it or can get it, where the check stands or when they'll hear back on it
+#true when they ask about the exact color they sent, if we found it or when they'll hear back
 def color_check_asked(state: dict) -> bool:
     asked_question: dict = {"type": "noul", "instructions": f"Is the customer asking about the exact color they sent over for their wrap or colored PPF, whether the shop found it or can get it, where the check on it stands or when they'll hear back on it, in `current_user_message`?\n{pricing_examples.color_check_asked_examples()}"}
 
@@ -2074,17 +1777,14 @@ def color_check_asked(state: dict) -> bool:
 
     return probability_yes > COLOR_CHECK_ASKED_THRESHOLD
 
-
-#REPEATED CHECK REPLY
-#the reply with the line saying the color books are still getting checked taken out, once a reply already told them and their message doesn't ask about the color
-#a reply that's only that line keeps it, so something still goes out
+#drops the still checking line once they've heard it, unless they asked or its all their is
 def repeated_check_reply(state: dict, reply: str) -> str:
     check_lines: list[str] = spacing.still_checking_lines(reply)
 
     if(len(check_lines) == 0):
         return reply
 
-    #no reply told them the color books are getting checked yet, so this one telling them stays
+    #nobody told them the color books are getting checked yet, so this one stays
     if(not spacing.color_check_sent(state["message_history"])):
         return reply
 
@@ -2095,27 +1795,23 @@ def repeated_check_reply(state: dict, reply: str) -> str:
 
         return reply
 
-    #they asked about the color they sent, so where it stands is their answer
+    #they asked about the color they sent, so where it stands is there answer
     if(color_check_asked(state)):
         return reply
 
     for sentence in check_lines:
         print(f"STILL CHECKING CUT: {sentence}")
 
-    #a reply never ends on a period, the way the shop texts, so the one the cut left at its end comes off
+    #the shop never ends a text on a period, so the one the cut left behind comes off
     if(kept_reply.endswith(".") and not kept_reply.endswith("..")):
         kept_reply = kept_reply[:-1]
 
     return kept_reply
 
 
+#REPEATED ASKS
 
-#**********REPEATED ASKS**********
-#keeps a commercial wrap question from going out again in the same words or the same way
-
-
-#LAST ASKED
-#the commercial wrap detail the shop's last reply asked for, None when that reply didn't ask for one
+#the commercial wrap detail our last reply asked for, None when it didn't ask for one
 def last_asked_group(id: str, message_history: dict) -> str | None:
     asked: dict[str, str] = log.read_info(f"c_s_asked_{id}")
 
@@ -2126,15 +1822,13 @@ def last_asked_group(id: str, message_history: dict) -> str | None:
     if(group is None or question is None):
         return None
 
-    #it only counts when the last reply that went out asked it, a reply from another branch asked something else
+    #only counts when our last sent reply asked it, another branchs reply asked something else
     if(not repeats.asked_in(question, spacing.last_sent_reply(message_history))):
         return None
 
     return group
 
-
-#SAVE ASKED
-#keeps the question the reply ended on with the detail it asked for, so the next reply can tell if it went unanswered
+#files the replys last question with its detail, so the next reply can tell if it got dodged
 def save_asked(id: str, group: str, response: str) -> None:
     questions: list[str] = repeats.question_sentences(response)
 
@@ -2146,9 +1840,7 @@ def save_asked(id: str, group: str, response: str) -> None:
 
     log.write_info(f"c_s_asked_{id}", [group, questions[-1]], ["group", "question"])
 
-
-#ASKS GROUP
-#True when the question asks for that group's commercial wrap detail, going by its words
+#true when the question asks for that groups detail, going by its words
 def asks_group(question: str, group: str) -> bool:
     plain_text: str = " ".join(repeats.plain_words(question))
 
@@ -2160,27 +1852,23 @@ def asks_group(question: str, group: str) -> bool:
 
     return False
 
-
-#REPEATED ASKS
-#the questions in the reply the shop already asked before, plus ones still asking for the detail they skipped
+#the replys questions we already asked, plus ones still chasing the detail they skipped
 def repeated_asks(response: str, earlier_replies: list[str], group: str, skipped_group: str) -> list[str]:
     repeated: list[str] = repeats.repeated_questions(response, earlier_replies)
 
     if(skipped_group == ""):
         return repeated
 
-    #what they skipped waits for a later reply, so a question about it in other words is still asking it now
+    #what they skipped waits for a later reply, so asking it now in other words still counts
     for question in repeats.question_sentences(response):
         if(asks_group(question, skipped_group) and not asks_group(question, group) and question not in repeated):
             repeated.append(question)
 
     return repeated
 
-
-#UNREPEATED REPLY
-#the reply with no question worded like one the shop already asked, rewritten when it repeated one
+#the reply minus any question worded like one we already asked, rewritten when it repeats
 def unrepeated_reply(state: dict, interrogator_text: str, response: str, regen_prompt: str, group: str, skipped_group: str) -> str:
-    #every question the shop asked so far, so none goes out in the same words or the same way again
+    #every reply we sent so far, so no question goes out the same way twice
     earlier_replies: list[str] = spacing.sent_replies(state["message_history"])
 
     repeated: list[str] = repeated_asks(response, earlier_replies, group, skipped_group)
@@ -2188,7 +1876,7 @@ def unrepeated_reply(state: dict, interrogator_text: str, response: str, regen_p
     if(len(repeated) == 0):
         return response
 
-    #the enforcer let through a question worded like one the shop already asked, so the regen gets told which one
+    #the enforcer let a repeat slip by, so the regen gets told which one
     print(f"REPEATED QUESTION: {repeated}")
 
     repeated_text: str = " ".join(repeated)
@@ -2199,11 +1887,11 @@ def unrepeated_reply(state: dict, interrogator_text: str, response: str, regen_p
 
     regen_repeated: list[str] = repeated_asks(regen_response, earlier_replies, group, skipped_group)
 
-    #a regen that came back empty never goes out, the first reply's rest does
+    #a regen that came back empty never goes out, the first replys rest does
     if(regen_response.strip() != "" and len(regen_repeated) == 0):
         return regen_response
 
-    #the regen asked it again too, so it comes off and the rest goes out, the first reply's rest when the regen had none
+    #the regen repeated it too, so cut it, the first replys rest goes when the regen has none
     for reply, reply_repeated in [(regen_response, regen_repeated), (response, repeated)]:
         kept_reply: str = repeats.drop_questions(reply, reply_repeated)
 
@@ -2218,24 +1906,18 @@ def unrepeated_reply(state: dict, interrogator_text: str, response: str, regen_p
     return regen_response
 
 
+#COMMERCIAL WRAP
 
-#**********COMMERCIAL WRAP**********
-#asks for what a commercial wrap's price still needs one thing at a time, then hands it to a person
-
-
-#VEHICLE COUNT
 #how many vehicles are on file, said as a short add on to the make and model ask
 def vehicle_count(car_amount: str | None) -> str:
-    #how many isn't on file when that question was skipped for a later reply, so the line leaves it out
+    #no count on file when that ask got pushed to a later reply, so the line leaves it out
     if(car_amount is None):
         return ""
 
     return f", {car_amount} in all"
 
-
-#COMMERCIAL MISSING
-#every commercial wrap detail the price still needs, in the order the owner asks for them
-def commercial_wrap_missing(custom_service_info: dict[str, str], services: str) -> list[COMMERCIAL_ASK]:
+#what the price still needs in the owners order, each as its group, prompt and one line ask
+def commercial_wrap_missing(custom_service_info: dict[str, str], services: str) -> list[tuple]:
     wrap_type: str | None = custom_service_info.get("wrap_type")
 
     car_amount: str | None = custom_service_info.get("car_amount")
@@ -2246,8 +1928,7 @@ def commercial_wrap_missing(custom_service_info: dict[str, str], services: str) 
 
     vector_files: str | None = custom_service_info.get("vector_files")
 
-    #everything the price still needs, in the order the owner asks for it, empty when it's all on file
-    missing: list[COMMERCIAL_ASK] = []
+    missing: list[tuple] = []
 
     if(wrap_type is None):
         missing.append(("wrap_type", custom_wrap_type.prompt, f"Whether the {services} is decals, a half wrap or a full wrap."))
@@ -2255,10 +1936,9 @@ def commercial_wrap_missing(custom_service_info: dict[str, str], services: str) 
     if(car_amount is None):
         missing.append(("car_amount", custom_vehicle_count.prompt, f"How many vehicles the {services} is for."))
 
-    #the make and model come in together, so they're one ask, and the model gets asked on its own once every make is in
+    #make and model are one ask, and once every make is in the model gets asked on its own
     if(makes is None):
         missing.append(("vehicles", custom_make_model.prompt, f"The make and model of each vehicle the {services} is for{vehicle_count(car_amount)}."))
-
     elif(vehicle_models is None):
         missing.append(("vehicles", custom_vehicle_model.prompt, f"The model of each vehicle the {services} is for, makes on file: {makes}."))
 
@@ -2267,9 +1947,7 @@ def commercial_wrap_missing(custom_service_info: dict[str, str], services: str) 
 
     return missing
 
-
-#OTHER INFO
-#True when their message filled in a commercial wrap detail other than the one the last reply asked for
+#true when they filled in some other commercial wrap detail than the one we asked for
 def gave_other_info(info_before: dict[str, str], info_after: dict[str, str], group: str) -> bool:
     for other_group, field_names in COMMERCIAL_GROUP_FIELDS.items():
         if(other_group == group):
@@ -2278,26 +1956,24 @@ def gave_other_info(info_before: dict[str, str], info_after: dict[str, str], gro
         for field_name in field_names:
             value: str | None = info_after.get(field_name)
 
-            #a field this message filled in or changed, like how many when the last reply asked which job it is
+            #a field this message filled or changed, like how many when we asked which job
             if(value is not None and value != info_before.get(field_name)):
                 return True
 
     return False
 
+#the detail to ask now, what we already asked, and the one they skipped for something else
+def commercial_ask(state: dict, id: str, missing: list[tuple], info_before: dict[str, str], custom_service_info: dict[str, str]) -> tuple:
+    first: tuple = missing[0]
 
-#COMMERCIAL ASK
-#which missing detail this reply asks for, what the last reply already asked, and the detail they skipped by giving something else
-def commercial_ask(state: dict, id: str, missing: list[COMMERCIAL_ASK], info_before: dict[str, str], custom_service_info: dict[str, str]) -> tuple[COMMERCIAL_ASK, str, str]:
-    first: COMMERCIAL_ASK = missing[0]
-
-    #the last reply asked something else, so what's missing first gets asked as usual
+    #the last reply asked something else, so whats missing first gets asked as usual
     if(last_asked_group(id, state["message_history"]) != first[0]):
         return (first, "", "")
 
-    #they wrote back without it, so it goes in as already asked and gets asked again in a new way
+    #they wrote back without it, so it goes in as already asked and gets reworded
     already_asked: str = first[2]
 
-    #they gave something else instead, so the next thing missing gets asked and it comes back in a later reply
+    #they gave something else instead, so ask the next thing and circle back to this one later
     if(gave_other_info(info_before, custom_service_info, first[0]) and len(missing) > 1):
         print(f"ASKED AGAIN SKIPPED: {first[0]}, asking {missing[1][0]} instead")
 
@@ -2305,15 +1981,13 @@ def commercial_ask(state: dict, id: str, missing: list[COMMERCIAL_ASK], info_bef
 
     return (first, already_asked, "")
 
-
-#COMMERCIAL INTERROGATE
 #asks for the next commercial wrap detail, held is True on a first reply that holds every price
-def commercial_interrogate(state: dict, id: str, user_text: str, ask: COMMERCIAL_ASK, already_asked: str, skipped_group: str, held: bool) -> str:
+def commercial_interrogate(state: dict, id: str, user_text: str, ask: tuple, already_asked: str, skipped_group: str, held: bool) -> str:
     interrogator_prompt: str = ask[1]()
 
     interrogator_text: str = f"{user_text}\n INFO_NEEDED: {ask[2]}"
 
-    #what we asked last time that they skipped, so it never gets asked the same way twice in a row
+    #what they skipped last time, so it never gets asked the same way twice in a row
     if(already_asked != ""):
         interrogator_text = f"{interrogator_text}\n ALREADY_ASKED: {already_asked}"
 
@@ -2326,19 +2000,17 @@ def commercial_interrogate(state: dict, id: str, user_text: str, ask: COMMERCIAL
     #the enforcers can miss a question asked twice in a row, so the code double checks
     return unrepeated_reply(state, interrogator_text, response, regen_prompt, ask[0], skipped_group)
 
-
-#COMMERCIAL WRAP
-#the next commercial wrap detail asked for, or the ack once everything the price needs is on file
+#the next detail ask, or the ack once the price has everything it needs
 def commercial_wrap_reply(state: dict, id: str, user_text: str, services: str, info_before: dict[str, str], custom_service_info: dict[str, str], field_names: list[str], held: bool) -> tuple:
-    missing: list[COMMERCIAL_ASK] = commercial_wrap_missing(custom_service_info, services)
+    missing: list[tuple] = commercial_wrap_missing(custom_service_info, services)
 
-    #everything the price needs is on file, so the ack goes out and a person takes it from here
+    #the price has all it needs, so the ack goes out and a person takes it from here
     if(len(missing) == 0):
         log.clear_info(f"c_s_asked_{id}", ["group", "question"])
 
         return (custom_ack_reply(state, user_text, custom_service_info, field_names), True)
 
-    ask: tuple[COMMERCIAL_ASK, str, str] = commercial_ask(state, id, missing, info_before, custom_service_info)
+    ask: tuple = commercial_ask(state, id, missing, info_before, custom_service_info)
 
     response: str = commercial_interrogate(state, id, user_text, ask[0], ask[1], ask[2], held)
 
@@ -2347,12 +2019,8 @@ def commercial_wrap_reply(state: dict, id: str, user_text: str, services: str, i
     return (response, False)
 
 
+#CUSTOM
 
-#**********CUSTOM**********
-#gets what a person needs to price a custom job, then lets them know when the price comes back
-
-
-#CUSTOM QUESTIONS
 #the yes or no questions that find which custom job their message asks about, one code each
 def custom_analyzer_questions() -> dict[str, dict]:
     questions: dict[str, dict] = {}
@@ -2371,11 +2039,8 @@ def custom_analyzer_questions() -> dict[str, dict]:
 
     return questions
 
-
-#CUSTOM SERVICES
 #the custom services named in one line, or job when none could be named
 def custom_services(custom_details: dict[str, dict]) -> str:
-    #the custom services are named, so the one line on what's needed says what it's for
     service_names: list[str] = []
 
     for custom_detail in custom_details.values():
@@ -2389,9 +2054,7 @@ def custom_services(custom_details: dict[str, dict]) -> str:
 
     return services
 
-
-#REMOVAL MISSING
-#the prompt and the ask while a removal job still needs its photo or how long the film has been on
+#the prompt and ask while a removal still needs its photo or how long the films been on
 def removal_missing(custom_service_info: dict[str, str], services: str) -> tuple[str, str]:
     media_sent: str | None = custom_service_info.get("media")
 
@@ -2399,21 +2062,17 @@ def removal_missing(custom_service_info: dict[str, str], services: str) -> tuple
 
     interrogator_prompt: str = custom_removal.prompt()
 
-    #the owner asks for both in the same question, then only for whichever one is still missing
+    #the owner asks for both at once, then only for whichever one is still missing
     if(media_sent is None and time_on is None):
         return (interrogator_prompt, f"How long it's been on and a photo of it as it is now, for the {services}.")
-
     elif(time_on is None):
         return (interrogator_prompt, f"How long it's been on, for the {services}. The photo is on file.")
-
     elif(media_sent is None):
         return (interrogator_prompt, f"A photo of it as it is now, for the {services}. How long it's been on is on file: {time_on}.")
 
-    #the photo and how long it's been on are both on file
+    #the photo and how long its been on are both on file
     return ("", "")
 
-
-#MEDIA MISSING
 #the photo prompt and the ask while the custom job has no photo on file, empty once it does
 def media_missing(custom_service_info: dict[str, str], services: str) -> tuple[str, str]:
     media_sent: str | None = custom_service_info.get("media")
@@ -2424,26 +2083,20 @@ def media_missing(custom_service_info: dict[str, str], services: str) -> tuple[s
     #the photo is on file
     return ("", "")
 
-
-#CUSTOM MISSING
-#the interrogator prompt and the one line on what it asks for, both empty when nothing is missing
+#the interrogator prompt and its one line ask, both empty when nothing is missing
 def custom_missing(custom_service_info: dict[str, str], services: str, removal: bool) -> tuple[str, str]:
     if(removal):
         return removal_missing(custom_service_info, services)
 
     return media_missing(custom_service_info, services)
 
-
-#CUSTOM INTERROGATE
-#the photo and removal interrogators' replies go out as written, written by flashx like every other interrogator
+#flashx writes the photo and removal asks, and they go out as written
 def custom_interrogate(user_text: str, interrogator_prompt: str, info_needed: str) -> str:
     interrogator_text: str = f"{user_text}\n INFO_NEEDED: {info_needed}"
 
     return models.generator("INTERROGATOR", interrogator_prompt, interrogator_text, CUSTOM_MAX_TOKENS, CUSTOM_INTERROGATOR_EFFORT, line_breaks=False)
 
-
-#CUSTOM REPLY
-#the reply and whether a person takes it from here, which is once everything the price needs is on file
+#the reply, and whether a person takes over, which happens once the price has all it needs
 def custom_reply(state: dict, id: str) -> tuple:
     #a custom job has no general code
     custom_details: dict[str, dict] = models.analyzer(custom_analyzer_questions(), state, CUSTOM_DETAILS, None, ANALYZER_THRESHOLD)
@@ -2456,7 +2109,7 @@ def custom_reply(state: dict, id: str) -> tuple:
 
     commercial_wrap: bool = "c1" in custom_details
 
-    #PPF (c3) or wrap (c6) removal, a commercial wrap's own details cover taking old decals or a wrap off
+    #c3 or c6 removal, a commercial wraps own details already cover taking old decals off
     removal: bool = not commercial_wrap and ("c3" in custom_details or "c6" in custom_details)
 
     #what a commercial wrap had on file before this message, so what they just gave shows
@@ -2471,14 +2124,13 @@ def custom_reply(state: dict, id: str) -> tuple:
 
     custom_service_info: dict[str, str] = log.read_info(f"custom_service_{id}")
 
-    #the shop's first reply holds every price unless their message asks what something costs, the extractors above read their message without the hold
+    #the first reply holds prices unless they asked one, the extractors above never see the hold
     held: bool = price_held(state)
 
     reply_text: str = held_text(user_text, held)
 
     if(commercial_wrap):
         custom_return: tuple = commercial_wrap_reply(state, id, reply_text, services, info_before, custom_service_info, field_names, held)
-
     else:
         missing: tuple[str, str] = custom_missing(custom_service_info, services, removal)
 
@@ -2486,36 +2138,30 @@ def custom_reply(state: dict, id: str) -> tuple:
 
         info_needed: str = missing[1]
 
-        #everything the price needs is on file, so the ack goes out and a person takes it from here
+        #the price has all it needs, so the ack goes out and a person takes it from here
         if(info_needed == ""):
             custom_return = (custom_ack_reply(state, reply_text, custom_service_info, field_names), True)
-
         else:
             custom_return = (custom_interrogate(reply_text, interrogator_prompt, info_needed), False)
 
-    #a price that got past the hold never goes out on the shop's first reply
+    #a price that got past the hold never goes out on the shops first reply
     return (held_price_cut(custom_return[0], held, id), custom_return[1])
 
 
+#PRICE TOTALS
 
-#**********PRICES AND DEPOSIT**********
-#adds up the prices quoted for what they're booking and works out the deposit like the invoice does
-
-
-#PRICE AMOUNT
-#the dollar amount in one extracted price, None when it was never quoted or isn't in the shop's format
-def price_amount(price: str) -> Decimal | None:
+#the dollar amount in one extracted price, None if never quoted or not in the shops format
+def price_amount(price: str):
     price_text: str = price.strip().lower()
 
-    #every price the extractor writes is $<amount> plus tax, so one never quoted or in any other shape has no amount
+    #the extractor writes every price as a dollar amount plus tax, anything else has no amount
     if(not price_text.startswith("$") or not price_text.endswith(" plus tax")):
         return None
 
     amount_text: str = price_text[len("$"):-len(" plus tax")].replace(",", "").strip()
 
     try:
-        amount: Decimal = Decimal(amount_text)
-
+        amount = Decimal(amount_text)
     except InvalidOperation:
         return None
 
@@ -2525,20 +2171,16 @@ def price_amount(price: str) -> Decimal | None:
 
     return amount
 
-
-#SERVICES AMOUNT
 #every extracted price added up, None when nothing came up yet or one service was never quoted
-def services_amount(services_pricing: dict[str, str]) -> Decimal | None:
-    #nothing they want has come up yet, so there's nothing to add up
+def services_amount(services_pricing: dict[str, str]):
     if(len(services_pricing) == 0):
         return None
 
-    total: Decimal = Decimal(0)
+    total = Decimal(0)
 
     for price in services_pricing.values():
-        amount: Decimal | None = price_amount(price)
+        amount = price_amount(price)
 
-        #one service never quoted leaves the total unknown
         if(amount is None):
             return None
 
@@ -2546,66 +2188,53 @@ def services_amount(services_pricing: dict[str, str]) -> Decimal | None:
 
     return total
 
-
-#DOLLAR TEXT
-#an amount written the way the shop writes a price
-def dollar_text(amount: Decimal) -> str:
-    #written the way the shop writes a price, like $3900, with cents only when there are some
+#an amount the way the shop writes a price, cents only when there are some
+def dollar_text(amount) -> str:
     if(amount == amount.to_integral_value()):
         return f"${int(amount)}"
 
     return f"${amount:.2f}"
 
-
-#SERVICES TOTAL
-#the total of every service they want written like the shop writes it, empty when it can't be added up
+#the total of every service they want, shop style, empty when it can't be added up
 def services_total(services_pricing: dict[str, str]) -> str:
-    total: Decimal | None = services_amount(services_pricing)
+    total = services_amount(services_pricing)
 
     if(total is None):
         return ""
 
     return f"{dollar_text(total)} plus tax"
 
+#the twenty percent deposit to the cent, None when theres no total
+def deposit_amount(services_pricing: dict[str, str]):
+    total = services_amount(services_pricing)
 
-#DEPOSIT AMOUNT
-#the 20% deposit on the total to the cent, None when there's no total
-def deposit_amount(services_pricing: dict[str, str]) -> Decimal | None:
-    total: Decimal | None = services_amount(services_pricing)
-
-    #with no total there's nothing to take the deposit from
     if(total is None):
         return None
 
     #a fifth of the total, to the cent the way the invoice charges it
     return (total * DEPOSIT_RATE).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
-
-#SERVICES DEPOSIT
-#the deposit written like the shop writes a price, empty when there's no total
+#the deposit written like the shop writes a price, empty when theres no total
 def services_deposit(services_pricing: dict[str, str]) -> str:
-    deposit: Decimal | None = deposit_amount(services_pricing)
+    deposit = deposit_amount(services_pricing)
 
     if(deposit is None):
         return ""
 
     return dollar_text(deposit)
 
-
-#SERVICES PRICING
-#reply_before is a branch's answer going out right before the days in the same text, a price it quotes counts too
+#the prices for every service they want, a price quoted in reply_before counts too
 def extract_services_pricing(state: dict, reply_before: str) -> dict[str, str]:
     state_as_text: str = state_form.state_to_text(state)
 
     extractor_output: str = models.extract_services(f"REPLY_BEFORE: {reply_before}\n STATE: {state_as_text}")
 
-    #the service is the key and the price quoted for it is the value, for every service they want
+    #service to its quoted price, for every service they want
     services_pricing: dict[str, str] = {}
 
-    #a reply that talks instead of giving the format is never used, so nothing gets booked from it
+    #extractor chatter is never used, so nothing gets booked off it
     try:
         services_pricing = models.services_pricing_values(extractor_output)
-
     except Exception as error:
         print(f"S_P EXTRACTOR ERROR: {error}")
 
@@ -2614,13 +2243,9 @@ def extract_services_pricing(state: dict, reply_before: str) -> dict[str, str]:
     return services_pricing
 
 
+#BOOKING DATES
 
-#**********BOOKING DATES**********
-#finds the open drop off days on the calendar and offers them, or lets them know none are open
-
-
-#OPEN DATES
-#every open drop off day in the next 3 weeks for the job on file, each written like Monday, October 12
+#open drop off days in the next 3 weeks for the job on file, written like Monday, October 12
 def pull_open_dates(state: dict, id: str) -> list[str]:
     #the job they want, saved when the open days first went out for it
     confirmed_services: dict = log.read_state(f"s_p_confirmed_{id}")
@@ -2631,16 +2256,16 @@ def pull_open_dates(state: dict, id: str) -> list[str]:
 
     service_names: list[str] = list(confirmed_services.keys())
 
-    shop_today: date = datetime.strptime(state["current_date_time"], state_form.CURRENT_DATE_TIME_FORMAT).date()
+    shop_today = datetime.strptime(state["current_date_time"], state_form.CURRENT_DATE_TIME_FORMAT).date()
 
     calendar_window: tuple = open_dates.calendar_window(shop_today)
 
     events: list[dict] = google_calendar.read_events(calendar_window[0], calendar_window[1])
 
     #every open day in the next 3 weeks, soonest first
-    open_days: list[date] = open_dates.open_drop_off_dates(service_names, events, shop_today)
+    open_days: list = open_dates.open_drop_off_dates(service_names, events, shop_today)
 
-    #each day is written like Monday, October 12, so the generator can say it the way the owner texts it
+    #written like Monday, October 12, so the generator says it the way the owner texts it
     open_date_texts: list[str] = []
 
     for open_day in open_days:
@@ -2650,29 +2275,25 @@ def pull_open_dates(state: dict, id: str) -> list[str]:
 
     return open_date_texts
 
-
-#DATE ACK
-#open_date_texts is empty when nothing is open, otherwise the days that went out and none of them work for them
+#the ack for when no day works, with the days they passed on, empty when none were open
 def booking_date_ack_reply(state: dict, open_date_texts: list[str], reply_before: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
     dates_text: str = json.dumps(open_date_texts)
 
-    #reply_before is a branch's answer going out right before this one, empty when the ack has to answer it
+    #reply_before goes out right before this, empty when the ack has to answer them itself
     ack_text: str = f"OPEN_DATES: {dates_text}\n REPLY_BEFORE: {reply_before}\n STATE: {state_as_text}"
 
     system_prompt: str = booking_date_ack.prompt()
 
     return models.generator("DATE ACK GENERATOR", system_prompt, ack_text, BOOKING_DATE_MAX_TOKENS, BOOKING_DATE_EFFORT, line_breaks=False)
 
-
-#DATE PROPOSE
-#the reply offering the open drop off days, with the job's total and deposit worked out here
+#the reply offering the open drop off days, with the jobs total and deposit worked out here
 def date_propose_reply(state: dict, open_date_texts: list[str], turned_down_texts: list[str], id: str, reply_before: str) -> str:
     #the job the days go out for, saved when they first went out for it
     confirmed_services: dict = log.read_state(f"s_p_confirmed_{id}")
 
-    #worked out here and never by the generator, so a price or deposit they ask about is the one the invoice charges
+    #math done here, never by the generator, so what they're quoted is what the invoice charges
     total: str = services_total(confirmed_services)
 
     deposit: str = services_deposit(confirmed_services)
@@ -2688,37 +2309,31 @@ def date_propose_reply(state: dict, open_date_texts: list[str], turned_down_text
 
     pricing_text: str = json.dumps(confirmed_services, ensure_ascii=False)
 
-    #total and deposit are empty when a service was never quoted, and reply_before is empty when nothing goes out first
+    #total and deposit are empty if a service never got quoted, reply_before if nothing goes first
     propose_text: str = f"OPEN_DATES: {dates_text}\n TURNED_DOWN: {turned_down_text}\n SERVICES_PRICING: {pricing_text}\n TOTAL: {total}\n DEPOSIT: {deposit}\n REPLY_BEFORE: {reply_before}\n STATE: {state_as_text}"
 
     system_prompt: str = booking_date_propose.prompt()
 
     return models.generator("DATE PROPOSE GENERATOR", system_prompt, propose_text, BOOKING_DATE_MAX_TOKENS, BOOKING_DATE_EFFORT, line_breaks=False)
 
-
-#BOOKING DATE
-#offers the soonest open days, or the ack when nothing is open, and hands back the days that went out
+#offers the soonest open days, or the ack when nothings open, plus the days that went out
 def booking_date_reply(state: dict, id: str, reply_before: str) -> tuple:
-    #the soonest open days go out first
     open_date_texts: list[str] = pull_open_dates(state, id)[:open_dates.DATES_TO_PROPOSE]
 
     response: str = ""
 
-    #nothing is open in the next 3 weeks, so the ack lets them know a person finds them a day, after any answer first
+    #nothing open in the next 3 weeks, so the ack says a person finds them a day
     if(len(open_date_texts) == 0):
         response = booking_date_ack_reply(state, open_date_texts, reply_before)
-
-    #the open days get offered, after the answer to anything they asked along with their yes
     else:
+        #the open days go out, after answering anything they asked along with their yes
         response = date_propose_reply(state, open_date_texts, [], id, reply_before)
 
     return (response, open_date_texts)
 
-
-#ASKED DATES
 #the open days they asked for by name, in calendar order
 def asked_open_dates(state: dict, open_date_texts: list[str]) -> list[str]:
-    #a yes or no for each open day, so a day they asked for is found anywhere in the next 3 weeks
+    #one yes or no per open day, so an asked day is found anywhere in the next 3 weeks
     asked_questions: dict[str, dict] = {}
 
     for date_number, open_date_text in enumerate(open_date_texts, start=1):
@@ -2753,16 +2368,14 @@ def asked_open_dates(state: dict, open_date_texts: list[str]) -> list[str]:
 
     return asked_date_texts
 
-
-#DATE RESEARCH
 #a fresh set of open days after they turned the last ones down, with the reply offering them
 def booking_date_research(state: dict, id: str, turned_down_texts: list[str], last_offered_texts: list[str]) -> tuple:
-    #the calendar gets read again, so a day that filled up since the last set never goes out and one that opened up can
+    #the calendar gets read again, so days that filled up drop out and new openings can go
     open_date_texts: list[str] = pull_open_dates(state, id)
 
     research_date_texts: list[str] = []
 
-    #a day they asked for that's open goes out, even one they turned down before
+    #a day they asked for thats open goes out, even one they turned down before
     if(len(open_date_texts) > 0):
         research_date_texts = asked_open_dates(state, open_date_texts)[:open_dates.DATES_TO_PROPOSE]
 
@@ -2787,15 +2400,10 @@ def booking_date_research(state: dict, id: str, turned_down_texts: list[str], la
     return (response, research_date_texts)
 
 
+#DATE ANSWERS
 
-#**********DATE ANSWERS**********
-#reads their answer to the offered drop off days: a pick, a yes to the job, or something else
-
-
-#DATE AGREE
-#whether they picked one of the offered days, said yes to the job without picking one, or neither
+#whether they picked an offered day, said yes to the job without a day, or neither
 def date_agree_analyzer(state: dict) -> str:
-    #the three things their answer to the job and the offered days can be
     agree_criteria: dict[str, str] = {}
 
     agree_criteria["agree_date"] = booking_date_instructions.instructions("agree_date")
@@ -2820,11 +2428,8 @@ def date_agree_analyzer(state: dict) -> str:
 
     return category
 
-
-#DATE NOT AGREE
-#what their answer is when it picks no day: none work, the job or a price is off, nevermind, or a question
+#there answer when it picks no day, none work, the job or price is off, nevermind, or a question
 def date_not_agree_analyzer(state: dict) -> str:
-    #the five things their answer can be when it doesn't pick a day
     not_agree_criteria: dict[str, str] = {}
 
     not_agree_criteria["not_agree_date"] = booking_date_instructions.instructions("not_agree_date")
@@ -2853,15 +2458,13 @@ def date_not_agree_analyzer(state: dict) -> str:
 
     return category
 
-
-#PICKED DATE
 #the offered day they picked
 def picked_date(state: dict, offered_dates: list[str]) -> str:
     #with one day offered, their yes is to that day
     if(len(offered_dates) == 1):
         return offered_dates[0]
 
-    #one choice for each day offered, numbered the same as they were kept with the pending flag
+    #one choice per offered day, numbered the way the pending flag kept them
     picked_criteria: dict[str, str] = {}
 
     for date_number, offered_date in enumerate(offered_dates, start=1):
@@ -2886,12 +2489,8 @@ def picked_date(state: dict, offered_dates: list[str]) -> str:
     return picked
 
 
+#DROP OFF
 
-#**********DROP OFF DAY**********
-#says the day they picked the way the owner would, and works out when the booking comes off file
-
-
-#DAY ORDINAL
 #a day of the month with its st, nd, rd or th
 def day_ordinal(day: int) -> str:
     #the 11th, 12th and 13th go by th like the rest of the teens
@@ -2902,29 +2501,25 @@ def day_ordinal(day: int) -> str:
 
     return f"{day}{suffixes.get(day % 10, 'th')}"
 
-
-#PICKED DAY
-#offered days are written like Thursday, October 29 with no year, so its year is the one closest to today
-def picked_day(drop_off_date: str, shop_today: date) -> date:
+#offered days have no year, so the picked one gets whichever year is closest to today
+def picked_day(drop_off_date: str, shop_today):
     date_parts: list[str] = drop_off_date.split(", ", 1)
 
     month_day: list[str] = date_parts[1].split(" ")
 
     month_number: int = datetime.strptime(month_day[0], "%B").month
 
-    picked: date = date(shop_today.year, month_number, int(month_day[1]))
+    picked = date(shop_today.year, month_number, int(month_day[1]))
 
-    #a day in January offered in December is next year's, while one that just went by is still this year's
+    #a January day offered in December is next years, one that just went by is still this years
     if((shop_today - picked).days > HALF_YEAR_DAYS):
         picked = picked.replace(year=shop_today.year + 1)
 
     return picked
 
-
-#DROP OFF
-#the picked day said the way the owner confirms it: just the weekday when it can only be that one, else with its date
+#the picked day the way the owner says it, just the weekday if thats clear, else with the date
 def drop_off_day_text(drop_off_date: str, offered_dates: list[str], current_date_time: str) -> str:
-    shop_today: date = datetime.strptime(current_date_time, state_form.CURRENT_DATE_TIME_FORMAT).date()
+    shop_today = datetime.strptime(current_date_time, state_form.CURRENT_DATE_TIME_FORMAT).date()
 
     #every offered day is written like Thursday, October 29, with no year
     date_parts: list[str] = drop_off_date.split(", ", 1)
@@ -2935,9 +2530,9 @@ def drop_off_day_text(drop_off_date: str, offered_dates: list[str], current_date
 
     month_text: str = month_day[0]
 
-    picked: date = picked_day(drop_off_date, shop_today)
+    picked = picked_day(drop_off_date, shop_today)
 
-    #two days offered on the same weekday, like Friday the 23rd or Friday the 30th, need the day of the month
+    #two offered days on the same weekday, like Friday the 23rd and the 30th, need the date
     same_weekday_offered: bool = False
 
     for offered in offered_dates:
@@ -2955,31 +2550,25 @@ def drop_off_day_text(drop_off_date: str, offered_dates: list[str], current_date
     if(picked.month == shop_today.month):
         return f"{weekday} the {day_ordinal(picked.day)}"
 
-    #its month too when it isn't this month ("Tuesday, November 3rd")
+    #its month too when it isn't this month, like Tuesday, November 3rd
     return f"{weekday}, {month_text} {day_ordinal(picked.day)}"
 
+#midnight shop time a few days after drop off, when what they booked comes off file
+def booked_clear_time(drop_off_date: str, current_date_time: str):
+    shop_today = datetime.strptime(current_date_time, state_form.CURRENT_DATE_TIME_FORMAT).date()
 
-#CLEAR TIME
-#the start of the day a few days after their drop off day in the shop's time, when what they booked comes off file
-def booked_clear_time(drop_off_date: str, current_date_time: str) -> datetime:
-    shop_today: date = datetime.strptime(current_date_time, state_form.CURRENT_DATE_TIME_FORMAT).date()
-
-    clear_day: date = picked_day(drop_off_date, shop_today) + timedelta(days=BOOKED_KEEP_DAYS)
+    clear_day = picked_day(drop_off_date, shop_today) + timedelta(days=BOOKED_KEEP_DAYS)
 
     return datetime.combine(clear_day, time(0, 0), open_dates.SHOP_TIMEZONE)
 
 
+#CONTACT
 
-#**********CONTACT**********
-#gets their name, number and email for the invoice, and reads what they answer instead
-
-
-#CONTACT VALUES
 #the name and the number out of their message, each one empty when they didn't give it
 def contact_values(state: dict) -> dict[str, str]:
     user_text: str = state["current_user_message"].get("user_text", "")
 
-    #the shop's last reply goes with it, so a bare "Danny" answering it reads as their name
+    #the shops last reply goes with it, so a bare Danny answering it reads as there name
     shop_last_reply: str = spacing.last_sent_reply(state["message_history"])
 
     extractor_output: str = models.extract_contact(user_text, shop_last_reply)
@@ -2991,23 +2580,20 @@ def contact_values(state: dict) -> dict[str, str]:
 
         for field_name, value in zip(["name", "number"], values):
             contact[field_name] = value
-
-    #a reply that talks instead of giving the format is never saved, the next reply still asks for what isn't on file
     except Exception as error:
+        #extractor chatter saves nothing, the next reply still asks for what isn't on file
         print(f"CONTACT EXTRACTOR ERROR: {error}")
 
     return contact
 
-
-#CONTACT ASK
-#offered_dates are the days the pick came out of, empty when it gets asked for again and the day isn't said
+#asks for there contact info, offered_dates is empty when asking again without the day
 def contact_ask_reply(state: dict, id: str, drop_off_date: str, offered_dates: list[str], missing: list[str], reply_before: str) -> str:
     #the services they confirmed by picking the day, saved when the days went out for them
     confirmed_services: dict = log.read_state(f"s_p_confirmed_{id}")
 
     state_as_text: str = state_form.state_to_text(state)
 
-    #how the day gets said is worked out here, never by the generator, so the day it confirms is the one they picked
+    #the days wording is worked out here, never by the generator, so it confirms the right day
     drop_off_day: str = drop_off_day_text(drop_off_date, offered_dates, state["current_date_time"])
 
     #all three are missing on the first ask
@@ -3019,15 +2605,13 @@ def contact_ask_reply(state: dict, id: str, drop_off_date: str, offered_dates: l
 
     deposit: str = services_deposit(confirmed_services)
 
-    #reply_before is a branch's answer going out first when they asked something instead
+    #reply_before is a branchs answer going out first when they asked something instead
     ask_text: str = f"DROP_OFF_DATE: {drop_off_date}\n DROP_OFF_DAY: {drop_off_day}\n MISSING: {missing_text}\n SERVICES_PRICING: {pricing_text}\n TOTAL: {total}\n DEPOSIT: {deposit}\n REPLY_BEFORE: {reply_before}\n STATE: {state_as_text}"
 
     system_prompt: str = contact_ask.prompt()
 
     return models.generator("CONTACT ASK GENERATOR", system_prompt, ask_text, CONTACT_MAX_TOKENS, CONTACT_EFFORT, line_breaks=False)
 
-
-#CONTACT ACK
 #the reply that takes in their name, number and email once the drop off day is set
 def contact_ack_reply(state: dict, drop_off_date: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
@@ -3038,11 +2622,8 @@ def contact_ack_reply(state: dict, drop_off_date: str) -> str:
 
     return models.generator("CONTACT ACK GENERATOR", system_prompt, ack_text, CONTACT_MAX_TOKENS, CONTACT_EFFORT, line_breaks=False)
 
-
-#CONTACT ANALYZER
-#whether their message gave any of their name, number or email for the invoice
+#whether their message gave any of there name, number or email for the invoice
 def contact_analyzer(state: dict) -> str:
-    #the two things their answer can be
     contact_criteria: dict[str, str] = {}
 
     contact_criteria["contact_info"] = contact_instructions.instructions("contact_info")
@@ -3065,11 +2646,8 @@ def contact_analyzer(state: dict) -> str:
 
     return category
 
-
-#NO CONTACT ANALYZER
-#what their message is when it has none of their info: won't give it, getting it, a question, or spam
+#what a message with none of there info is, won't give it, getting it, a question, or spam
 def no_contact_analyzer(state: dict) -> str:
-    #the five things their answer can be when it has none of their info for the invoice
     no_contact_criteria: dict[str, str] = {}
 
     no_contact_criteria["wont_give_info"] = contact_instructions.instructions("wont_give_info")
@@ -3098,9 +2676,7 @@ def no_contact_analyzer(state: dict) -> str:
 
     return category
 
-
-#NO CONTACT ACK
-#the reply to a message with none of their info, written for the case it is
+#the reply to a message with none of there info, written for the case it is
 def no_contact_ack_reply(state: dict, case: str, drop_off_date: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
@@ -3111,13 +2687,9 @@ def no_contact_ack_reply(state: dict, case: str, drop_off_date: str) -> str:
     return models.generator("CONTACT NO INFO GENERATOR", system_prompt, ack_text, CONTACT_MAX_TOKENS, CONTACT_EFFORT, line_breaks=False)
 
 
+#OTHER REPLIES
 
-#**********OTHER REPLIES**********
-#the replies for a problem, small talk, a phone call ask, them wrapping up and calling off a booking
-
-
-#ESCALATION
-#problems and person-only asks get a quick ack, then True hands them to a person
+#problems and person only asks get a quick ack, then True hands them to a person
 def escalation_reply(state: dict, id: str) -> tuple:
     state_as_text: str = state_form.state_to_text(state)
 
@@ -3132,11 +2704,9 @@ def escalation_reply(state: dict, id: str) -> tuple:
 
     reply: str = enforced_reply(state, id, escalation_text, response, "ESCALATION REGEN", regen_prompt, models.generator, ESCALATION_REGEN_MAX_TOKENS, ESCALATION_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
-    #never the bot's call, so a person takes it from here
+    #never the systems call, so a person takes it from here
     return (reply, True)
 
-
-#GENERAL TEXT
 #small talk gets answered and nudged back to what they need
 def general_text_reply(state: dict, id: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
@@ -3153,22 +2723,18 @@ def general_text_reply(state: dict, id: str) -> str:
     #small talk loved sneaking in a schedule ask, so it goes through the enforcers now too
     return enforced_reply(state, id, general_text, response, "GENERAL TEXT REGEN", regen_prompt, models.generator, GENERAL_TEXT_REGEN_MAX_TOKENS, GENERAL_TEXT_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
-
-#HOLD
-#a person has them, so what they sent gets taken in and they hear what's still being worked on, never left on read
+#a person has them, so they hear whats still in the works instead of getting left on read
 def hold_reply(state: dict) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
-    #what's being worked on comes from the shop's last replies in the state, the shop's info is already in its prompt
+    #whats in the works comes from our last replies, the shops info is already in its prompt
     hold_text: str = f"STATE: {state_as_text}"
 
     system_prompt: str = restricted_hold.prompt()
 
     return models.generator("HOLD GENERATOR", system_prompt, hold_text, HOLD_MAX_TOKENS, HOLD_EFFORT, line_breaks=False)
 
-
-#PHONE CALL
-#the reply giving them the shop's number when they want a call, and True so a person takes it from here
+#they want a call, so they get the shops number and True hands them to a person
 def phone_call_reply(state: dict) -> tuple:
     state_as_text: str = state_form.state_to_text(state)
 
@@ -3179,24 +2745,19 @@ def phone_call_reply(state: dict) -> tuple:
 
     response: str = models.generator("PHONE CALL GENERATOR", system_prompt, phone_call_text, PHONE_CALL_MAX_TOKENS, PHONE_CALL_EFFORT, line_breaks=False)
 
-    #they want a person on the phone, so once the number goes out a person takes it from here
     return (response, True)
 
-
-#END CONVERSATION
-#the reply that takes in them wrapping up for now and leaves the door open, with no question so nothing is left for them to answer
+#they're wrapping up, so the door stays open with no question left hanging for them
 def end_conversation_reply(state: dict) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
-    #they asked nothing, so nothing gets looked up, the shop's info it can't go against is already in its prompt
+    #they asked nothing, so no lookups, the shops info is already in its prompt
     end_text: str = f"STATE: {state_as_text}"
 
     system_prompt: str = end_conversation_ack.prompt()
 
     return models.generator("END CONVERSATION GENERATOR", system_prompt, end_text, END_CONVERSATION_MAX_TOKENS, END_CONVERSATION_EFFORT, line_breaks=False)
 
-
-#CONFIRM ACK
 #the reply when they call off getting on the books for now, leaving the door open
 def pricing_confirm_ack_reply(state: dict) -> str:
     state_as_text: str = state_form.state_to_text(state)
@@ -3208,13 +2769,9 @@ def pricing_confirm_ack_reply(state: dict) -> str:
     return models.generator("CONFIRM ACK GENERATOR", system_prompt, ack_text, PRICING_CONFIRM_MAX_TOKENS, PRICING_CONFIRM_EFFORT, line_breaks=False)
 
 
+#COLOR NEWS
 
-#**********COLOR NEWS**********
-#tells them the owner can get their color, and reads their pick when he sent the closest materials
-
-
-#COLOR APPROVED
-#reply comes back with the good news worked in, or only the good news when the open days go out right after it
+#the reply with the good news worked in, or just the good news when open days follow it
 def color_approved_reply(state: dict, reply: str, days_after: bool) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
@@ -3223,7 +2780,7 @@ def color_approved_reply(state: dict, reply: str, days_after: bool) -> str:
     if(days_after):
         days_text = "yes"
 
-    #the conversation names the color they sent and the job it's for, so the good news says both the way they would
+    #the chat names their color and job, so the good news says both the way they would
     color_approved_text: str = f"REPLY: {reply}\n DAYS_AFTER: {days_text}\n STATE: {state_as_text}"
 
     system_prompt: str = color_approved_generator.prompt()
@@ -3231,9 +2788,7 @@ def color_approved_reply(state: dict, reply: str, days_after: bool) -> str:
     #the reply can come in parts, so a line break in what comes back is its own
     return models.generator("COLOR APPROVED GENERATOR", system_prompt, color_approved_text, COLOR_APPROVED_MAX_TOKENS, COLOR_APPROVED_EFFORT, line_breaks=True)
 
-
-#MATERIAL CRITERION
-#the shop asked if the only material it sent works for them, so a yes to it picks it the same as pointing to it
+#the pick rule for one material, and when its the only one a plain yes picks it too
 def material_criterion(position: int, material: dict[str, str], count: int) -> str:
     name: str = material.get("name", "")
 
@@ -3249,20 +2804,16 @@ def material_criterion(position: int, material: dict[str, str], count: int) -> s
 
     return f"The customer picks material {position}, {name}, the {ordinal} pic the shop sent ('#{position}', '{position}', 'the {ordinal} one'), which shows {description}"
 
-
-#OTHER CRITERION
-#an ok only says nothing when more than one was sent, with one it's a yes to it
+#an ok only says nothing when more than one was sent, with one its a yes to it
 def other_criterion(count: int) -> str:
     if(count == 1):
         return "The customer neither says yes to the material the shop sent nor turns it down: a question with no yes in it, a maybe, still deciding, a thanks, or anything else. A yes, an ok, saying they like it or going ahead with it is never other, even when it asks something too."
 
     return "The customer neither picks one of the materials nor turns them all down: a question with no pick in it, a maybe, still deciding, asking which one the shop would go with, a thanks or an ok, or anything else. A message that points to one of them, by its number or where it is in the order ('#1', '2', 'the last one') or by its color or finish, is never other, even when it asks something too."
 
-
-#MATERIAL PICK
-#which of the closest materials they picked (none or other when they didn't), and if they asked something else too
+#which closest material they picked, none or other if they didn't, and if they asked more
 def material_pick(state: dict, materials: list[dict[str, str]]) -> tuple[str, bool]:
-    #one choice for each material, numbered in the order the owner sent them, the same way their history notes them
+    #one choice per material, numbered in the order the owner sent them, like there history
     pick_criteria: dict[str, str] = {}
 
     for position, material in enumerate(materials, start=1):
@@ -3300,9 +2851,7 @@ def material_pick(state: dict, materials: list[dict[str, str]]) -> tuple[str, bo
 
     return (choice, asks_more)
 
-
-#COLOR PICKED
-#takes in their material pick, reply is what else they asked ("" when the pick is all), picked is the material's color
+#takes in their pick, reply is what else they asked or empty, picked is the materials color
 def color_picked_reply(state: dict, id: str, reply: str, picked: str) -> str:
     state_as_text: str = state_form.state_to_text(state)
 
@@ -3314,7 +2863,7 @@ def color_picked_reply(state: dict, id: str, reply: str, picked: str) -> str:
     #can come in parts, so a line break in here is on purpose
     response: str = models.generator("COLOR PICKED GENERATOR", system_prompt, color_picked_text, COLOR_PICKED_MAX_TOKENS, COLOR_PICKED_EFFORT, line_breaks=True)
 
-    #the regen reads the shop's last reply on its own, so an answer it gave never goes out again
+    #the regen reads our last reply on its own, so an answer it gave never goes out twice
     shop_last_reply: str = spacing.last_sent_reply(state["message_history"])
 
     regen_prompt: str = color_picked_regenerator.prompt()

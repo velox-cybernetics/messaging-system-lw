@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#python's json and text patterns, the notes check every reply already gets when it's written, and the shop's details files
+#IMPORTS
+
 import json
 import re
 
@@ -7,38 +7,23 @@ from helpers.response import reasoning
 from src import branches
 
 
+#ADDRESSES
 
-#**********ADDRESSES**********
-#what a street address looks like in a reply, and the shop's own written the same way, so any other one is made up
-
-
-#STREET TYPES
-#the words that end a street name, spelled out or short
-#drive, road and trail are left out, in a reply they're a vehicle's trim far more often than a street, like the F-250 4 Wheel Drive, the Wrangler 392 Off Road or the Silverado 1500 LT Trail Boss
+#street name endings, minus drive, road and trail since those are usually trims like Off Road
 STREET_TYPES: str = r"St|Street|Ave|Avenue|Blvd|Boulevard|Ln|Lane|Way|Hwy|Highway|Pkwy|Parkway|Ct|Court|Cir|Circle|Pl|Place|Ter|Terrace|Loop"
 
+#a house number, up to four capitalized words and the street type, like 123 Main St
+STREET_ADDRESS = re.compile(rf"\b\d{{2,6}}(?:\s+[A-Z0-9][\w'.-]*){{0,4}}?\s+(?:{STREET_TYPES})\b")
 
-#STREET ADDRESS
-#a house number, up to four capitalized words and the street type, like 123 Main St or 105 S 700 E St
-STREET_ADDRESS: re.Pattern[str] = re.compile(rf"\b\d{{2,6}}(?:\s+[A-Z0-9][\w'.-]*){{0,4}}?\s+(?:{STREET_TYPES})\b")
-
-
-#DIRECTIONS
 DIRECTIONS: str = r"N|S|E|W|North|South|East|West"
 
+#utah grid addresses like 105 S 700 E, no street type needed because utah is special
+GRID_ADDRESS = re.compile(rf"\b\d{{1,5}}\s+(?:{DIRECTIONS})\.?\s+\d{{1,5}}\s+(?:{DIRECTIONS})\b")
 
-#GRID ADDRESS
-#utah's grid addresses are a house number, a direction, a block number and a direction, like 105 S 700 E, with no street type needed
-GRID_ADDRESS: re.Pattern[str] = re.compile(rf"\b\d{{1,5}}\s+(?:{DIRECTIONS})\.?\s+\d{{1,5}}\s+(?:{DIRECTIONS})\b")
-
-
-#SHORT WORDS
-#a direction or street type spelled out reads the same as its short form, so 105 South 700 East is the shop's 105 S 700 E
+#spelled out reads the same as short, so 105 South 700 East is still the shop
 SHORT_WORDS: dict[str, str] = {"north": "n", "south": "s", "east": "e", "west": "w", "street": "st", "avenue": "ave", "boulevard": "blvd", "lane": "ln", "highway": "hwy", "parkway": "pkwy", "court": "ct", "circle": "cir", "place": "pl", "terrace": "ter"}
 
-
-#ADDRESS WORDS
-#an address as lowercase words with its marks off and every long word shortened, one space between each and one on each end
+#an address as lowercase short words with the marks off, padded with a space on each end
 def address_words(text: str) -> str:
     words: list[str] = []
 
@@ -47,9 +32,7 @@ def address_words(text: str) -> str:
 
     return f" {' '.join(words)} "
 
-
-#SHOP ADDRESSES
-#every address the business details give, from the same file the replies answer from so the two never drift apart
+#every address in the business details, same file the replies use so they never drift apart
 def shop_addresses() -> list[str]:
     addresses: list[str] = []
 
@@ -59,13 +42,9 @@ def shop_addresses() -> list[str]:
 
     return addresses
 
-
-#SHOP ADDRESS WORDS
 SHOP_ADDRESSES: list[str] = shop_addresses()
 
-
-#SHOP ADDRESS
-#True when the address is the shop's or a piece of it, like 105 S 700 E out of 105 S 700 E St Unit E
+#true when the address is the shops or a piece of it, like the address without the unit
 def is_shop_address(address: str) -> bool:
     for shop_address in SHOP_ADDRESSES:
         if(address_words(address) in shop_address):
@@ -73,9 +52,7 @@ def is_shop_address(address: str) -> bool:
 
     return False
 
-
-#UNKNOWN ADDRESS
-#the first address in the reply that isn't the shop's, empty when there is none
+#the first address in the reply that isn't the shops, empty when there is none
 def unknown_address(reply: str) -> str:
     for pattern in [STREET_ADDRESS, GRID_ADDRESS]:
         for found in pattern.finditer(reply):
@@ -85,28 +62,18 @@ def unknown_address(reply: str) -> str:
     return ""
 
 
+#LINKS
 
-#**********LINKS**********
-#what a link looks like in a reply, and the shop's own sites, so a link anywhere else is made up
-
-
-#LINK ENDINGS
-#the endings a phone turns into a tappable link even with no https:// in front, everyday words like "in" or "to" are left out
+#endings a phone links even without https in front, everyday words like in or to are left out
 LINK_ENDINGS: str = r"com|net|org|info|biz|xyz|io|co|ly|us|me|tv|ai|gg|app|dev|link|site|online|shop|store|live|page|club"
 
+#full links, www ones or bare site dot com ones, emails and handles are never links
+LINK = re.compile(rf"(?<![\w@.-])(?:(?:https?://|www\.)[^\s<>\"']+|(?:[a-z0-9-]+\.)+(?:{LINK_ENDINGS})\b[^\s<>\"']*)", re.IGNORECASE)
 
-#LINK
-#"https://...", "www...." or a bare "site.com/path", the domain of an email like lonewraps@gmail.com and a handle like @lone.wraps are never links
-LINK: re.Pattern[str] = re.compile(rf"(?<![\w@.-])(?:(?:https?://|www\.)[^\s<>\"']+|(?:[a-z0-9-]+\.)+(?:{LINK_ENDINGS})\b[^\s<>\"']*)", re.IGNORECASE)
-
-
-#LINK END MARKS
-#a mark right after a link ends the sentence, it's never part of the link
+#a mark right after a link ends the sentence, its never part of the link
 LINK_END_MARKS: str = ".,;:!?)"
 
-
-#LINK HOST
-#the site a link goes to, lowercase with no https, no www and nothing after it, "lonewraps.com" for "https://www.lonewraps.com/quote."
+#the bare site a link goes to, lowercase with no https, no www and nothing after it
 def link_host(link: str) -> str:
     host: str = link.lower().rstrip(LINK_END_MARKS)
 
@@ -116,9 +83,7 @@ def link_host(link: str) -> str:
 
     return host.removeprefix("www.")
 
-
-#SHOP LINK HOSTS
-#every site the shop's details link to, from the same files the replies answer from so the two never drift apart
+#every site the shops details link to, same files the replies use so they never drift apart
 def shop_link_hosts() -> set[str]:
     hosts: set[str] = set()
 
@@ -128,13 +93,9 @@ def shop_link_hosts() -> set[str]:
 
     return hosts
 
-
-#SHOP SITES
 SHOP_LINK_HOSTS: set[str] = shop_link_hosts()
 
-
-#UNKNOWN LINK
-#the first link in the reply that goes somewhere other than the shop's own sites, empty when there is none
+#the first link in the reply that isn't one of the shops sites, empty when there is none
 def unknown_link(reply: str) -> str:
     for link in LINK.findall(reply):
         if(link_host(link) not in SHOP_LINK_HOSTS):
@@ -143,14 +104,9 @@ def unknown_link(reply: str) -> str:
     return ""
 
 
+#FINAL CHECK
 
-#**********FINAL CHECK**********
-#the last look at a reply before it reaches a customer, nothing it stops ever goes out
-
-
-#BLOCKED REASON
-#why the reply can't go out, written the way the owner reads it, empty when it can
-#a reply written in parts can have line breaks, so only the model's notes themselves stop it
+#why the reply can't go out in the owners words, line breaks are fine since replies come in parts
 def blocked_reason(reply: str) -> str:
     if(reasoning.has_reasoning(reply, True)):
         return "The reply had the model's own notes in it"

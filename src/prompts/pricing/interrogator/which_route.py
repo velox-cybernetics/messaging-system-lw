@@ -1,14 +1,10 @@
-#**********IMPORTS**********
-#the shared prompt that every reply still waiting on something from them is built on
+#IMPORTS
+
 from src.prompts.pricing.interrogator import shared as interrogator_shared
 
 
-
-#**********EXAMPLES**********
-#sample replies that lay out a vinyl wrap and colored PPF and ask which way they're leaning
-
-
 #EXAMPLES
+
 #handed to the shared prompt, which puts them last, after the rules
 def examples() -> str:
     return r"""
@@ -211,13 +207,9 @@ def examples() -> str:
 """
 
 
-
-#**********WHATS MISSING**********
-#which way they want the color changed, a vinyl wrap or colored PPF, and the prices that wait on it
-
-
 #WHATS MISSING
-#rides in the prompt, and the regen gets the whole prompt, so both hold the same prices and end on the same question
+
+#rides in the prompt and the regen gets it whole, so both hold the same prices and question
 def whats_missing() -> str:
     return """
     #WHAT'S MISSING
@@ -232,12 +224,8 @@ def whats_missing() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts the shared prompt together with what's missing and the examples for this reply
-
-
-#SYSTEM PROMPT
-#static on purpose, it's the cached prefix of every route interrogator request
+#static on purpose, its the cached prefix of every route interrogator request
 def prompt() -> str:
     return interrogator_shared.prompt(whats_missing(), examples())

@@ -1,42 +1,31 @@
-//**********IMPORTS**********
-//the replies, the database, the sign in check and the feed's shapes
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
 import * as shop from "./_helpers/shop.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//when follow ups get picked and sent, and what a customer looks like
-
-
-//HOURS
-//keep in step with PREP_HOUR, FOLLOWUP_HOUR and RECHECK_MINUTES in src/followup.py, picked at night, checked again that many minutes before the morning's send, shop time
+//keep in step with the followup python file, picked at night, sent in the morning, shop time
 const PICK_HOUR: number = 22;
 
 const SEND_HOUR: number = 10;
 
+//the nights pick gets checked again this many minutes before the morning send
 const RECHECK_MINUTES: number = 10;
 
-
-//FOLLOW UP
-//number is which follow up in a row it is, counted since they last wrote, sms is one that went out from the shop's ghl number
+//number counts follow ups in a row since they last wrote, sms means it went out from ghl
 type FOLLOW_UP = {at: number; number: number; sms: boolean};
 
-
-//CUSTOMER
-//tab is where their conversation sits on Messages, null once it was deleted there, held is when blooio started holding their texts till they text back or react
+//tab is null once deleted from Messages, held is when blooio started holding their texts
 type CUSTOMER = {id: string; name: string; channel: string; tab: shop.TAB | null; due: FOLLOW_UP | null; sent: FOLLOW_UP[]; held: number | null};
 
 
+//CUSTOMERS
 
-//**********CUSTOMERS**********
-//reads the feed's follow ups and groups them by customer
-
-
-//FOLLOW UP OF
-//a follow up as the feed writes it (helpers/state/dashboard.py), null for anything else
+//a follow up the way the feed writes it, null for anything else
 function follow_up_of(fields: Record<string, unknown>): FOLLOW_UP | null {
     const at: number = Number(fields.at);
 
@@ -55,8 +44,7 @@ function follow_up_of(fields: Record<string, unknown>): FOLLOW_UP | null {
     return {"at": at, "number": count, "sms": fields.sms === true};
 }
 
-
-//CUSTOMER IN
+//there spot in the map, made blank the first time they show up
 function customer_in(customers: Map<string, CUSTOMER>, id: string, channel: string): CUSTOMER {
     let customer: CUSTOMER | undefined = customers.get(id);
 
@@ -74,13 +62,15 @@ function customer_in(customers: Map<string, CUSTOMER>, id: string, channel: stri
     return customer;
 }
 
-
-//NEWEST
-//their newest follow up that went out, or when blooio started holding them when that's later
+//their newest follow up that went out, or when blooio started holding them when thats later
 function newest(customer: CUSTOMER): number {
     const last: FOLLOW_UP | undefined = customer.sent[customer.sent.length - 1];
 
-    let at: number = customer.held ?? 0;
+    let at: number = 0;
+
+    if(customer.held !== null) {
+        at = customer.held;
+    }
 
     if(last !== undefined && last.at > at) {
         at = last.at;
@@ -89,12 +79,16 @@ function newest(customer: CUSTOMER): number {
     return at;
 }
 
-
-//BY NEXT
 //the ones getting a follow up first, soonest first, then everyone else by their newest send or hold
 function by_next(a: CUSTOMER, b: CUSTOMER): number {
     if(a.due !== null && b.due !== null) {
-        return a.due.at - b.due.at || newest(b) - newest(a);
+        let order: number = a.due.at - b.due.at;
+
+        if(!order) {
+            order = newest(b) - newest(a);
+        }
+
+        return order;
     }
 
     if(a.due !== null) {
@@ -109,13 +103,9 @@ function by_next(a: CUSTOMER, b: CUSTOMER): number {
 }
 
 
+//FOLLOW UPS
 
-//**********FOLLOW UPS**********
-//who gets one at the next morning's send, every one that went out in the last two weeks, and who blooio holds till they answer
-
-
-//READ FOLLOW UPS
-//someone switched off, or on a channel switched off, gets nothing in the morning, so they don't show as getting one or as held
+//anyone switched off, or on an off channel, gets nothing, so they never show as due or held
 async function read_follow_ups(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -137,7 +127,13 @@ async function read_follow_ups(request: Request): Promise<Response> {
         const sent: FOLLOW_UP | null = follow_up_of(fields);
 
         if(typeof fields.id === "string" && sent !== null) {
-            customer_in(customers, fields.id, String(fields.channel ?? "")).sent.push(sent);
+            let channel: unknown = fields.channel;
+
+            if(channel === undefined || channel === null) {
+                channel = "";
+            }
+
+            customer_in(customers, fields.id, String(channel)).sent.push(sent);
         }
     }
 
@@ -150,7 +146,13 @@ async function read_follow_ups(request: Request): Promise<Response> {
 
         const due: FOLLOW_UP | null = follow_up_of(fields);
 
-        const channel: string = String(fields.channel ?? "");
+        let channel_field: unknown = fields.channel;
+
+        if(channel_field === undefined || channel_field === null) {
+            channel_field = "";
+        }
+
+        const channel: string = String(channel_field);
 
         if(due !== null && !off.has(id) && !off_tabs.has(shop.tab_of(channel))) {
             customer_in(customers, id, channel).due = due;
@@ -166,7 +168,13 @@ async function read_follow_ups(request: Request): Promise<Response> {
 
         const held: number = Number(fields.at);
 
-        const channel: string = String(fields.channel ?? "");
+        let channel_field: unknown = fields.channel;
+
+        if(channel_field === undefined || channel_field === null) {
+            channel_field = "";
+        }
+
+        const channel: string = String(channel_field);
 
         if(Number.isFinite(held) && held > 0 && !off.has(id) && !off_tabs.has(shop.tab_of(channel))) {
             customer_in(customers, id, channel).held = held;
@@ -182,11 +190,21 @@ async function read_follow_ups(request: Request): Promise<Response> {
     let summaries: string[] = [];
 
     if(ids.length > 0) {
-        summaries = redis.as_strings(await redis.command(["HMGET", "summaries", ...ids]));
+        const summaries_command: redis.COMMAND = ["HMGET", "summaries"];
+
+        for(const id of ids) {
+            summaries_command.push(id);
+        }
+
+        summaries = redis.as_strings(await redis.command(summaries_command));
     }
 
     for(let index: number = 0; index < ids.length; index++) {
-        const id: string = ids[index] ?? "";
+        let id: string | undefined = ids[index];
+
+        if(id === undefined) {
+            id = "";
+        }
 
         const summary: shop.SUMMARY | null = shop.parse_summary(summaries[index]);
 
@@ -202,21 +220,29 @@ async function read_follow_ups(request: Request): Promise<Response> {
     const list: CUSTOMER[] = [];
 
     for(const customer of customers.values()) {
-        list.push(customer);
-    }
+        let spot: number = list.length;
 
-    list.sort(by_next);
+        //walks back past everyone who goes after them, ties keep the order they came in
+        while(spot > 0) {
+            const before: CUSTOMER | undefined = list[spot - 1];
+
+            if(before === undefined || !(by_next(before, customer) > 0)) {
+                break;
+            }
+
+            spot--;
+        }
+
+        list.splice(spot, 0, customer);
+    }
 
     return http.json({"pick_hour": PICK_HOUR, "send_hour": SEND_HOUR, "recheck_minutes": RECHECK_MINUTES, "customers": list});
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for GET /api/follow-ups
-
-
-//GET
+//who gets a follow up next and who already got one
 export function GET(request: Request): Promise<Response> {
     return http.guarded(read_follow_ups, request);
 }

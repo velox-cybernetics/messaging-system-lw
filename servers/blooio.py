@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#python's tools, the web server, the shop's state, the dashboard and the journal that keeps every waiting message, ghl that logs every text a customer sends, senders and reply chains, the follow ups a tapback lifts blooio's hold on, the spam check every text gets first, the kept pics, and the instagram and messenger servers
+#IMPORTS
+
 import asyncio
 import hashlib
 import hmac
@@ -23,7 +23,8 @@ from helpers.response import spacing
 from helpers.media import media_host
 from helpers.channels import senders
 from helpers.channels.senders import OWNER_NUMBER
-from src.core import core, booking_silent
+from src.core import core
+from src.reply_checks import booking_silent
 from src import followup
 from src import spam
 from helpers.chains import color_chains
@@ -31,95 +32,65 @@ from helpers.terminal import prints
 from servers import instagram, messenger
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#the web server, the blooio secret, and the memory that holds each customer's waiting messages
-
-
-#LOAD ENV
 load_dotenv()
 
+#no docs, redoc or openapi pages, nobody gets a free map of the webhook
+APP = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-#APP
-#no /docs, /redoc, or /openapi.json, so nobody can pull up a map of the webhook
-APP: FastAPI = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-
-
-#BLOOIO SECRET
 #blooio signs every delivery with it
 BLOOIO_WEBHOOK_SECRET: str | None = os.getenv("BLOOIO_WEBHOOK_SECRET")
 
-
-#MESSAGE BATCHES
-#each number's countdown till their batch gets answered
-BATCH_COUNTDOWNS: dict[str, asyncio.Task] = {}
+#each numbers countdown till there batch gets answered
+BATCH_COUNTDOWNS: dict = {}
 
 #the texts each number sent that wait on that countdown
 MESSAGE_BATCHES: dict[str, list] = {}
 
-#each of those texts' entries in the journal, cleared once their batch is answered
+#where each of those texts sits in the journal, cleared once there batch is answered
 BATCH_ENTRIES: dict[str, list[str]] = {}
 
-
-#CUSTOMER LOCKS
 #one lock per number, so only one of their batches gets answered at a time
-CUSTOMER_LOCKS: dict[str, asyncio.Lock] = {}
+CUSTOMER_LOCKS: dict = {}
 
-
-#OWNER PICS
-#the closest material pics coming in for each M the owner sent, by its check number, the newest last
+#closest material pics landing for each of his Ms, by check number, the newest M last
 OWNER_PICS: dict[str, list[str]] = {}
 
-
-#NEWS TIMERS
-#what the owner found for each customer, waiting a few seconds on anything they're still sending before it goes out on its own
-NEWS_TIMERS: dict[str, asyncio.Task] = {}
+#each customers few second wait before the owners news goes out on its own
+NEWS_TIMERS: dict = {}
 
 
+#TIMINGS
 
-#**********TIMINGS**********
-#how long each wait lasts and how big a webhook may be before it gets refused
-
-
-#BATCH TIMES
 BLOOIO_BATCH_TIME: int = 45
 
-#a pic can land over a minute after its text, so a batch still waiting on an asked-for pic gets this much longer
+#a pic can land over a minute after its text, so a batch waiting on one gets this much longer
 BLOOIO_PIC_WAIT_TIME: int = 75
 
-
-#TYPING BUBBLE
-#while a batch waits the bubble goes up a few seconds at a time, a random amount so it looks like someone typing
+#the bubble goes up for a random few seconds at a time, so it looks like someone typing
 TYPING_BURST_SECONDS: tuple[int, int] = (5, 12)
 
 #and comes down for a moment between, like they stopped to think
 TYPING_PAUSE_SECONDS: tuple[int, int] = (2, 4)
 
-
-#WEBHOOK LIMITS
-#a real webhook is a few kilobytes, so a bigger body is refused before it can fill the instance's memory
+#a real webhook is a few kilobytes, so a bigger body is refused before it can eat the memory
 MAX_BODY_BYTES: int = 1024 * 1024
 
-#blooio's own replay window, a signed delivery older than this is someone resending a captured one
+#blooios replay window, a signed delivery older than this is a captured one sent again
 BLOOIO_MAX_AGE_SECONDS: int = 300
 
-#blooio retries a delivery for about 15 minutes and a replay resends it later, so an id is kept for 48 hours
+#blooio retries for about 15 minutes and a replay comes later, so an id is kept 48 hours
 SEEN_TTL_SECONDS: int = 172800
 
-
-#PICS WAIT
-#his closest material pics get this long to land after his M, a big pic can come in over a minute after its text
+#his closest material pics get this long to land after his M, big pics take their sweet time
 OWNER_PICS_WAIT_TIME: int = 120
 
 
+#WEBHOOK SAFETY
 
-#**********WEBHOOK SAFETY**********
-#keeps out giant, forged, replayed and repeated deliveries so each real text gets answered once
-
-
-#READ BODY
-#nothing comes back when the body is over the size cap, the signature is checked against these exact bytes
-async def read_body(request: Request) -> bytes | None:
+#the raw body for the signature check, None once its over the size cap
+async def read_body(request) -> bytes | None:
     chunks: list[bytes] = []
 
     size: int = 0
@@ -135,9 +106,7 @@ async def read_body(request: Request) -> bytes | None:
 
     return b"".join(chunks)
 
-
-#BLOOIO SIGNED
-#blooio signs "<t>.<body>" with the webhook secret, sent as "t=<unix seconds>,v1=<hex>" in X-Blooio-Signature
+#blooio signs the timestamp, a dot and the body, its header hands over t and the v1 hex
 def blooio_signed(body: bytes, signature: str, secret: str) -> bool:
     fields: dict[str, str] = {}
 
@@ -154,19 +123,15 @@ def blooio_signed(body: bytes, signature: str, secret: str) -> bool:
     if(not hmac.compare_digest(fields.get("v1", "").encode(), expected.encode())):
         return False
 
-    #int() only ever sees a signed timestamp, and a delivery outside the window is a replay
+    #int only ever sees a signed timestamp, and anything outside the window is a replay
     return abs(time.time() - int(timestamp)) <= BLOOIO_MAX_AGE_SECONDS
 
-
-#FIRST SEEN
 #set nx is one atomic step, so two copies of a delivery can never both get through
 def first_seen(message_id: str) -> bool:
     seen: bool | None = REDIS_CLIENT.set(f"seen_blooio_{message_id}", "1", nx=True, ex=SEEN_TTL_SECONDS)
 
     return bool(seen)
 
-
-#NEW MESSAGE
 #blooio resends a delivery it thinks was missed, an id already seen was already batched
 async def new_message(message_id: str | None) -> bool:
     if(not message_id):
@@ -179,38 +144,31 @@ async def new_message(message_id: str | None) -> bool:
             print()
 
             return False
-
-    #redis down must not drop the message, it is answered without the dedupe
     except Exception as error:
+        #redis down must not drop the message, it is answered without the dedupe
         print(f"DEDUPE ERROR: {error}")
 
     return True
 
 
+#PIC WAITING
 
-#**********PIC WAITING**********
-#gives a pic the shop asked for time to land, so it goes out in the same batch as its text
-
-
-#PIC PENDING
-#true when the shop's last reply asked for a pic and none is in the batch yet, a list with anything in it is a pic
+#true when the shops last reply asked for a pic and the batch still has none
 def pic_pending(id: str, message_batch: list) -> bool:
+    #a list with anything in it is a pic
     for message in message_batch:
         if(isinstance(message, list) and message != []):
             return False
 
     return spacing.asks_for_pic(spacing.last_sent_reply(message_history_form(id)))
 
-
-#PIC WAIT
-#the pic the shop asked for gets time to land before the countdown starts, so it goes out in the same batch as its text
+#the pic the shop asked for gets time to land first, so it joins the batch with its text
 async def wait_for_pic(id: str) -> None:
     try:
-        #a copy, the batch keeps growing in the event loop while the history gets read in a worker thread
+        #a copy, since the batch keeps growing while a worker thread reads the history
         waiting: bool = await asyncio.to_thread(pic_pending, id, list(MESSAGE_BATCHES[id]))
-
-    #redis down never holds the batch up, it just goes out on the usual countdown
     except Exception as error:
+        #redis down never holds the batch up, it just goes out on the usual countdown
         print(f"PIC WAIT ERROR: {error}")
 
         return
@@ -221,17 +179,13 @@ async def wait_for_pic(id: str) -> None:
         await asyncio.sleep(BLOOIO_PIC_WAIT_TIME)
 
 
+#TYPING
 
-#**********TYPING**********
-#shows the typing bubble while a batch waits, so the shop looks like a person writing back
-
-
-#NATURAL TYPING
-#the batch waits out its time with the bubble going up and down, so it looks like someone typing and stopping
-#a person fitting them a day on the schedule keeps the bot silent, so their batch waits out its time with no bubble at all
+#the batch waits out its time with the bubble going up and down, like someone typing for real
 async def natural_typing(id: str) -> None:
     end: float = time.monotonic() + BLOOIO_BATCH_TIME
 
+    #a person fitting them in keeps the system silent, so the wait goes by with no bubble at all
     if(await asyncio.to_thread(booking_silent, id)):
         await asyncio.sleep(max(0.0, end - time.monotonic()))
 
@@ -252,47 +206,35 @@ async def natural_typing(id: str) -> None:
         await asyncio.sleep(min(pause_seconds, end - time.monotonic()))
 
 
+#CUSTOMER LOCKS
 
-#**********CUSTOMER LOCKS**********
-#makes a customer's batches and the owner's news for them take turns, so only one gets answered at a time
-
-
-#CUSTOMER LOCK
 #their lock, made the first time they need one
-def customer_lock(id: str) -> asyncio.Lock:
+def customer_lock(id: str):
     if(id not in CUSTOMER_LOCKS):
         CUSTOMER_LOCKS[id] = asyncio.Lock()
 
     return CUSTOMER_LOCKS[id]
 
-
-#INCOMING BATCH
-#a batch of theirs still counting down gets answered first, and a restarted countdown keeps the wait on the new one
+#any batch of theirs still counting down gets answered first, a restarted one included
 async def incoming_batch_answered(id: str) -> None:
     while(id in BATCH_COUNTDOWNS):
         await asyncio.wait([BATCH_COUNTDOWNS[id]])
 
 
+#COLOR NEWS
 
-#**********COLOR NEWS**********
-#sends what the owner found on its own when no reply to a text of theirs carries it
-
-
-#STOP TIMER
 #their news wait is called off, if one is running
 def stop_news_timer(id: str) -> None:
-    timer: asyncio.Task | None = NEWS_TIMERS.pop(id, None)
+    timer = NEWS_TIMERS.pop(id, None)
 
     if(timer is not None):
         timer.cancel()
 
-
-#NEWS WAIT
-#a few seconds for a text they're still sending to land, then any batch of theirs goes first so its reply carries it
+#a few seconds for a text they're still sending, then any batch of theirs gets to carry it
 async def news_wait(id: str) -> None:
     await asyncio.sleep(owner.NEWS_WAIT_SECONDS)
 
-    #done waiting, so nothing cancels it from here, a newer answer from the owner gets its own wait
+    #done waiting, so nothing cancels it from here, a newer owner answer gets its own wait
     if(NEWS_TIMERS.get(id) is asyncio.current_task()):
         del NEWS_TIMERS[id]
 
@@ -301,23 +243,25 @@ async def news_wait(id: str) -> None:
         await incoming_batch_answered(id)
 
         async with customer_lock(id):
-            #a text that came in while this waited on their lock starts a batch that carries it too
+            #anything they sent while this waited on the lock starts a batch, which carries it
             if(id in BATCH_COUNTDOWNS):
                 continue
 
             #a reply that carried it leaves nothing to send
             if(await asyncio.to_thread(owner.news_due, id)):
-                with prints.held():
+                held_token = prints.hold()
+
+                try:
                     print(f"COLOR NEWS: nothing from {id} is being answered, so what the owner found goes out on its own")
 
                     print()
 
                     await asyncio.to_thread(color_chains.send_color_news, id)
+                finally:
+                    prints.release(held_token)
 
             return
 
-
-#START TIMER
 #a newer answer from the owner restarts their news wait
 def start_news_timer(id: str) -> None:
     stop_news_timer(id)
@@ -325,13 +269,9 @@ def start_news_timer(id: str) -> None:
     NEWS_TIMERS[id] = asyncio.create_task(news_wait(id))
 
 
+#OWNER ANSWERS
 
-#**********OWNER ANSWERS**********
-#picks up the owner's answer on a color check and his material pics and hands them over, anything else from his number goes nowhere
-
-
-#OWNER ANSWER
-#his pics get read once before any customer waits on them, then a reply of theirs being written holds off till his answer is on file
+#his pics get read before any customer waits on them, then there reply holds for his answer
 async def owner_answer(answer: tuple, pics: list[str]) -> None:
     customer: str = ""
 
@@ -339,7 +279,9 @@ async def owner_answer(answer: tuple, pics: list[str]) -> None:
     if(answer[0] == "answer" and answer[1] != owner.NO_ANSWER):
         customer = await asyncio.to_thread(owner.color_check_customer, answer[2])
 
-    with prints.held():
+    held_token = prints.hold()
+
+    try:
         print(f"OWNER COLOR CHECK ANSWER: {answer} with {len(pics)} pics")
 
         print()
@@ -349,7 +291,7 @@ async def owner_answer(answer: tuple, pics: list[str]) -> None:
 
             return
 
-        #reading his material pics is the slow part, so their batches keep getting answered while it runs
+        #reading his pics is the slow part, so their batches keep getting answered meanwhile
         materials: list[dict[str, str]] | None = await asyncio.to_thread(color_chains.prepared_materials, customer, answer[1], answer[2], pics)
 
         if(materials is None):
@@ -357,7 +299,7 @@ async def owner_answer(answer: tuple, pics: list[str]) -> None:
 
         channel: str = await asyncio.to_thread(owner.color_check_channel, customer)
 
-        #an instagram or messenger customer's batches, lock and news wait are on that channel's server, so what he found goes there
+        #an instagram or messenger customer lives on that server, so his answer goes there
         if(channel == "ig"):
             await instagram.owner_answer(customer, answer, materials)
 
@@ -368,34 +310,33 @@ async def owner_answer(answer: tuple, pics: list[str]) -> None:
 
             return
 
-        #the reply core is writing for them right now, if there is one, gets held so their batch is answered again with it
+        #a reply core is writing for them right now gets held and redone with his answer
         owner.hold_for_news(customer)
 
-        #a reply of theirs being written or already going out when he answered means what he found waits for the next reply to them
+        #a reply already underway when he answered means the news waits for their next reply
         replying: bool = customer_lock(customer).locked()
 
         news_due: bool = False
 
         try:
             async with customer_lock(customer):
-                #a batch answered in the meantime can send a different exact color, which takes this check off
+                #a batch answered meanwhile can bring a new exact color and take this check off
                 if(await asyncio.to_thread(owner.color_check_customer, answer[2]) != customer):
                     await asyncio.to_thread(color_chains.color_check_unmatched, answer)
 
                     return
 
                 news_due = await asyncio.to_thread(color_chains.color_check_answered, customer, answer[1], answer[2], materials, replying)
-
         finally:
             owner.news_landed(customer)
 
-        #nothing of theirs was being answered, so the reply to what they're sending carries it, or it goes out on its own once they go quiet
+        #nothing was underway, so it rides their next reply or goes out alone once they go quiet
         if(news_due and not replying):
             start_news_timer(customer)
+    finally:
+        prints.release(held_token)
 
-
-#PICS ADDED
-#anything the owner sends while an M waits on its pics belongs to the newest one, true when one was open
+#pics he sends while an M waits go to the newest one, true when one was open
 def material_pics_added(pics: list[str]) -> bool:
     if(len(OWNER_PICS) == 0):
         return False
@@ -406,8 +347,6 @@ def material_pics_added(pics: list[str]) -> bool:
 
     return True
 
-
-#PICS ANSWER
 #once his pics had their time to land, the M goes out with every one that came in
 async def material_pics_answer(answer: tuple) -> None:
     await asyncio.sleep(OWNER_PICS_WAIT_TIME)
@@ -416,9 +355,7 @@ async def material_pics_answer(answer: tuple) -> None:
 
     await owner_answer(answer, pics)
 
-
-#COLLECT PICS
-#his M waits for every closest material pic he sends till time is up, a repeat M on an open check only adds its pics
+#his M waits for its pics till times up, a repeat M on an open check just adds its pics
 def collect_material_pics(answer: tuple, pics: list[str]) -> None:
     code: str = answer[2]
 
@@ -431,9 +368,7 @@ def collect_material_pics(answer: tuple, pics: list[str]) -> None:
 
     asyncio.create_task(material_pics_answer(answer))
 
-
-#OWNER CHECK
-#true for every text from the owner's number, which only ever answers color checks: his Y or M and the pics for his M get handled, anything else is dropped, so he's never batched or answered like a customer
+#true for anything from the owners number, hes never batched or answered like a customer
 async def owner_checked(id: str, text: str | None, attachments: list | None) -> bool:
     if(id != OWNER_NUMBER):
         return False
@@ -449,7 +384,7 @@ async def owner_checked(id: str, text: str | None, attachments: list | None) -> 
         answer = await asyncio.to_thread(owner.color_check_answer, text)
 
     if(answer is None):
-        #anything he sends while an M waits on its pics belongs to it, the rest answers no color check, so it goes nowhere
+        #an open M takes whatever he sends, otherwise it answers no check and goes nowhere
         if(not material_pics_added(pics)):
             print(f"OWNER TEXT DROPPED: {text!r} with {len(pics)} pics answers no color check, the owner's number only answers color checks")
 
@@ -468,19 +403,13 @@ async def owner_checked(id: str, text: str | None, attachments: list | None) -> 
     return True
 
 
+#MESSAGE BATCHING
 
-#**********MESSAGE BATCHING**********
-#holds their texts until they stop sending, shows the typing bubble, then answers them all at once
-
-
-#SENT SINCE
-#they texted again after their batch was taken, so the reply being written for it never goes out and the batch carrying the new texts answers both
+#they texted again after their batch was taken, so its reply gets tossed for the next batch
 def sent_since(id: str) -> bool:
     return id in MESSAGE_BATCHES
 
-
-#FOLD BATCH
-#a batch whose reply never went out goes in front of the texts they sent since, so one reply answers them all, False when nothing of theirs is waiting
+#a tossed batch goes in front of their newer texts, False when nothing of theirs is waiting
 def fold_batch(id: str, current_message_batch: list, current_entries: list[str]) -> bool:
     if(id not in MESSAGE_BATCHES):
         return False
@@ -495,13 +424,12 @@ def fold_batch(id: str, current_message_batch: list, current_entries: list[str])
 
     return True
 
-
-#BATCH
-#waits on an asked-for pic and the typing, then answers the whole batch, again if its reply was held for the owner's answer
-#it stays open till it holds their lock, so a text that lands while their last batch is still being answered joins it
+#answers the whole batch once they stop, late texts join right up until it gets their lock
 async def batch(id: str) -> None:
-    #everything this batch prints, its countdown included, comes out in one block once its reply went out or it failed
-    with prints.held():
+    #everything it prints comes out as one block at the end, sent or failed
+    held_token = prints.hold()
+
+    try:
         await wait_for_pic(id)
 
         await natural_typing(id)
@@ -514,11 +442,11 @@ async def batch(id: str) -> None:
 
         answered: bool = False
 
-        #a reply held for the owner's answer landing gets written again once his answer is on file, so it carries what he found
+        #a reply held for the owners answer gets written again once its on file
         while(not answered):
-            #a batch closing while their last one is still being answered waits, so it sees that reply in the history
+            #their last batch finishes first, so this one sees that reply in the history
             async with customer_lock(id):
-                #it closes the first time it holds their lock, and nothing waits from here to core, so what the owner found never goes out on its own in between
+                #no waiting from here to core, so the owners news can't sneak out in between
                 if(not taken):
                     current_message_batch = MESSAGE_BATCHES.pop(id)
 
@@ -534,19 +462,18 @@ async def batch(id: str) -> None:
 
                     print()
 
-                #core runs in its own worker thread, so the server keeps taking webhooks while it works
-                answered = await asyncio.to_thread(core, current_message_batch, id, "blooio", lambda: sent_since(id))
+                answered = await asyncio.to_thread(core, current_message_batch, id, "blooio", sent_since)
 
-                #they texted again while its reply was being written, so the batch carrying those answers this one with them
+                #they texted mid reply, so their newer batch answers this one too
                 if(not answered and fold_batch(id, current_message_batch, current_entries)):
                     return
 
         #answered, so its texts come off the journal and a restart never answers them again
         await asyncio.to_thread(journal.clear, "blooio", id, current_entries)
+    finally:
+        prints.release(held_token)
 
-
-#QUEUE MESSAGE
-#every new message restarts the id's countdown, so the whole batch goes out once they stop sending, journal_entry is where the message is on file
+#every new message restarts there countdown, so the batch only goes out once they stop
 def queue_message(id: str, message: list, journal_entry: str) -> None:
     if(id not in BATCH_COUNTDOWNS):
         MESSAGE_BATCHES[id] = message
@@ -554,7 +481,6 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
         BATCH_ENTRIES[id] = [journal_entry]
 
         BATCH_COUNTDOWNS[id] = asyncio.create_task(batch(id))
-
     else:
         MESSAGE_BATCHES[id].extend(message)
 
@@ -565,23 +491,19 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
         BATCH_COUNTDOWNS[id] = asyncio.create_task(batch(id))
 
 
+#TAKING IN
 
-#**********TAKING IN**********
-#every customer's text gets its spam check before anything else sees it, then goes to ghl, the dashboard and the batch
-
-
-#TAKE MESSAGE
-#their texts take turns through the spam check, so each one still reaches ghl, the dashboard and the batch in the order it came in
-#spam goes no further, so it never shows in ghl or the dashboard and never gets a reply
+#one text at a time through the spam check, so ghl, the dashboard and the batch keep order
 async def take_message(id: str, text: str | None, attachments: list | None) -> None:
     async with spam.intake_lock(id):
+        #spam stops here, so it never shows in ghl or the dashboard and never gets a reply
         if(await asyncio.to_thread(spam.is_spam, id, text, "blooio")):
             return
 
-        #ghl never sees blooio, so every text a customer sends goes in their conversation there, switched on in the dashboard or not
+        #ghl never sees blooio, so every text goes in there ghl convo, switched on or not
         ghl.log_received(id, text, attachments)
 
-        #every message but spam shows in the dashboard, unless the owner had them before the bot, and only one from a customer switched on there gets batched
+        #the dashboard shows it unless the owner had them first, only switched on ones get batched
         if(await asyncio.to_thread(dashboard.take_in, id, "blooio", [text, attachments])):
             #on file before it waits in the batch, so a restart while it waits never loses it
             journal_entry: str = await asyncio.to_thread(journal.save, "blooio", id, [text, attachments])
@@ -589,29 +511,20 @@ async def take_message(id: str, text: str | None, attachments: list | None) -> N
             queue_message(id, [text, attachments], journal_entry)
 
 
+#BLOOIO WEBHOOK
 
-#**********BLOOIO WEBHOOK**********
-#serves the owner's pics to blooio, and takes every text blooio delivers, checks it's real, and sends it to the owner or the batch
-
-
-#HOSTED PIC
-#the customer's pics the owner's texts carry are served from here, since blooio never gets them from instagram's links
-#blooio fetches each one from its link here, a name never handed out or a day old is not found
-@APP.get(f"{media_host.MEDIA_PATH}/{{file_name}}")
-async def hosted_pic(file_name: str) -> Response:
+#serves the customer pics in the owners texts, blooio can't pull them from instagrams links
+async def hosted_pic(file_name: str):
     media: tuple[bytes, str] | None = await asyncio.to_thread(media_host.hosted_media, file_name)
 
+    #a name never handed out or a day old is a 404
     if(media is None):
         return Response(status_code=404)
 
     return Response(content=media[0], media_type=media[1])
 
-
-#BLOOIO HOOK
 #every text and tapback blooio delivers comes in here as a signed POST
-#it answers with a dict or a JSONResponse, so fastapi makes no response model from the annotation
-@APP.post("/blooio/webhook", response_model=None)
-async def blooio_hook(request: Request) -> dict | JSONResponse:
+async def blooio_hook(request: Request):
     if(not BLOOIO_WEBHOOK_SECRET):
         print("BLOOIO WEBHOOK ERROR: BLOOIO_WEBHOOK_SECRET is not set, delivery refused")
 
@@ -639,27 +552,30 @@ async def blooio_hook(request: Request) -> dict | JSONResponse:
 
         attachments: list = data.get("data").get("attachments")
 
-        #message_id is the same on every retry and replay, the envelope id is blooio's own dedupe key
+        #message_id survives every retry and replay, the envelope id is blooios own dedupe key
         message_id: str | None = data.get("data").get("message_id")
 
         if(not message_id):
             message_id = data.get("id")
 
-        #a message is its text and its attachments
         if(await new_message(message_id)):
-            #the owner's number only ever answers color checks, so nothing from it goes in the batch, every customer's text gets taken in
+            #the owners number only answers color checks, everyone else gets taken in
             if(not await owner_checked(id, text, attachments)):
                 await take_message(id, text, attachments)
-
-    #a tapback they put on in their own chat counts as an answer to blooio, so it lifts the hold on their follow ups
     elif(data.get("type") == "message.reaction"):
-        reaction: dict = data.get("data") or {}
+        reaction: dict | None = data.get("data")
 
-        sender: str = reaction.get("sender") or ""
+        if(not reaction):
+            reaction = {}
 
+        sender: str | None = reaction.get("sender")
+
+        if(not sender):
+            sender = ""
+
+        #a tapback they put on in there own chat lifts the hold on their follow ups
         if(sender != "" and reaction.get("direction") == "inbound" and reaction.get("action", "add") == "add" and not reaction.get("is_group")):
             await asyncio.to_thread(followup.note_reaction, sender)
-
     elif(data.get("type") == "message.failed"):
         failed: dict = data.get("data")
 
@@ -672,12 +588,16 @@ async def blooio_hook(request: Request) -> dict | JSONResponse:
     return {"status": "ok"}
 
 
+#ROUTES
 
-#**********RUN**********
-#starts this webhook server on its own when the file is run directly
+APP.add_api_route(f"{media_host.MEDIA_PATH}/{{file_name}}", hosted_pic, methods=["GET"])
+
+#it hands back a dict or a JSONResponse, so no response model
+APP.add_api_route("/blooio/webhook", blooio_hook, methods=["POST"], response_model=None)
 
 
-#RUN SERVER
+#RUN
+
 #uvicorn only prints its warnings and errors, so the terminal is just the held blocks
 if(__name__ == "__main__"):
     uvicorn.run(APP, port=8000, log_level="warning")

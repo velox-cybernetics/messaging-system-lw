@@ -1,9 +1,6 @@
-#**********CHECK EXAMPLES**********
-#whether what the new girl said she'd ask the owner about is small, and whether they asked about it again, with yes and no samples
+#CHECK EXAMPLES
 
-
-#SMALL ASK
-#the yes and no rules and samples for whether everything the reply said she'd ask the owner about is small
+#yes and no rules plus samples for whether everything she'd ask the owner about is small
 def small_ask_examples() -> str:
     return r"""Yes: every thing SYSTEM_RESPONSE says she isn't sure on and will ask the owner about is something small about coming to the shop, the kind of thing that never changes the job, the price or the booking: the wifi, what's in the waiting area (a bathroom, coffee, snacks, a TV, outlets, seating), parking or the lot (where to park, whether it's gated, leaving the car there overnight), EV charging, bringing a kid or a dog along, or merch like stickers or shirts.
 No: any of it is about a job or a service (whether the shop does something, how, on what, or wrapping over something), a price, a fee, a payment or financing, the hours, a holiday or a day, booking, the warranty, insurance or what it covers, a license, hiring, gift cards, a deal, a discount, a referral, a collab, or anything else only the owner can decide.
@@ -37,9 +34,7 @@ state: {"current_user_message":{"user_media":{},"user_text":"if yall scratch my 
 system_response: Yeah, we're insured. tbh I'm not sure on exactly what it covers though 😅 I'm still learning the ropes here since I'm new, but I'll ask the owner.
 answer: False"""
 
-
-#SIDE ASK PERSISTS
-#the yes and no rules and samples for whether they asked again about the small thing she said she'd ask the owner about
+#yes and no rules plus samples for whether they asked again about her small ask to the owner
 def persist_examples() -> str:
     return r"""Yes: `current_user_message` asks about the small thing a system_response in `message_history` said she wasn't sure on and would ask the owner about, again, in any words: asking it again ("so is there wifi or not?"), following up on it ("any word on the parking?", "did you ask him yet?"), or pushing for the answer ("I really need to know if there's wifi, I have to work while I wait"), even when the message asks something else too.
 No: it doesn't bring that thing up again: an ok, a thanks or a "no worries" taking it in, small talk, a different question, going ahead with the job, or answering something else the shop asked.

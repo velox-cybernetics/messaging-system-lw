@@ -1,16 +1,12 @@
-#**********IMPORTS**********
-#the shop details and texting habits every reply prompt shares, and the selling points every follow up picks its one from
+#IMPORTS
+
 from src.prompts import shared
 from src.prompts.followup import selling_points
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample follow ups for a conversation that went quiet before they got on the schedule, one for each kind
-
-
-#REPLY EXAMPLES
-#the sample follow ups added to the end of the prompt, so the follow up sounds like the shop's
+#the sample follow ups added to the end of the prompt, so the follow up sounds like the shops
 def examples() -> str:
     return r"""
     Ex 1:
@@ -95,12 +91,8 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for writing the follow up, with the shop details, the selling points, texting habits and samples added on the end
-
-
-#SYSTEM PROMPT
 #the system prompt for the follow up the shop sends on its own after a conversation went quiet
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests

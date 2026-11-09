@@ -1,15 +1,11 @@
-#**********IMPORTS**********
-#the shop's shared notes on typos, laughs, pics and color picks
+#IMPORTS
+
 from src.prompts import shared
 
 
-
-#**********EXAMPLES**********
-#sample replies from the new girl at the shop, not sure yet, still learning the ropes, asking the owner
-
-
 #EXAMPLES
-#go in last in the prompt, after the rules and the shop's shared notes
+
+#go in last in the prompt, after the rules and the shops shared notes
 def examples() -> str:
     return r"""
     Ex 1:
@@ -119,13 +115,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#puts together the prompt for replies about things the shop has no info on yet
-
-
-#SYSTEM PROMPT
-#static on purpose, this prompt is the cached prefix of every lack info generator request and the regenerator's
+#static on purpose, its the cached prefix of every lack info generator and regen request
 def prompt() -> str:
     prompt_text: str = """
     #ROLE

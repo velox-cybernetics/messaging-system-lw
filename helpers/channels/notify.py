@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#the texts that go out to the owner and the developer, what's on file about the customer, the copies of their pics, and the dashboard that counts every hand off
+#IMPORTS
+
 import json
 
 from helpers.channels import senders
@@ -12,28 +12,18 @@ from helpers.state import state_form
 from src import branches
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#how the owner's texts name each channel and each color job
-
-
-#CHANNEL NAMES
-#a text conversation that came in from a lead form reads as Form (see channel_name)
+#a text conversation that came in from a lead form reads as Form, channel_name has the rest
 CHANNEL_NAMES: dict[str, str] = {"blooio": "Text", "meta-form": "Form", "website-form": "Form", "ig": "IG", "messenger": "FB"}
 
-
-#COLOR SERVICES
 #the job a color check is for, by the route on file
 COLOR_SERVICES: dict[str, str] = {branches.WRAP_ROUTE: "wrap", branches.COLORED_PPF_ROUTE: "colored PPF"}
 
 
+#CUSTOMER DETAILS
 
-#**********CUSTOMER DETAILS**********
-#who the customer is, where they came in and what they drive, written the way the owner reads it
-
-
-#MESSAGE DETAILS
-#what they sent written out for the owner, their text and how many photos or videos came with it
+#what they sent written out for the owner, there text and how many photos or videos came with it
 def notify_details(user_message: dict) -> str:
     details: str = user_message.get("user_text", "").strip()
 
@@ -45,9 +35,7 @@ def notify_details(user_message: dict) -> str:
 
     return details
 
-
-#VEHICLE TEXT
-#the make and model, with the color it is now so a bright one that takes more work shows too, and whether it was only typed
+#the make and model plus the color it is now, a bright one is more work, and if it was only typed
 def vehicle_text(id: str) -> str:
     critical_info: dict[str, str] = log.read_info(f"criticalInfo_{id}")
 
@@ -56,15 +44,13 @@ def vehicle_text(id: str) -> str:
     if(critical_info.get("color")):
         vehicle = f"{vehicle}, {critical_info['color']} now"
 
-    #they typed it, a neutral color right away or any other after the shop asked twice for a pic, so no pic ever showed it
+    #they typed the color instead of sending a pic, so the owner shouldn't trust it blindly
     if(critical_info.get("color_from") == branches.TYPED_COLOR_SOURCE):
         vehicle = f"{vehicle} (typed, no pic)"
 
     return vehicle
 
-
-#LEAD NOTE
-#a form lead's full name and that they came from a form stay on file for the owner's texts
+#a form leads full name and that they came from a form stay on file for the owners texts
 def note_lead(current_message_batch: list, id: str) -> None:
     form: dict[str, str] = state_form.form_fields(current_message_batch)
 
@@ -72,11 +58,9 @@ def note_lead(current_message_batch: list, id: str) -> None:
 
     log.write_info(f"lead_{id}", [name, "form"], ["name", "source"])
 
-    #the dashboard lists them by the name off the form instead of their number
+    #the dashboard lists them by the name off the form instead of there number
     dashboard.name_convo(id, name)
 
-
-#CHANNEL NAME
 #someone who first came in from a form reads as Form, even when they text
 def channel_name(id: str, channel: str) -> str:
     if(log.read_info(f"lead_{id}").get("source", "") == "form"):
@@ -84,28 +68,21 @@ def channel_name(id: str, channel: str) -> str:
 
     return CHANNEL_NAMES.get(channel, channel)
 
-
-#CUSTOMER NAME
 #the full name they gave on a form, Not given when they never filled one out
 def customer_name(id: str) -> str:
     name: str = log.read_info(f"lead_{id}").get("name", "")
 
-    #someone who never filled out a form hasn't given a name
     if(name == ""):
         return "Not given"
 
     return name
 
-
-#COLOR SERVICE
 #the job the color check is for, a wrap when no route was kept on the check
 def color_service(id: str) -> str:
     route: str = log.read_info(f"color_check_{id}").get("route", "")
 
     return COLOR_SERVICES.get(route, "wrap")
 
-
-#SAVED LINES
 #the pics or links kept on file one per line, with the empty lines left out
 def saved_lines(text: str) -> list[str]:
     lines: list[str] = []
@@ -117,18 +94,12 @@ def saved_lines(text: str) -> list[str]:
     return lines
 
 
+#OWNER TEXTS
 
-#**********OWNER TEXTS**********
-#texts the owner when a person has to step in, a color needs checking, an estimate is ready or they want on the schedule, and the developer when something small went out on the side
-
-
-#OWNER TEXT
-#a plain text on his color checks, sent over blooio so it lands in the thread he answers them in, never over textbelt with his hand offs
+#his color checks go over blooio so they land in the thread he answers in, not with the hand offs
 def notify_owner_text(text: str) -> None:
     senders.send_alert("OWNER NOTIFY", senders.OWNER_NUMBER, text)
 
-
-#COLOR CHECK
 #the exact color they sent goes to the owner with who it is, the job and the number he answers with
 def notify_color_check(id: str, channel: str) -> None:
     color_check: dict[str, str] = owner.take_color_check_alert(id, channel)
@@ -138,7 +109,7 @@ def notify_color_check(id: str, channel: str) -> None:
 
     media: list[str] = []
 
-    #blooio never gets the pic from instagram's link to it, so it gets this server's copy
+    #blooio never gets the pic from instagrams link to it, so it gets this servers copy
     for url in saved_lines(color_check.get("media", "")):
         media.append(media_host.host_media(url))
 
@@ -156,11 +127,9 @@ def notify_color_check(id: str, channel: str) -> None:
 
     senders.notify_color_check(code, channel_text, user_name, name, service, media, links)
 
-    #the owner checking the color books has the conversation, so it's a hil
+    #the owner checking the color books has the conversation, so its a hil
     dashboard.log_hand_off(id, dashboard.HIL, f"Color check #{code} sent to the owner")
 
-
-#ESTIMATE SERVICES
 #every service with its quoted price, then the total and the deposit when every one has a price
 def estimate_services(confirmed_services: dict[str, str]) -> str:
     service_texts: list[str] = []
@@ -185,8 +154,6 @@ def estimate_services(confirmed_services: dict[str, str]) -> str:
 
     return services
 
-
-#ESTIMATE READY
 #they gave their name, number and email, so the owner gets everything he needs to send the estimate
 def notify_estimate(id: str, channel: str) -> None:
     estimate: dict[str, str] = owner.take_estimate_alert(id)
@@ -212,9 +179,7 @@ def notify_estimate(id: str, channel: str) -> None:
 
     senders.notify_estimate(user_name, channel, services, vehicle, drop_off_date, name, number, email)
 
-
-#SCHEDULE REQUEST
-#they want to get on the schedule, so the owner gets the job they were quoted, their vehicle and what they said to fit them a day
+#they want on the schedule, so the owner gets the quoted job, the vehicle and what they said
 def notify_schedule_request(id: str, channel: str, user_message: dict) -> None:
     schedule_request: dict[str, str] = owner.take_schedule_request(id)
 
@@ -223,7 +188,6 @@ def notify_schedule_request(id: str, channel: str, user_message: dict) -> None:
 
     confirmed_services: dict[str, str] = json.loads(schedule_request.get("services", "{}"))
 
-    #every service with its quoted price, then the total and the deposit, the same way the estimate text has them
     services: str = estimate_services(confirmed_services)
 
     channel_text: str = channel_name(id, channel)
@@ -241,9 +205,7 @@ def notify_schedule_request(id: str, channel: str, user_message: dict) -> None:
     #a schedule request is the hand off a booking makes
     dashboard.log_hand_off(id, dashboard.BOOKED, "Schedule request sent to the owner")
 
-
-#SIDE ASK
-#something small the details have no answer for went out with the new girl's line, so the developer gets it on the side and nobody takes the chat
+#a small side ask got the new girl line, so the developer hears about it and nobody takes the chat
 def notify_side_ask(id: str, channel: str, user_message: dict) -> None:
     reply: str = owner.take_side_ask_alert(id)
 
@@ -254,13 +216,11 @@ def notify_side_ask(id: str, channel: str, user_message: dict) -> None:
 
     senders.notify_side_ask(user_name, channel, notify_details(user_message), reply)
 
-
-#HAND OFF
-#after the reply goes out, the owner hears about a hand off, a color check, a ready estimate and a schedule request, and the developer about a side ask
+#after the reply goes out, everyone who needs to hear about this one hears about it
 def notify_hand_off(id: str, channel: str, user_message: dict) -> None:
     reason: str = owner.take_notify_reason(id)
 
-    #nothing handed them to a person this time, so the owner isn't texted
+    #an empty reason means nobody needs a person this time, so the owner gets to keep his peace
     if(reason != ""):
         user_name: str = username.username(id, channel)
 
@@ -276,9 +236,7 @@ def notify_hand_off(id: str, channel: str, user_message: dict) -> None:
 
     notify_schedule_request(id, channel, user_message)
 
-
-#BLOCKED REPLY
-#the final check stopped their reply, so the owner gets it with why, answers them himself, and the dashboard counts it as a hand off
+#the final check stopped there reply, so the owner answers them himself and it counts as a hand off
 def notify_blocked(id: str, channel: str, system_response: str, reason: str) -> None:
     user_name: str = username.username(id, channel)
 
@@ -287,13 +245,9 @@ def notify_blocked(id: str, channel: str, system_response: str, reason: str) -> 
     dashboard.log_hand_off(id, dashboard.HIL, reason)
 
 
+#DEVELOPER TEXTS
 
-#**********DEVELOPER TEXTS**********
-#texts the developer when something broke and the customer got no reply
-
-
-#FAILED REPLY
-#the error is cut short so it fits in a text
+#the developer hears when a reply broke, the error cut short so it fits in a text
 def notify_failure(id: str, channel: str, user_message: dict, error: str) -> None:
     #the customer isn't getting a reply, so the typing bubble core put up comes down
     senders.stop_typing(id, channel)

@@ -1,43 +1,29 @@
-#**********IMPORTS**********
-#the shop details and texting habits every reply prompt shares, and the selling points every follow up picks its one from
+#IMPORTS
+
 from src.prompts import shared
 from src.prompts.followup import selling_points
 
 
+#SMS PARTS
 
-#**********SMS PARTS**********
-#every sms follow up opens and closes the same way and only the middle gets written, so every word around it lives here
-
-
-#INTRO
-#it comes from a number they never texted, so it opens with who it's from, and the middle goes on from its comma
+#a number they never texted, so it says who its from, and the middle picks up after the comma
 INTRO: str = "Hey {name}, this is Lone Wraps,"
 
 #with no real name on file it opens the same way without one
 INTRO_NO_NAME: str = "Hey, this is Lone Wraps,"
 
-
-#HAZEL NUMBER
-#the blooio line hazel texts from, so their text back reaches her and lifts blooio's cap on them
+#the blooio line hazel texts from, so there text back reaches her and lifts blooios cap on them
 HAZEL_NUMBER: str = "(801) 941-2361"
 
-
-#CTA
 CTA: str = f"If you are still thinking of getting this done, you can message our receptionist Hazel at {HAZEL_NUMBER} and she can get you taken care of."
 
-
-#ENDING
 #the thanks and how to stop the texts, which ghl honors on its own
 ENDING: str = "Thanks! Reply STOP to opt out."
 
 
+#EXAMPLES
 
-#**********EXAMPLES**********
-#sample middles for a conversation that went quiet and got no answer on hazel's line, one for each kind
-
-
-#SMS EXAMPLES
-#the sample middles added to the end of the prompt, so the sms sounds like the shop's
+#the sample middles added to the end of the prompt, so the sms sounds like the shops
 def examples() -> str:
     return r"""
     Ex 1:
@@ -82,13 +68,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#the rules for writing the middle of the sms, with the shop details, the selling points, texting habits and samples added on the end
-
-
-#SYSTEM PROMPT
-#the system prompt for the line between the sms's set intro and its set call to text hazel
+#the system prompt for the line between the smss set intro and its set call to text hazel
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = f"""

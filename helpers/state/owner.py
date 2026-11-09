@@ -1,5 +1,5 @@
-#**********IMPORTS**********
-#python's json, clock and pattern matching, plus the saved state where hand offs, side asks and color checks are kept
+#IMPORTS
+
 import json
 import re
 from datetime import datetime, timedelta, timezone
@@ -7,13 +7,9 @@ from datetime import datetime, timedelta, timezone
 from helpers.state import log
 
 
+#GLOBALS
 
-#**********GLOBALS**********
-#why a conversation goes to a person, and the fields, codes and answers a color check is kept with
-
-
-#REASONS
-#what the owner's text says for each way a conversation gets handed to a person
+#what the owners text says for each way a conversation gets handed to a person
 REASONS: dict[str, str] = {}
 
 REASONS["service_pricing"] = "The service details have no answer for what they asked, the reply told them Hazel would ask you"
@@ -50,38 +46,24 @@ REASONS["side_ask"] = "They asked again about something small the details have n
 
 REASONS["booking_hold"] = "They messaged while you're fitting them a day on the schedule, nothing went back to them, so it waits on you"
 
-
-#SIDE ASK DAYS
-#a small thing the new girl said she'd ask the owner about stays open this long, so asking about it again hands them to him
+#days a small ask stays open, asking about it again in that time hands them to the owner
 SIDE_ASK_DAYS: int = 7
 
-
-#ESTIMATE FIELDS
 #everything the owner needs to send the estimate by hand, kept until his text goes out
 ESTIMATE_FIELDS: list[str] = ["services", "drop_off_date", "name", "number", "email"]
 
-
-#SCHEDULE FIELDS
-#the job they want on the schedule, kept until the owner's text about it goes out
+#the job they want on the schedule, kept until the owners text about it goes out
 SCHEDULE_REQUEST_FIELDS: list[str] = ["services"]
 
-
-#CHECK FIELDS
-#a wrap or colored ppf waits on the owner making sure the shop can get the exact color they sent before it's booked
+#a wrap or colored ppf waits on the owner checking the shop can get that exact color
 COLOR_CHECK_FIELDS: list[str] = ["status", "code", "want", "media", "links", "route", "channel", "news", "materials"]
 
-
-#CHECK CODES
-#the codes of every color check still waiting on the owner, each one pointing to its customer
+#every color check code still waiting on the owner, each one pointing to its customer
 COLOR_CHECK_CODES: str = "color_check_codes"
 
+#y 12 is the exact color, m 12 is the closest materials, a bare answer works when only one waits
+COLOR_ANSWER_PATTERN = re.compile(r"^\s*(y|yes|yep|yeah|m|n|no|nope)\s*#?\s*(\d+)?\s*[.!]*\s*$", re.IGNORECASE)
 
-#ANSWER PATTERN
-#"Y 12" means the shop has that exact color, "M 12" comes with the closest materials, a bare one when only one waits
-COLOR_ANSWER_PATTERN: re.Pattern = re.compile(r"^\s*(y|yes|yep|yeah|m|n|no|nope)\s*#?\s*(\d+)?\s*[.!]*\s*$", re.IGNORECASE)
-
-
-#OWNER ANSWERS
 #his answers, by the letter they start with
 EXACT_ANSWER: str = "y"
 
@@ -89,125 +71,89 @@ MATERIALS_ANSWER: str = "m"
 
 NO_ANSWER: str = "n"
 
-
-#CHECK STATUSES
-#waiting on him, the shop can get the color they want, or they're picking from the closest materials it can order
+#waiting on him, exact color approved, or picking from the closest materials
 PENDING_STATUS: str = "pending"
 
 APPROVED_STATUS: str = "approved"
 
 MATERIALS_STATUS: str = "materials"
 
-
-#NEWS WAIT
-#what the owner found gets this long for a message they're still sending to land, a pic takes a moment, then goes out on its own
+#the owners news waits this long in case they're mid message, pics are slow, then it goes out
 NEWS_WAIT_SECONDS: int = 10
 
-
-#NEWS LANDING
-#how many of the owner's answers are landing on each customer right now, a reply of theirs being written holds off for every one
+#owner answers landing on each customer right now, a reply in progress waits for every one
 NEWS_LANDING: dict[str, int] = {}
 
-
-#HELD STATE
-#on file in place of "HIL" once a hold reply went out for their last message, so their next one waits and the one after it gets one
+#replaces HIL after a hold reply, so there next message waits and the one after it gets one
 HELD_STATE: str = "HIL HELD"
 
-
-#BOOKING STATE
-#on file in place of "HIL" while a person fits them a day on the schedule, so nothing from the bot goes out to them till it comes off
+#replaces HIL while a person fits them a day, the system sends them nothing till it comes off
 BOOKING_STATE: str = "HIL BOOKING"
 
-
-#CONVO STATE
-#on file in place of "HIL" when they were already talking with the owner before the bot showed up, so the bot stays a ghost for good
+#replaces HIL when the owner had them first, so the system stays a ghost for good
 CONVO_STATE: str = "HIL CONVO"
 
 
+#HAND OFFS
 
-#**********HAND OFFS**********
-#hands a conversation to the owner and keeps what his text needs until it goes out
-
-
-#RESTRICT
-#a person takes the conversation from here, the reason is kept so the owner gets texted once the reply goes out
+#a person takes the chat from here, the reason waits for the owners text after the reply
 def restrict(id: str, reason: str) -> None:
-    #the plain string "HIL" on file means a person (the owner) has the chat, so their messages take the restricted route till it comes off
+    #plain HIL on file means the owner has the chat, restricted route till it comes off
     log.write_state(f"restricted_{id}", "HIL")
 
-    #kept until the owner's text goes out, so a chain that runs again after a timeout never texts them twice
+    #kept until the owners text goes out, so a rerun after a timeout never texts them twice
     log.write_info(f"hil_notify_{id}", [reason], ["reason"])
 
-
-#HOLD
-#a hold reply went out while a person has them, so the next message they send waits for the one after it
+#a hold reply went out, so their next message waits for the one after it
 def hold(id: str) -> None:
     #write_state keeps the time a schedule hold ends at
     log.write_state(f"restricted_{id}", HELD_STATE)
 
-
-#HELD
-#True when the last message they sent while a person has them got a hold reply
+#true when there last message while a person has them got a hold reply
 def held(id: str) -> bool:
     return log.read_state(f"restricted_{id}") == HELD_STATE
 
-
-#RESTRICT BOOKING
-#a person fits them a day on the schedule from here, so the bot goes silent for them, and the reason is kept so the owner gets texted once the reply goes out
+#a person fits them a day from here, so the system goes quiet and the owner gets the reason
 def restrict_booking(id: str, reason: str) -> None:
     #write_state keeps the time a schedule hold ends at
     log.write_state(f"restricted_{id}", BOOKING_STATE)
 
-    #kept until the owner's text goes out, so a chain that runs again after a timeout never texts them twice
+    #kept until the owners text goes out, so a rerun after a timeout never texts them twice
     log.write_info(f"hil_notify_{id}", [reason], ["reason"])
 
-
-#BOOKING HELD
-#True while a person is fitting them a day on the schedule, when the bot sends them nothing at all
+#true while a person fits them a day, the system sends them nothing at all
 def booking_held(id: str) -> bool:
     return log.read_state(f"restricted_{id}") == BOOKING_STATE
 
-
-#BOOKING MESSAGE
-#they wrote in while a person fits them a day, so the owner gets texted what they sent, and the booking hold stays as it was
+#they wrote in during the booking hold, so the owner gets texted and the hold stays put
 def note_booking_message(id: str) -> None:
     log.write_info(f"hil_notify_{id}", [REASONS["booking_hold"]], ["reason"])
 
-
-#RESTRICT CONVO
-#they were the owner's before the bot ever showed up, so he keeps them and the bot never says a word
+#they were the owners before the system showed up, so he keeps them and it never says a word
 def restrict_convo(id: str) -> None:
     log.write_state(f"restricted_{id}", CONVO_STATE)
 
-
-#CONVO HELD
-#True when they were already talking with the owner before the bot showed up, when the bot sends them nothing at all
+#true when they were the owners before the system showed up, so it sends nothing at all
 def convo_held(id: str) -> bool:
     return log.read_state(f"restricted_{id}") == CONVO_STATE
 
-
-#NOTIFY REASON
 #why they just got handed to a person, empty when nothing handed them off this time
 def take_notify_reason(id: str) -> str:
     reason: str = log.read_info(f"hil_notify_{id}").get("reason", "")
 
-    #taken off once it's read, so the next message never texts the owner about this one again
+    #taken off once its read, so the next message never texts the owner about this one again
     log.clear_info(f"hil_notify_{id}", ["reason"])
 
     return reason
 
-
-#READY ESTIMATE
-#they gave their contact info for the invoice, so the owner gets texted the job and how to reach them
+#they gave their contact info for the invoice, so the owner gets the job and how to reach them
 def ready_estimate(id: str, confirmed_services: dict, drop_off_date: str, contact: dict[str, str]) -> None:
     values: list[str] = [json.dumps(confirmed_services), drop_off_date, contact.get("name", ""), contact.get("number", ""), contact.get("email", "")]
 
-    #kept until the owner's text goes out, so a chain that runs again after a timeout never texts him twice
+    #kept until the owners text goes out, so a rerun after a timeout never texts him twice
     log.write_info(f"estimate_notify_{id}", values, ESTIMATE_FIELDS)
 
-
-#ESTIMATE ALERT
-#the estimate that still has to be texted to the owner, empty when none is, taken off once it's read
+#the estimate still owed to the owner, empty when none is, taken off once its read
 def take_estimate_alert(id: str) -> dict[str, str]:
     estimate: dict[str, str] = log.read_info(f"estimate_notify_{id}")
 
@@ -215,16 +161,12 @@ def take_estimate_alert(id: str) -> dict[str, str]:
 
     return estimate
 
-
-#READY SCHEDULE REQUEST
-#they want to get on the schedule, so the owner gets texted the job to fit them a day once the reply goes out
+#they want on the schedule, so the owner gets texted the job once the reply goes out
 def ready_schedule_request(id: str, confirmed_services: dict) -> None:
-    #kept until the owner's text goes out, so a chain that runs again after a timeout never texts him twice
+    #kept until the owners text goes out, so a rerun after a timeout never texts him twice
     log.write_info(f"schedule_request_notify_{id}", [json.dumps(confirmed_services)], SCHEDULE_REQUEST_FIELDS)
 
-
-#SCHEDULE REQUEST ALERT
-#the schedule request that still has to be texted to the owner, empty when none is, taken off once it's read
+#the schedule request still owed to the owner, empty when none is, taken off once its read
 def take_schedule_request(id: str) -> dict[str, str]:
     schedule_request: dict[str, str] = log.read_info(f"schedule_request_notify_{id}")
 
@@ -233,15 +175,11 @@ def take_schedule_request(id: str) -> dict[str, str]:
     return schedule_request
 
 
+#SIDE ASKS
 
-#**********SIDE ASKS**********
-#something small the details have no answer for, like the wifi or parking, goes to the developer on the side and nobody takes the chat
-
-
-#SIDE ASK
-#the reply that told them she'd ask the owner is kept until the developer's text goes out, and the ask stays open in case they ask about it again
+#the reply saying she'd ask the owner is kept for the developers text, and the ask stays open
 def side_ask(id: str, reply: str) -> None:
-    #kept until the developer's text goes out, so a chain that runs again after a timeout never texts him twice
+    #kept until the developers text goes out, so a rerun after a timeout never texts him twice
     log.write_info(f"side_ask_notify_{id}", [reply], ["reply"])
 
     log.write_state(f"side_ask_open_{id}", reply)
@@ -249,21 +187,15 @@ def side_ask(id: str, reply: str) -> None:
     #an ask they never bring up again comes off file on its own
     log.expire_at(f"side_ask_open_{id}", datetime.now(timezone.utc) + timedelta(days=SIDE_ASK_DAYS))
 
-
-#SIDE ASK OPEN
-#True while a small thing the new girl said she'd ask the owner about is still open for them
+#true while a small thing she said she'd ask the owner about is still open
 def side_ask_open(id: str) -> bool:
     return log.read_state(f"side_ask_open_{id}") != {}
 
-
-#CLOSE SIDE ASK
-#they asked about it again and the owner has it now, so it's never open twice
+#they asked about it again and the owner has it now, so its never open twice
 def close_side_ask(id: str) -> None:
     log.clear_state(f"side_ask_open_{id}")
 
-
-#SIDE ASK ALERT
-#the reply the developer still has to be texted about, empty when there's none, taken off once it's read
+#the reply the developer still needs a text about, empty when none, taken off once its read
 def take_side_ask_alert(id: str) -> str:
     reply: str = log.read_info(f"side_ask_notify_{id}").get("reply", "")
 
@@ -272,18 +204,12 @@ def take_side_ask_alert(id: str) -> str:
     return reply
 
 
+#COLOR CHECKS
 
-#**********COLOR CHECKS**********
-#asks the owner if the shop can get the exact color they sent, and tracks the check till he answers
-
-
-#CHECK STATUS
-#empty before a check went out, then pending, approved, or materials while they pick from the closest ones
+#empty before a check, then pending, approved, or materials while they pick from the closest
 def color_check_status(id: str) -> str:
     return log.read_info(f"color_check_{id}").get("status", "")
 
-
-#CLOSE CHECK
 #the check comes off the ones waiting on the owner
 def close_color_check(id: str) -> None:
     code: str = log.read_info(f"color_check_{id}").get("code", "")
@@ -291,8 +217,6 @@ def close_color_check(id: str) -> None:
     if(code != ""):
         log.clear_info(COLOR_CHECK_CODES, [code])
 
-
-#CLEAR CHECK
 #everything kept for the check comes off, so a new color starts a check of its own
 def clear_color_check(id: str) -> None:
     close_color_check(id)
@@ -301,9 +225,7 @@ def clear_color_check(id: str) -> None:
 
     log.clear_info(f"color_check_notify_{id}", ["code"])
 
-
-#WANTED COLOR
-#the exact color they sent, with the pics and links it came in, kept until the owner gets texted about it
+#the exact color they sent, with its pics and links, kept until the owner gets texted about it
 def note_wanted_color(id: str, want: str, media: list[str], links: list[str]) -> None:
     if(want == ""):
         return
@@ -320,9 +242,7 @@ def note_wanted_color(id: str, want: str, media: list[str], links: list[str]) ->
 
     log.write_info(f"color_ref_{id}", [want, "\n".join(media), "\n".join(links)], ["want", "media", "links"])
 
-
-#REQUEST CHECK
-#the route stays on the check so the job stays the same, and they're restricted till the owner answers
+#the route stays on the check so the job stays the same, and they wait restricted on the owner
 def request_color_check(id: str, route: str) -> str:
     color_ref: dict[str, str] = log.read_info(f"color_ref_{id}")
 
@@ -336,17 +256,15 @@ def request_color_check(id: str, route: str) -> str:
 
     log.write_info(COLOR_CHECK_CODES, [id], [code])
 
-    #kept until the owner's text goes out, so a chain that runs again after a timeout never texts them twice
+    #kept until the owners text goes out, so a rerun after a timeout never texts them twice
     log.write_info(f"color_check_notify_{id}", [code], ["code"])
 
-    #no hand off reason goes with it, the color check text already tells him why they're waiting on him
+    #no hand off reason here, the color check text already tells him why they're waiting
     log.write_state(f"restricted_{id}", "HIL")
 
     return code
 
-
-#UNREAD CHECK
-#their pics or links go to the owner with no color read off them, so he still checks the color books for what they sent
+#pics or links with no color read off them, so the owner checks the color books himself
 def request_unread_color_check(id: str, route: str, media: list[str], links: list[str]) -> str:
     log.clear_info(f"color_ref_{id}", ["want", "media", "links"])
 
@@ -354,9 +272,7 @@ def request_unread_color_check(id: str, route: str, media: list[str], links: lis
 
     return request_color_check(id, route)
 
-
-#CHECK ALERT
-#the check that still has to be texted to the owner, empty when none is, taken off once it's read
+#the check still owed to the owner, empty when none is, taken off once its read
 def take_color_check_alert(id: str, channel: str) -> dict[str, str]:
     notify: dict[str, str] = log.read_info(f"color_check_notify_{id}")
 
@@ -365,21 +281,17 @@ def take_color_check_alert(id: str, channel: str) -> dict[str, str]:
 
     log.clear_info(f"color_check_notify_{id}", ["code"])
 
-    #the channel goes on file, so an error answering the owner's answer still names it for the developer
+    #the channel goes on file, so an error answering his answer still names it for the developer
     log.write_info(f"color_check_{id}", [channel], ["channel"])
 
     return log.read_info(f"color_check_{id}")
 
 
+#OWNER ANSWERS
 
-#**********OWNER ANSWERS**********
-#reads the owner's yes or materials answer to a color check and puts the conversation back on track
-
-
-#OWNER ANSWER
-#("answer", letter, code) for his answer, ("which",) when a bare one has many checks waiting, None when it's not one
+#answer with its letter and code, which when a bare one has many waiting, None when its not one
 def color_check_answer(text: str) -> tuple | None:
-    match: re.Match | None = COLOR_ANSWER_PATTERN.match(text)
+    match = COLOR_ANSWER_PATTERN.match(text)
 
     if(match is None):
         return None
@@ -393,7 +305,7 @@ def color_check_answer(text: str) -> tuple | None:
 
     waiting: dict[str, str] = log.read_info(COLOR_CHECK_CODES)
 
-    #a bare answer with no check waiting answers nothing, so it's dropped like anything else from his number
+    #a bare answer with nothing waiting is just a text from him, so its dropped
     if(code == "" and len(waiting) == 0):
         return None
 
@@ -408,21 +320,15 @@ def color_check_answer(text: str) -> tuple | None:
 
     return ("answer", letter, code)
 
-
-#CHECK CUSTOMER
 #the customer the check with this number is for, empty when no check with it is waiting
 def color_check_customer(code: str) -> str:
     return log.read_info(COLOR_CHECK_CODES).get(code, "")
 
-
-#CHECK CHANNEL
-#where they wrote in when the check went to the owner, so his answer goes back to the server that has them
+#where they wrote in when the check went out, so his answer goes back to the right server
 def color_check_channel(id: str) -> str:
     return log.read_info(f"color_check_{id}").get("channel", "blooio")
 
-
-#ANSWER EXACT
-#the shop has that exact color, so the restriction comes off and the bot picks it back up with the good news due
+#the shop has the exact color, so the restriction comes off and the good news is due
 def answer_exact(id: str) -> None:
     close_color_check(id)
 
@@ -430,9 +336,7 @@ def answer_exact(id: str) -> None:
 
     log.clear_state(f"restricted_{id}")
 
-
-#ANSWER MATERIALS
-#the shop can't get that exact color, so the closest materials go out to pick from and they stay restricted till then
+#the shop can't get that color, so the closest materials go out and they stay restricted
 def answer_materials(id: str, materials: list[dict[str, str]]) -> None:
     close_color_check(id)
 
@@ -441,25 +345,17 @@ def answer_materials(id: str, materials: list[dict[str, str]]) -> None:
     log.write_state(f"restricted_{id}", "HIL")
 
 
+#PICKS
 
-#**********PICKS AND NEWS**********
-#keeps the material they picked and whether what he found has gone out yet
-
-
-#COLOR MATERIALS
 #the closest materials, in the order the owner sent them
 def color_materials(id: str) -> list[dict[str, str]]:
     return json.loads(log.read_info(f"color_check_{id}").get("materials", "[]"))
 
-
-#CHECKED COLOR
 #the exact color they sent that the owner checked, empty when none got read off what they sent
 def checked_want(id: str) -> str:
     return log.read_info(f"color_check_{id}").get("want", "")
 
-
-#PICK MATERIAL
-#the material they picked is the color they want now and one the shop can get, so the bot picks it back up
+#their pick is the color they want now and the shop can get it, so the system picks it back up
 def pick_material(id: str, material: dict[str, str]) -> None:
     name: str = material.get("name", "")
 
@@ -467,48 +363,35 @@ def pick_material(id: str, material: dict[str, str]) -> None:
 
     log.clear_info(f"color_check_{id}", ["materials"])
 
-    #the booking names the job's color from it, and a pic whose color couldn't be read keeps the one they sent
+    #the booking names the jobs color from criticalInfo, so the pick has to land their too
     log.write_info(f"criticalInfo_{id}", [name], ["want"])
 
     log.clear_state(f"restricted_{id}")
 
-
-#NEWS DUE
 #what the owner found hasn't gone out yet, the good news or the closest materials to pick from
 def news_due(id: str) -> bool:
     return log.read_info(f"color_check_{id}").get("news", "") == "due"
 
-
-#NEWS GIVEN
 #it went out, so nothing after it says it again or waits on them for it
 def news_given(id: str) -> None:
     log.clear_info(f"color_check_{id}", ["news"])
 
 
+#NEWS LANDING
 
-#**********NEWS LANDING**********
-#a reply of theirs being written while the owner's answer lands never goes out, it gets written again carrying what he found
-
-
-#HOLD REPLIES
-#the reply being written for them right now is held at the send, and their batch gets answered again once his answer is on file
+#the reply being written now waits at the send, then their batch runs again with his answer
 def hold_for_news(id: str) -> None:
     NEWS_LANDING[id] = NEWS_LANDING.get(id, 0) + 1
 
-
-#NEWS LANDED
 #his answer is on file, so the next reply written for them carries it
 def news_landed(id: str) -> None:
     landing: int = NEWS_LANDING.get(id, 0) - 1
 
     if(landing > 0):
         NEWS_LANDING[id] = landing
-
     else:
         NEWS_LANDING.pop(id, None)
 
-
-#NEWS LANDING
-#True while any of the owner's answers is still landing on them
+#true while any of the owners answers is still landing on them
 def news_landing(id: str) -> bool:
     return NEWS_LANDING.get(id, 0) > 0

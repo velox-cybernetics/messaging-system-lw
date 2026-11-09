@@ -1,9 +1,6 @@
-#**********EXAMPLES**********
-#sample removal chats with what should be pulled out of them, so the model copies them
+#EXAMPLES
 
-
-#EXTRACT EXAMPLES
-#hands back the sample chats and what gets pulled out of them, pasted at the end of the system prompt below
+#sample chats and what gets pulled out of them, pasted at the end of the system prompt
 def examples() -> str:
     return r"""
     Ex 1:
@@ -86,13 +83,9 @@ def examples() -> str:
 """
 
 
+#PROMPT
 
-#**********PROMPT**********
-#pulls out the latest photo of the old film or wrap and how long it has been on the vehicle
-
-
-#SYSTEM PROMPT
-#hands back the system prompt the removal extractor uses to save the photo and how long it has been on
+#system prompt the removal extractor uses to save the photo and how long its been on
 def prompt() -> str:
     #static on purpose, this prompt is the cached prefix of its requests
     prompt_text: str = """

@@ -1,16 +1,12 @@
-#**********IMPORTS**********
-#the not sure prompt the rewrite starts from, and the shared regen playbook
+#IMPORTS
+
 from src.prompts.enforcers import regen_guide
 from src.prompts.pricing.lack_info import generator as pricing_lack_info_generator
 
 
+#REGEN PROMPT
 
-#**********REGEN PROMPT**********
-#the not sure prompt plus the playbook for fixing a flagged reply, with what a fix can never touch
-
-
-#FIX NOTES
-#the not sure reply has a couple of untouchables, and here's why
+#the not sure reply has a couple of untouchables, and heres why
 def fix_notes() -> str:
     return """
     #NOT SURE FIX NOTES
@@ -25,8 +21,6 @@ def fix_notes() -> str:
         - Rule: a first reply to a lead form goes out with the shop's intro in front of it, so the fixed reply never starts with a greeting, a name, an introduction or anything about the form.
         - Why: the intro already greeted them by name, so a second greeting right under it reads like two bots talking over each other."""
 
-
-#REGEN PROMPT
 #same rules and examples as the not sure generator, then the playbook for fixing what got flagged
 def prompt() -> str:
     #no extra inputs here, just the flagged reply and what to fix

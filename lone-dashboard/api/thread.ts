@@ -1,27 +1,19 @@
-//**********IMPORTS**********
-//the replies, the database, the sign in check and the feed's shapes
+//IMPORTS
+
 import * as http from "./_helpers/http.js";
 import * as redis from "./_helpers/redis.js";
 import * as session from "./_helpers/session.js";
 import * as shop from "./_helpers/shop.js";
 
 
+//GLOBALS
 
-//**********GLOBALS**********
-//what a ledger count turns into
-
-
-//COUNT
 //one count to take back, the hash, the field in it and how much
 type COUNT = {key: string; field: string; amount: number};
 
 
+//CLEANUP
 
-//**********CLEANUP**********
-//everything a deleted conversation left behind
-
-
-//PIC KEYS
 //the pic copies a thread kept, so deleting it takes them too
 function pic_keys(entries: Record<string, unknown>[]): string[] {
     const keys: string[] = [];
@@ -45,15 +37,13 @@ function pic_keys(entries: Record<string, unknown>[]): string[] {
     return keys;
 }
 
-
-//TAKE BACK
-//keep in step with ledger_commands in dashboard.py, aged out hashes get skipped so old days never go negative
+//same as ledger_commands on the python side, skips aged out hashes so days never go negative
 async function take_back_commands(id: string): Promise<redis.COMMAND[]> {
     const ledger: unknown[] = await redis.pipeline([["HGETALL", `ledger:${id}`], ["SMEMBERS", `ledger_sets:${id}`]]);
 
     const counts: COUNT[] = [];
 
-    //places look like "day:2026-10-29|in@14"
+    //each place is the hash key and the field in it, split on the last bar
     for(const entry of Object.entries(redis.as_object(ledger[0]))) {
         const place: string = entry[0];
 
@@ -86,7 +76,13 @@ async function take_back_commands(id: string): Promise<redis.COMMAND[]> {
 
     for(let index: number = 0; index < hash_keys.length; index++) {
         if(redis.as_number(exists[index]) === 1) {
-            live.add(hash_keys[index] ?? "");
+            let key: string | undefined = hash_keys[index];
+
+            if(key === undefined) {
+                key = "";
+            }
+
+            live.add(key);
         }
     }
 
@@ -107,8 +103,6 @@ async function take_back_commands(id: string): Promise<redis.COMMAND[]> {
     return commands;
 }
 
-
-//FOLLOW UPS
 //a picked one the system still sends shows up again with the new conversation it starts
 async function follow_up_commands(id: string): Promise<redis.COMMAND[]> {
     const theirs: string[] = [];
@@ -122,19 +116,21 @@ async function follow_up_commands(id: string): Promise<redis.COMMAND[]> {
     const commands: redis.COMMAND[] = [["HDEL", "followups:due", id]];
 
     if(theirs.length > 0) {
-        commands.push(["ZREM", "followups:sent", ...theirs]);
+        const remove_command: redis.COMMAND = ["ZREM", "followups:sent"];
+
+        for(const line of theirs) {
+            remove_command.push(line);
+        }
+
+        commands.push(remove_command);
     }
 
     return commands;
 }
 
 
+//THREAD
 
-//**********THREAD**********
-//one conversation, read whole or deleted whole
-
-
-//READ THREAD
 //summary, every entry oldest first, whether it or its channel is off, and its flag
 async function read_thread(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
@@ -162,9 +158,7 @@ async function read_thread(request: Request): Promise<Response> {
     return http.json({"convo": convo, "entries": shop.parse_entries(results[1])});
 }
 
-
-//DELETE THREAD
-//takes everything kept for it and its overview counts, but the customer's switch stays so off stays off
+//takes everything kept for it and its overview counts, its switch stays so off stays off
 async function delete_thread(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -183,7 +177,27 @@ async function delete_thread(request: Request): Promise<Response> {
 
     const pics: string[] = pic_keys(shop.parse_entries(reads[0]));
 
-    const commands: redis.COMMAND[] = [...reads[1], ...reads[2], ["DEL", `thread:${id}`, `state:${id}`, `writer:${id}`, ...pics], ["HDEL", "summaries", id], ["HDEL", "flagged", id]];
+    const commands: redis.COMMAND[] = [];
+
+    for(const each of reads[1]) {
+        commands.push(each);
+    }
+
+    for(const each of reads[2]) {
+        commands.push(each);
+    }
+
+    const delete_command: redis.COMMAND = ["DEL", `thread:${id}`, `state:${id}`, `writer:${id}`];
+
+    for(const pic of pics) {
+        delete_command.push(pic);
+    }
+
+    commands.push(delete_command);
+
+    commands.push(["HDEL", "summaries", id]);
+
+    commands.push(["HDEL", "flagged", id]);
 
     for(const tab of shop.TABS) {
         commands.push(["ZREM", `convos:${tab}`, id]);
@@ -197,18 +211,14 @@ async function delete_thread(request: Request): Promise<Response> {
 }
 
 
+//ROUTE
 
-//**********ROUTE**********
-//what vercel runs for GET and DELETE /api/thread
-
-
-//GET
+//one conversation with its whole thread
 export function GET(request: Request): Promise<Response> {
     return http.guarded(read_thread, request);
 }
 
-
-//DELETE
+//deletes a conversation for good, its switch survives
 export function DELETE(request: Request): Promise<Response> {
     return http.guarded(delete_thread, request);
 }
