@@ -131,7 +131,7 @@ async function follow_up_commands(id: string): Promise<redis.COMMAND[]> {
 
 //THREAD
 
-//summary, every entry oldest first, whether it or its channel is off, and its flag
+//summary, every entry oldest first, whether its booked, whether it or its channel is off, and its flag
 async function read_thread(request: Request): Promise<Response> {
     const refused: Response | null = session.refuse(request);
 
@@ -145,7 +145,16 @@ async function read_thread(request: Request): Promise<Response> {
         return http.fail(400, "That conversation id isn't valid.");
     }
 
-    const results: unknown[] = await redis.pipeline([["HGET", "summaries", id], ["LRANGE", `thread:${id}`, 0, -1], ["SISMEMBER", "off", id], ["SMEMBERS", "off_tabs"], ["HGET", "flagged", id]]);
+    const commands: redis.COMMAND[] = [["HGET", "summaries", id], ["LRANGE", `thread:${id}`, 0, -1], ["SISMEMBER", "off", id], ["SMEMBERS", "off_tabs"], ["HGET", "flagged", id]];
+
+    //one more ask per booked set, their answers land after the ones above
+    const first_booked: number = commands.length;
+
+    for(const key of shop.booked_keys(shop.shop_clock(new Date()).date)) {
+        commands.push(["SISMEMBER", key, id]);
+    }
+
+    const results: unknown[] = await redis.pipeline(commands);
 
     const summary: shop.SUMMARY | null = shop.parse_summary(results[0]);
 
@@ -153,7 +162,15 @@ async function read_thread(request: Request): Promise<Response> {
         return http.fail(404, "No conversation with that id. It was deleted or is over a year old.");
     }
 
-    const convo: Record<string, unknown> = {"id": summary.id, "tab": summary.tab, "channel": summary.channel, "name": summary.name, "last_at": summary.last_at, "last_kind": summary.last_kind, "last_text": summary.last_text, "off": redis.as_number(results[2]) === 1, "tab_off": redis.as_strings(results[3]).includes(summary.tab), "flagged_at": redis.as_number(results[4])};
+    let booked: boolean = false;
+
+    for(let index: number = first_booked; index < results.length; index++) {
+        if(redis.as_number(results[index]) === 1) {
+            booked = true;
+        }
+    }
+
+    const convo: Record<string, unknown> = {"id": summary.id, "tab": summary.tab, "channel": summary.channel, "name": summary.name, "last_at": summary.last_at, "last_kind": summary.last_kind, "last_text": summary.last_text, "off": redis.as_number(results[2]) === 1, "booked": booked, "tab_off": redis.as_strings(results[3]).includes(summary.tab), "flagged_at": redis.as_number(results[4])};
 
     return http.json({"convo": convo, "entries": shop.parse_entries(results[1])});
 }

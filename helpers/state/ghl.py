@@ -255,9 +255,15 @@ def log_received(id: str, text: str | None, attachments: list | None) -> None:
 
 #SMS
 
-#one text from the shops default ghl number, which logs itself, a refused one raises
-def send_sms(contact: str, text: str) -> None:
-    ghl_request("post", "/conversations/messages", CONVERSATIONS_VERSION, json={"type": "SMS", "contactId": contact, "message": text})
+#one text from the shops default ghl number, which logs itself, pics ride along, a refused one raises
+def send_sms(contact: str, text: str, pics: list[str] | None = None) -> None:
+    message: dict = {"type": "SMS", "contactId": contact, "message": text}
+
+    #an mms only when theres a pic to send, a plain sms stays a plain sms
+    if(pics):
+        message["attachments"] = pics
+
+    ghl_request("post", "/conversations/messages", CONVERSATIONS_VERSION, json=message)
 
 #everything ghl has on the contact, like there first name and whether they texted STOP
 def contact_details(contact: str) -> dict:

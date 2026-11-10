@@ -38,6 +38,7 @@
     "s2" : {"service" : "Paint Protection Film", "service_details" : {
         "description": "PPF, also called clear bra or clear wrap. A clear film installed over the paint to protect it from rock chips and road debris, the vehicle keeps its color. It is much more durable than a vinyl wrap with double the lifespan, and about double the thickness of a vinyl wrap",
         "material" : "Ghost Films in particular the Revenant film",
+        "why_this_film" : "After using quite a few PPF brands the shop ultimately landed on Ghost Films because of the quality of the film (DONT MENTION UNLESS THEY ASK WHY THIS BRAND, WHETHER IT'S ANY GOOD, HOW IT COMPARES TO ANOTHER BRAND, OR SAY THEY HAVEN'T HEARD OF IT)",
         "finishes" : "Clear (gloss), matte and satin/stealth. Matte and satin/stealth are a full body option, except on paint in that same finish: on matte paint the matte film and on satin paint the satin film match the paint, so they go on just the front end or the full body",
         "appearance" : "The clear film can't really be seen once it's on, the paint looks the same, and the edges can't be seen because everything is tucked. Matte and satin change the finish",
         "self_healing" : "The film is self healing, so lighter scratches in the film heal on their own",
@@ -57,7 +58,7 @@
 
         "add_ons" : "High impact add on (DONT MENTION UNLESS ASKED): $600 plus tax for any vehicle, an add on package on top of the front end price. Includes: rocker panels, lower door sections, rear wheel impact areas (behind rear wheels, where applicable), rear bumper luggage strip",
 
-        "warranty" : "Liftime warranty on any bubbling or peeling, essetially anything due to install error. Road damage is not covered.",
+        "warranty" : "Lifetime warranty on any bubbling or peeling, essentially anything due to install error. Road damage is not covered.",
         "manufacturer_warranty" : "The film itself is covered by the manufacturer for typically 10 to 12 years, depending on the exact film, never a lifetime manufacturer warranty. The lifetime warranty is the shop's, on the install (DONT MENTION UNLESS THEY ASK ABOUT THE FILM'S OWN WARRANTY OR THE MANUFACTURER'S WARRANTY)",
         "turnaround_time" : "Front end: a day and a half for smaller vehicles (the Tesla Model Y and Model Y L included), two days for larger. Full body: four to five days for any vehicle",
 
@@ -70,11 +71,12 @@
         "ppf_over_wrap" : "PPF can be applied over an existing vinyl wrap",
         "satin_paint" : "Satin PPF on satin paint and matte PPF on matte paint keep the paint's finish, and they can go on just the front end or the full body at the same price as clear PPF on gloss paint. Full body PPF is still recommended for satin and matte paint vehicles because satin and matte paint cannot be easily repaired or paint corrected",
         "fresh_paint" : "Fresh paint needs some time to cure before film goes over it, so on a recent paint job the shop makes sure the paint is ready before the PPF goes on",
-        "shop_experience" : "4 years doing PPF"
+        "shop_experience" : "4 years doing PPF (DONT MENTION UNLESS THEY ASK HOW LONG THE SHOP HAS BEEN DOING PPF)"
     }},
     "s3" : {"service" : "Colored Paint Protection Film", "service_details" : {
         "description": "Colored PPF is the same protective film as clear PPF but in a color, so it changes the color like a vinyl wrap while protecting the paint like PPF, essentially the best of both worlds. It is much more durable than a vinyl wrap against scratches, rock chips and road debris, and lasts about 10 years, about double a vinyl wrap",
         "material" : "Main material is Ghost Films",
+        "why_this_film" : "After using quite a few PPF brands the shop ultimately landed on Ghost Films because of the quality of the film (DONT MENTION UNLESS THEY ASK WHY THIS BRAND, WHETHER IT'S ANY GOOD, HOW IT COMPARES TO ANOTHER BRAND, OR SAY THEY HAVEN'T HEARD OF IT)",
 
         "film_thickness" : "About twice the thickness of a vinyl wrap",
 

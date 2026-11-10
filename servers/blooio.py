@@ -186,7 +186,13 @@ async def natural_typing(id: str) -> None:
     end: float = time.monotonic() + BLOOIO_BATCH_TIME
 
     #a person fitting them in keeps the system silent, so the wait goes by with no bubble at all
-    if(await asyncio.to_thread(booking_silent, id)):
+    silent: bool = await asyncio.to_thread(booking_silent, id)
+
+    #an sms has no bubble either, one would only pop up over on hazels line
+    if(not silent):
+        silent = await asyncio.to_thread(senders.on_sms_line, id)
+
+    if(silent):
         await asyncio.sleep(max(0.0, end - time.monotonic()))
 
         return
@@ -493,15 +499,19 @@ def queue_message(id: str, message: list, journal_entry: str) -> None:
 
 #TAKING IN
 
-#one text at a time through the spam check, so ghl, the dashboard and the batch keep order
-async def take_message(id: str, text: str | None, attachments: list | None) -> None:
+#one text at a time through the spam check, sms_line is one they sent the shops own sms number
+async def take_message(id: str, text: str | None, attachments: list | None, sms_line: bool = False) -> None:
     async with spam.intake_lock(id):
         #spam stops here, so it never shows in ghl or the dashboard and never gets a reply
         if(await asyncio.to_thread(spam.is_spam, id, text, "blooio")):
             return
 
-        #ghl never sees blooio, so every text goes in there ghl convo, switched on or not
-        ghl.log_received(id, text, attachments)
+        #an sms is already in ghl, a text on hazels line isn't and it moves them back onto her line
+        if(not sms_line):
+            await asyncio.to_thread(senders.close_sms_line, id)
+
+            #ghl never sees blooio, so every text goes in there ghl convo, switched on or not
+            ghl.log_received(id, text, attachments)
 
         #the dashboard shows it unless the owner had them first, only switched on ones get batched
         if(await asyncio.to_thread(dashboard.take_in, id, "blooio", [text, attachments])):

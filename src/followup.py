@@ -39,6 +39,14 @@ RECHECK_MINUTES: int = 10
 #quiet this long when it goes out, so someone still texting that morning never gets one
 QUIET_SECONDS: int = 4 * 3600
 
+#days between follow ups in a row, so after the first they land on day 3, 7, 14 and 30
+FOLLOWUP_GAP_DAYS: list[int] = [2, 4, 7, 16]
+
+#past those its one every this many days, so someone long quiet only hears from the shop monthly
+FOLLOWUP_LATER_GAP_DAYS: int = 30
+
+DAY_SECONDS: int = 24 * 3600
+
 #when the nights check last started, not named followup_ so its never read as a conversation
 NIGHT_PICK_KEY: str = "followups_night_pick"
 
@@ -106,11 +114,6 @@ SMS_MAIN_MAX_LENGTH: int = 160
 #the shops ghl number only texts us and canada numbers, never an imessage email
 SMS_NUMBER_PATTERN = re.compile(r"\+1\d{10}")
 
-#one curly quote or emoji turns the sms into the kind that splits every 70 characters
-SMS_PLAIN_CHARACTERS: dict[str, str] = {"’": "'", "‘": "'", "“": '"', "”": '"', "—": "-", "–": "-", "…": "..."}
-
-SMS_EMOJI_PATTERN = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]")
-
 #a phone number written into the middle, which only the set call to text hazel ever has
 SMS_PHONE_PATTERN = re.compile(r"\d{3}\D{0,2}\d{3}\D?\d{4}")
 
@@ -134,6 +137,9 @@ SMS_FIELD: str = "sms"
 
 #they texted STOP to the shops sms number, so nothing goes out till they write in again
 STOPPED_FIELD: str = "stopped"
+
+#when there last follow up went out, the next one counts its gap from here
+SENT_FIELD: str = "last_followup"
 
 #the kind they got read as and the message it was read for, a new text gets a fresh look
 KIND_FIELD: str = "kind"
@@ -159,8 +165,8 @@ def note_message(id: str, channel: str) -> None:
         if(log.take_info(followup_key(id), PICKED_FIELD)):
             dashboard.log_followup_dropped(id)
 
-        #a STOP still standing in ghl stops them again when an sms comes up
-        log.clear_info(followup_key(id), [STOPPED_FIELD])
+        #a STOP still standing in ghl stops them again when an sms comes up, and the gaps start fresh
+        log.clear_info(followup_key(id), [STOPPED_FIELD, SENT_FIELD])
 
         #a form they filled in again never reached blooio, so only a text lifts its hold
         if(channel not in state_form.FORM_CHANNELS):
@@ -218,6 +224,38 @@ def name_attached(id: str, channel: str) -> bool:
     return len(names) > 0 and greeting.real_name(names[0])
 
 
+#SPACING
+
+#the shop day a moment falls on, so a gap counts mornings and never trips over a few minutes
+def shop_day(moment: float):
+    return datetime.fromtimestamp(moment, open_dates.SHOP_TIMEZONE).date()
+
+#when there last follow up went out, ones from before the gaps went daily so its count days in
+def last_followup_time(record: dict[str, str]) -> float:
+    if(SENT_FIELD in record):
+        return float(record[SENT_FIELD])
+
+    return float(record.get("last_message", "0")) + int(record.get("count", "0")) * DAY_SECONDS
+
+#days the next one waits after the last, by how many already went out with no answer
+def gap_days(count: int) -> int:
+    if(count <= len(FOLLOWUP_GAP_DAYS)):
+        return FOLLOWUP_GAP_DAYS[count - 1]
+
+    return FOLLOWUP_LATER_GAP_DAYS
+
+#the first one goes the next morning like always, every one after it waits out its gap
+def spaced_out(record: dict[str, str], send_time: float) -> bool:
+    count: int = int(record.get("count", "0"))
+
+    if(count == 0):
+        return True
+
+    days_since: int = (shop_day(send_time) - shop_day(last_followup_time(record))).days
+
+    return days_since >= gap_days(count)
+
+
 #ELIGIBILITY
 
 #instagram and messenger only take a message inside a day of their last one, others always do
@@ -231,12 +269,34 @@ def window_open(channel: str, last_message: float, send_time: float) -> bool:
 def sms_reachable(id: str) -> bool:
     return SMS_NUMBER_PATTERN.fullmatch(id) is not None
 
-#a text or form lead past blooios follow ups, or one blooio quit on before those ran out
-def goes_by_sms(record: dict[str, str]) -> bool:
+#a text or form lead past blooios follow ups, one blooio quit on, or one on the shops sms line
+def goes_by_sms(id: str, record: dict[str, str]) -> bool:
     if(senders.service_of(record.get("channel", "")) != "blooio"):
         return False
 
-    return SMS_FIELD in record or int(record.get("count", "0")) >= BLOOIO_FOLLOWUPS
+    if(SMS_FIELD in record or int(record.get("count", "0")) >= BLOOIO_FOLLOWUPS):
+        return True
+
+    #the shops sms number is already their line, so theirs go out on it from the first one
+    return senders.on_sms_line(id)
+
+#the shop reached them on its sms number, a follow up from before the line got marked counts too
+def sms_reply_expected(id: str) -> bool:
+    if(senders.on_sms_line(id)):
+        return True
+
+    try:
+        record: dict[str, str] = log.read_info(followup_key(id))
+    except Exception as error:
+        #a failed read leaves their sms with the owner, who sees it in ghl like always
+        print(f"SMS LINE READ ERROR: {error}, so the sms from {id} stays with the owner")
+
+        return False
+
+    count: int = int(record.get("count", "0"))
+
+    #past blooios follow ups at least one went out by sms, same when blooio quit on them early
+    return count > BLOOIO_FOLLOWUPS or (SMS_FIELD in record and count > 0)
 
 #true when nothing on file rules them out, the gauntlet every follow up runs before it goes
 def followup_allowed(id: str, record: dict[str, str], booked: bool, restricted: bool, named: bool, send_time: float) -> bool:
@@ -254,7 +314,7 @@ def followup_allowed(id: str, record: dict[str, str], booked: bool, restricted: 
         return False
 
     #blooios follow ups are done and the shops ghl number can't text them, so theirs end there
-    if(goes_by_sms(record) and not sms_reachable(id)):
+    if(goes_by_sms(id, record) and not sms_reachable(id)):
         return False
 
     channel_limit: int | None = CHANNEL_FOLLOWUPS.get(channel)
@@ -266,6 +326,10 @@ def followup_allowed(id: str, record: dict[str, str], booked: bool, restricted: 
 
     #still texting the morning it would go out, so theirs waits for the next one
     if(send_time - last_message < QUIET_SECONDS):
+        return False
+
+    #there last follow up went out too recently, so this one waits out its gap
+    if(not spaced_out(record, send_time)):
         return False
 
     return window_open(channel, last_message, send_time)
@@ -665,7 +729,7 @@ def send_followup(id: str) -> None:
     count: int = int(record.get("count", "0"))
 
     #blooio is done with them, so this one goes by sms from the shops ghl number
-    if(goes_by_sms(record)):
+    if(goes_by_sms(id, record)):
         send_sms_followup(id, channel, count, record)
 
         return
@@ -719,7 +783,8 @@ def send_followup(id: str) -> None:
     #nothing of theirs came in before it, so it joins the shops last reply in their history
     log.add_to_last_message(f"systemres_{id}", went_out)
 
-    log.write_info(followup_key(id), [str(count + 1)], ["count"])
+    #when it went out goes on file with the count, so the next one waits out its gap from here
+    log.write_info(followup_key(id), [str(count + 1), str(time.time())], ["count", SENT_FIELD])
 
     #the dashboard moves them from the mornings list to the ones that went out
     dashboard.log_followup_sent(id, channel, count + 1)
@@ -743,18 +808,9 @@ def send_followups() -> None:
 
 #SMS FOLLOWUPS
 
-#curly quotes and long dashes become plain ones and emoji come off, so the sms stays the cheap kind
-def sms_plain(text: str) -> str:
-    for fancy, plain in SMS_PLAIN_CHARACTERS.items():
-        text = text.replace(fancy, plain)
-
-    text = SMS_EMOJI_PATTERN.sub("", text)
-
-    return " ".join(text.split())
-
 #the middle tidied to follow the intros comma, plain, unquoted, lowercase start, period end
 def sms_main(written: str) -> str:
-    main: str = sms_plain(written).strip('"').strip()
+    main: str = senders.sms_plain(written).strip('"').strip()
 
     if(main == ""):
         return main
@@ -889,7 +945,11 @@ def send_sms_followup(id: str, channel: str, count: int, record: dict[str, str])
     #nothing of theirs came in before it, so it joins the shops last reply in there history
     log.add_to_last_message(f"systemres_{id}", text)
 
-    log.write_info(followup_key(id), [str(count + 1)], ["count"])
+    #when it went out goes on file with the count, so the next one waits out its gap from here
+    log.write_info(followup_key(id), [str(count + 1), str(time.time())], ["count", SENT_FIELD])
+
+    #the shops number is their line now, so an sms back from them reaches hazel and gets her reply
+    senders.open_sms_line(id)
 
     #the dashboard moves them to the ones that went out, in green
     dashboard.log_followup_sent(id, channel, count + 1, sms=True)

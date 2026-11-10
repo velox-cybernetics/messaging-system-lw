@@ -24,7 +24,7 @@ def examples() -> str:
     answer: True
     REASON: Hours Of Operations has no holiday hours (true case 2).
 
-    BUSINESS_DETAILS: {"Shop Address": ["105 S 700 E St Unit E, American Fork, UT 84003"], "Shop Building": "The gray building just south of Jack and Jill's", "Shop Address Notes": "Give EVERY location listed when asked where located, with the shop building right after the address. NOT MOBILE(DONT MENTION UNLESS ASK), Waiting area avalible or can just drop off and get it whenever done(DONT MENTION UNLESS ASKED)"}
+    BUSINESS_DETAILS: {"Shop Address": ["105 S 700 E St Unit E, American Fork, UT 84003"], "Shop Building": "The gray building just south of Jack and Jill's", "Shop Address Notes": "Give EVERY location listed when asked where located, with the shop building right after the address. NOT MOBILE(DONT MENTION UNLESS ASK), Waiting area available or can just drop off and get it whenever done(DONT MENTION UNLESS ASKED)"}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"do you guys have wifi in the waiting area?"},"message_history":{}}
     answer: True
     REASON: The waiting area is written there but wifi is not, and wifi is all they asked (true case 2).
@@ -54,7 +54,7 @@ def examples() -> str:
     answer: False
     REASON: Hours Of Operations with current_date_time answers it (false case 4).
 
-    BUSINESS_DETAILS: {"Shop Address": ["105 S 700 E St Unit E, American Fork, UT 84003"], "Shop Building": "The gray building just south of Jack and Jill's", "Shop Address Notes": "Give EVERY location listed when asked where located, with the shop building right after the address. NOT MOBILE(DONT MENTION UNLESS ASK), Waiting area avalible or can just drop off and get it whenever done(DONT MENTION UNLESS ASKED)"}
+    BUSINESS_DETAILS: {"Shop Address": ["105 S 700 E St Unit E, American Fork, UT 84003"], "Shop Building": "The gray building just south of Jack and Jill's", "Shop Address Notes": "Give EVERY location listed when asked where located, with the shop building right after the address. NOT MOBILE(DONT MENTION UNLESS ASK), Waiting area available or can just drop off and get it whenever done(DONT MENTION UNLESS ASKED)"}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"do you guys come to me or do I have to bring it in?"},"message_history":{}}
     answer: False
     REASON: Shop Address Notes says the shop is not mobile. A note marked DONT MENTION UNLESS ASKED still counts once they ask.
@@ -69,7 +69,7 @@ def examples() -> str:
     answer: False
     REASON: The short follow up asks for the email, and Contact Email has it.
 
-    BUSINESS_DETAILS: {"Name of person talking to": "Hazel at the Lone Wraps team. When they ask straight out whether this is a bot, AI or a real person, Hazel is the Lone Wraps AI assistant, never a real person (DONT MENTION BEING AI UNLESS THEY ASK THAT)"}
+    BUSINESS_DETAILS: {"Name of person talking to": "Hazel, she handles the texting at Lone Wraps. When they ask straight out whether this is a bot, AI, gen AI, software or a real person, they're speaking with Hazel, Lone Wraps' AI messaging software, never a real person (DONT MENTION BEING AI UNLESS THEY ASK THAT)"}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Wait is this a bot?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"yall open friday?"},"system_response_to_user_message_0":"Yeah, Friday we're open 9AM to 5PM."}}
     answer: False
     REASON: Whether this is a bot always gets answered (false case 6).

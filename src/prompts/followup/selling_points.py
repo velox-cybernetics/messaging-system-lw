@@ -10,5 +10,6 @@ def selling_points() -> str:
     - Colored PPF: it changes the color while it protects the paint, the best of both worlds, the film is self healing, it comes with a lifetime warranty on any bubbling or peeling, and it comes with free side and rear window tint.
     - Window tint: it's Ghost Films nano ceramic tint, a local Utah brand and one of the best ceramic films out there, it blocks 99% of the UV and 90% of the heat in every shade, it comes with a lifetime warranty on any bubbling or peeling, and it's usually done the same day.
     - Ceramic coating: it adds UV protection and a hydrophobic layer that keeps the vehicle cleaner longer, since the water just beads right off, and the coating lasts for years.
-    - The shop's work in general, for when no job came up: 4 years of quality work, experienced installers, the owner installs the tint himself, and the lifetime warranty on PPF and tint.
+    - The shop's work in general, for when no job came up: experienced installers, the owner installs the tint himself, and the lifetime warranty on PPF and tint.
+    - How long the shop has been in business or how long anyone has been installing is never a selling point, in any wording ("4 years of quality work", "we've been doing this for years", "years of experience"). It only ever comes up when they ask how long the shop has been around.
 """

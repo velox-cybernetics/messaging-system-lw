@@ -7,8 +7,10 @@ from urllib.parse import quote
 
 import requests
 
+from helpers.response import spacing
 from helpers.state import dashboard
 from helpers.state import ghl
+from helpers.state import log
 
 
 #GLOBALS
@@ -58,6 +60,11 @@ LINK_PATTERN = re.compile(r"(?:https?://|www\.)?(?:[a-z0-9-]+\.)+[a-z]{2,}\b", r
 
 #filled once the dev heard textbelt quit sending, emptied when it sends again, one text per outage
 TEXTBELT_DOWN: list[str] = []
+
+#one curly quote or emoji turns an sms into the kind that splits every 70 characters
+SMS_PLAIN_CHARACTERS: dict[str, str] = {"’": "'", "‘": "'", "“": '"', "”": '"', "—": "-", "–": "-", "…": "..."}
+
+SMS_EMOJI_PATTERN = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]")
 
 
 #SENDING
@@ -237,16 +244,16 @@ def show_blooio_typing(recipient: str, seconds: int) -> bool:
 
     return typing_started
 
-#only a text chat over blooio has the bubble, instagram and messenger get none
+#only a text chat on hazels line has the bubble, instagram, messenger and the shops sms line get none
 def start_typing(recipient: str, channel: str) -> bool:
-    if(channel in META_CHANNELS):
+    if(channel in META_CHANNELS or on_sms_line(recipient)):
         return False
 
     return start_blooio_typing(recipient)
 
-#takes a text chats bubble down, instagram and messenger never had one
+#takes a text chats bubble down, instagram, messenger and the shops sms line never had one
 def stop_typing(recipient: str, channel: str) -> bool:
-    if(channel in META_CHANNELS):
+    if(channel in META_CHANNELS or on_sms_line(recipient)):
         return False
 
     return stop_blooio_typing(recipient)
@@ -329,6 +336,10 @@ def send_texts(recipient: str, channel: str, texts: list[str], attachments: dict
 
         return ([], False, False)
 
+    #the shop reached them on its sms line, so the reply goes back out on that same line
+    if(service_of(channel) == "blooio" and on_sms_line(recipient)):
+        return send_sms_reply(recipient, channel, texts, attachments)
+
     delivery: tuple = send_on_channel(recipient, channel, texts, attachments)
 
     texts_sent: list[str] = delivery[0]
@@ -378,7 +389,77 @@ def send_dashboard_text(recipient: str, text: str) -> bool:
     return sent
 
 
+#SMS LINE
+
+#an sms follow up went out from the shops number, so thats their line till they text hazels again
+def open_sms_line(recipient: str) -> None:
+    try:
+        log.write_info(f"sms_line_{recipient}", ["open"], ["status"])
+    except Exception as error:
+        #a mark that fails only means an sms back from them stays with the owner
+        print(f"SMS LINE WRITE ERROR: {error}, so {recipient} stays on hazel's line")
+
+#they texted hazels line, so everything goes back out on it
+def close_sms_line(recipient: str) -> None:
+    try:
+        log.clear_info(f"sms_line_{recipient}", ["status"])
+    except Exception as error:
+        #a mark that won't come off never costs them their reply, it just rides the sms line
+        print(f"SMS LINE WRITE ERROR: {error}, so {recipient} stays on the shop's sms line")
+
+#true while the shops sms number is the line they're on, a failed read leaves them on hazels
+def on_sms_line(recipient: str) -> bool:
+    try:
+        return len(log.read_info(f"sms_line_{recipient}")) > 0
+    except Exception as error:
+        print(f"SMS LINE READ ERROR: {error}, so {recipient} stays on hazel's line")
+
+        return False
+
+
 #SMS SENDS
+
+#curly quotes and long dashes become plain ones and emoji come off, so the sms stays the cheap kind
+def sms_plain(text: str) -> str:
+    for fancy, plain in SMS_PLAIN_CHARACTERS.items():
+        text = text.replace(fancy, plain)
+
+    text = SMS_EMOJI_PATTERN.sub("", text)
+
+    return " ".join(text.split())
+
+#hazels reply on the shops sms line, one plain sms with every pic since sms can land out of order
+def send_sms_reply(recipient: str, channel: str, texts: list[str], attachments: dict[int, list[str]] | None) -> tuple:
+    plain_texts: list[str] = []
+
+    for text in texts:
+        plain_texts.append(sms_plain(text))
+
+    sms: str = spacing.one_text(plain_texts)
+
+    pics: list[str] = []
+
+    if(attachments):
+        for position in sorted(attachments):
+            pics.extend(attachments[position])
+
+    sent: bool = True
+
+    try:
+        ghl.send_sms(ghl.contact_id(recipient), sms, pics)
+    except Exception as error:
+        print(f"[GHL SMS] send to {recipient} failed: {error}")
+
+        sent = False
+
+    #ghl logs its own sms, so only the dashboard hears about it, in green like every text off that line
+    dashboard.log_outgoing(recipient, channel, [sms], {0: pics}, sent, False, sms=True)
+
+    #same shape the other sends hand back, the texts that went out, all sent, and never capped
+    if(not sent):
+        return ([], False, False)
+
+    return ([sms], True, False)
 
 #an sms follow up through ghl, it shows in green on the dashboard, false when ghl turned it down
 def send_sms_text(recipient: str, channel: str, contact: str, text: str) -> bool:

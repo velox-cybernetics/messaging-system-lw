@@ -16,7 +16,8 @@ from helpers.channels import senders
 from helpers.state import dashboard
 from helpers.state import ghl
 from helpers.state.log import REDIS_CLIENT
-from servers.blooio import read_body
+from servers.blooio import read_body, take_message
+from src import followup
 
 
 #GLOBALS
@@ -26,10 +27,15 @@ load_dotenv()
 #no docs or openapi pages, nobody gets a free map of the webhook
 APP = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
-#ghl refuses any url with ghl or highlevel in it, so both paths hide under crm
+#ghl refuses any url with ghl or highlevel in it, so every path hides under crm
 CALLBACK_PATH: str = "/crm/oauth/callback"
 
 DELIVERY_PATH: str = "/crm/outbound"
+
+#where the apps InboundMessage event lands, every text a customer writes the shop in ghl
+INBOUND_PATH: str = "/crm/inbound"
+
+INBOUND_EVENT: str = "InboundMessage"
 
 #the exact redirect url saved on the app, ghl only trades an install code for tokens with it
 REDIRECT_URI: str = f"{os.getenv('PUBLIC_BASE_URL', '').rstrip('/')}{CALLBACK_PATH}"
@@ -44,6 +50,9 @@ TEXT_TYPES: list[str] = ["SMS", "Custom"]
 
 #ghl resends anything it thinks got missed, so ids stick around 48 hours and texts go out once
 SEEN_TTL_SECONDS: int = 172800
+
+#the carriers opt out words, ghl stops their sms on its own so the system only notes it
+STOP_WORDS: list[str] = ["stop", "stopall", "unsubscribe", "cancel", "end", "quit"]
 
 
 #WEBHOOK SAFETY
@@ -175,12 +184,121 @@ async def ghl_hook(request: Request):
     return {"status": "ok"}
 
 
+#SMS LINE
+
+#true for a customers sms to the shops own number, never a text logged on the systems channel
+def inbound_sms(data: dict) -> bool:
+    if(data.get("type") != INBOUND_EVENT or data.get("locationId") != ghl.GHL_LOCATION_ID):
+        return False
+
+    if(data.get("messageType") != "SMS" or data.get("direction") != ghl.INBOUND):
+        return False
+
+    provider: str | None = data.get("conversationProviderId")
+
+    #blooio texts get logged in ghl under the apps provider, those already came in over blooio
+    if(provider and provider == ghl.GHL_PROVIDER_ID):
+        return False
+
+    return True
+
+#each sms goes by its id, or by who sent it and when on one that came without an id
+def sms_key(data: dict) -> str:
+    message_id: str | None = data.get("messageId")
+
+    if(message_id):
+        return message_id
+
+    contact: str | None = data.get("contactId")
+
+    sent_at: str | None = data.get("dateAdded")
+
+    if(not contact or not sent_at):
+        return ""
+
+    return f"{contact}_{sent_at}"
+
+#the pics on an sms the way blooio hands them over, so the batch reads them like any other pic
+def sms_pics(attachments: list | None) -> list[dict]:
+    pics: list[dict] = []
+
+    for url in ghl.attachment_urls(attachments):
+        pics.append({"url": url})
+
+    return pics
+
+#hazel only takes an sms from someone the system texted on that line, the rest stay the owners
+async def take_sms(data: dict) -> None:
+    phone: str | None = data.get("from")
+
+    if(not phone):
+        phone = ""
+
+    text: str | None = data.get("body")
+
+    if(not text):
+        text = ""
+
+    #his own number only ever answers color checks, and never over sms
+    if(phone == "" or phone == senders.OWNER_NUMBER):
+        return
+
+    #nobody the system texted on this line, so its the owners own conversation and hazel stays out
+    if(not await asyncio.to_thread(followup.sms_reply_expected, phone)):
+        return
+
+    #a follow up from before the line got marked gets its mark now, so her reply goes out on it
+    await asyncio.to_thread(senders.open_sms_line, phone)
+
+    #ghl stops their sms on its own, so the system only notes it and never texts back
+    if(text.strip().lower() in STOP_WORDS):
+        await asyncio.to_thread(followup.stop_followups, phone)
+
+        return
+
+    print(f"SMS LINE MESSAGE: {phone} texted the shop's sms number back, so hazel answers them on it")
+
+    await take_message(phone, text, sms_pics(data.get("attachments")), True)
+
+#every text a customer writes the shop in ghl lands here signed, only an sms on the follow up line counts
+async def ghl_inbound_hook(request: Request):
+    body: bytes | None = await read_body(request)
+
+    if(body is None):
+        print("GHL INBOUND REJECTED: body is over the size cap")
+
+        return JSONResponse({"error": "body too large"}, status_code=413)
+
+    if(not ghl_signed(body, request.headers.get("X-GHL-Signature", ""))):
+        print("GHL INBOUND REJECTED: signature is missing or wrong")
+
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+    data: dict = json.loads(body)
+
+    #calls, emails and the systems own channel land here too, hazel only wants the sms
+    if(not inbound_sms(data)):
+        return {"status": "ok"}
+
+    key: str = sms_key(data)
+
+    #a resend only gets taken the first time, and one with no key can't be told from a resend
+    if(key == "" or not await asyncio.to_thread(first_seen, key)):
+        return {"status": "ok"}
+
+    await take_sms(data)
+
+    return {"status": "ok"}
+
+
 #ROUTES
 
-#no response model for either, fastapi just sends back whatever they return
+#no response model for any of them, fastapi just sends back whatever they return
 APP.add_api_route(CALLBACK_PATH, ghl_install, methods=["GET"], response_model=None)
 
 APP.add_api_route(DELIVERY_PATH, ghl_hook, methods=["POST"], response_model=None)
+
+APP.add_api_route(INBOUND_PATH, ghl_inbound_hook, methods=["POST"], response_model=None)
 
 
 #RUN

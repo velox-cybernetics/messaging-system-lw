@@ -245,3 +245,10 @@ export function days_in_month(month: string): number {
 
     return new Date(Date.UTC(year, number, 0)).getUTCDate();
 }
+
+//this shop year and the one before, so january still shows decembers bookings
+export function booked_keys(date: string): string[] {
+    const year: number = Number(date.slice(0, 4));
+
+    return [`year:${year}:booked`, `year:${year - 1}:booked`];
+}

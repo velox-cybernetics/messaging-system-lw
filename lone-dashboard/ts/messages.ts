@@ -7,13 +7,13 @@ import * as shared from "./shared.js";
 
 type TAB = "forms" | "instagram" | "messenger";
 
-//each tab splits into the convos the system answers and the ones switched off
-type VIEW = "on" | "off";
+//each tab splits into the convos the system answers, the ones with a booked hil and the ones switched off
+type VIEW = "on" | "booked" | "off";
 
-type CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; flagged_at: number};
+type CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; booked: boolean; flagged_at: number};
 
 //same convo plus whether its whole channel is switched off
-type THREAD_CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; tab_off: boolean; flagged_at: number};
+type THREAD_CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; booked: boolean; tab_off: boolean; flagged_at: number};
 
 type MEDIA = {kind: "pic"; id: string; width?: number; height?: number; caption: string} | {kind: "video" | "link"; url: string; caption: string} | {kind: "post"; caption: string};
 
@@ -46,7 +46,7 @@ const TABS: TAB[] = ["forms", "instagram", "messenger"];
 
 const TAB_NAMES: Record<TAB, string> = {"forms": "Forms", "instagram": "Instagram", "messenger": "Messenger"};
 
-const VIEWS: VIEW[] = ["on", "off"];
+const VIEWS: VIEW[] = ["on", "booked", "off"];
 
 //only web links get linked, so a customer can't slip a script link in
 const WEB_LINK: RegExp = /^https?:\/\//i;
@@ -128,11 +128,15 @@ const VIEW_ON_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("view-
 
 const VIEW_ON_COUNT: HTMLSpanElement = shared.by_id<HTMLSpanElement>("view-on-count");
 
+const VIEW_BOOKED_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("view-booked");
+
+const VIEW_BOOKED_COUNT: HTMLSpanElement = shared.by_id<HTMLSpanElement>("view-booked-count");
+
 const VIEW_OFF_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("view-off");
 
 const VIEW_OFF_COUNT: HTMLSpanElement = shared.by_id<HTMLSpanElement>("view-off-count");
 
-const VIEW_BUTTONS: Record<VIEW, VIEW_PARTS> = {"on": {"button": VIEW_ON_BUTTON, "count": VIEW_ON_COUNT}, "off": {"button": VIEW_OFF_BUTTON, "count": VIEW_OFF_COUNT}};
+const VIEW_BUTTONS: Record<VIEW, VIEW_PARTS> = {"on": {"button": VIEW_ON_BUTTON, "count": VIEW_ON_COUNT}, "booked": {"button": VIEW_BOOKED_BUTTON, "count": VIEW_BOOKED_COUNT}, "off": {"button": VIEW_OFF_BUTTON, "count": VIEW_OFF_COUNT}};
 
 const LOG: HTMLElement = shared.by_id<HTMLElement>("log");
 
@@ -240,8 +244,8 @@ function convo_title(convo: CONVO | THREAD_CONVO): string {
 function remember_place(): void {
     const query: URLSearchParams = new URLSearchParams({"tab": CURRENT_TAB});
 
-    if(CURRENT_VIEW === "off") {
-        query.set("view", "off");
+    if(CURRENT_VIEW !== "on") {
+        query.set("view", CURRENT_VIEW);
     }
 
     if(CURRENT_ID) {
@@ -349,14 +353,14 @@ function message_note(show: boolean | undefined, text: string): HTMLSpanElement 
     return false;
 }
 
-//ghl texts came from a person, sms follow ups from teh shops ghl number, not hazels line
+//ghl texts came from a person, sms ones went out on the shops follow up line, not hazels line
 function sender_note(from_ghl: boolean | undefined, sms: boolean | undefined): HTMLSpanElement | false {
     if(from_ghl) {
         return shared.make_element("span", {"class": "msg-note"}, ["Sent from GHL"]);
     }
 
     if(sms) {
-        return shared.make_element("span", {"class": "msg-note is-sms"}, ["SMS follow up"]);
+        return shared.make_element("span", {"class": "msg-note is-sms"}, ["Follow up line"]);
     }
 
     return false;
@@ -386,7 +390,7 @@ function entry_node(entry: ENTRY): HTMLElement {
 
         let class_name: string = "msg is-out";
 
-        //sms follow ups show in green so they stand apart from hazels texts
+        //texts off the follow up line show in green so they stand apart from hazels line
         if(entry.sms) {
             class_name = "msg is-out is-sms";
         }
@@ -591,7 +595,7 @@ function show_list(): void {
 
 //LIST
 
-//the tabs convos split by their own switch into System on and System off
+//the tabs convos split three ways, System on, Booked HILs and System off
 function press_view(): void {
     for(const view of VIEWS) {
         VIEW_BUTTONS[view].button.setAttribute("aria-pressed", String(view === CURRENT_VIEW));
@@ -629,8 +633,20 @@ function render_channel(): void {
 function empty_note(view_counts: Record<VIEW, number>): string {
     const name: string = TAB_NAMES[CURRENT_TAB];
 
+    if(CURRENT_VIEW === "booked") {
+        return `No ${name} conversations have a Booked HIL yet. They move here once a customer asks to get on the schedule.`;
+    }
+
     if(CURRENT_VIEW === "off") {
         return `No ${name} conversations are switched off.`;
+    }
+
+    if(view_counts.booked > 0 && view_counts.off > 0) {
+        return `Every ${name} conversation is under Booked HILs or System off.`;
+    }
+
+    if(view_counts.booked > 0) {
+        return `Every ${name} conversation has a Booked HIL. They're under Booked HILs.`;
     }
 
     if(view_counts.off > 0) {
@@ -861,7 +877,7 @@ function build_tab(tab: TAB): void {
     TABS_NAV.append(button);
 }
 
-//switching between System on and System off reloads the list from the top
+//switching between System on, Booked HILs and System off reloads the list from the top
 function pick_view(view: VIEW): void {
     if(view === CURRENT_VIEW) {
         return;
@@ -918,13 +934,22 @@ async function flip_switch(): Promise<void> {
 
         render_head(convo);
 
-        let message: string = `System switched off for ${convo_title(convo)}. Nothing goes out to them now, and they're under System off.`;
+        let message: string = `System switched off for ${convo_title(convo)}. Nothing goes out to them now,`;
+
+        let ending: string = "and they're under System off.";
 
         if(on) {
-            message = `System switched on for ${convo_title(convo)}. It answers their next message, and they're back under System on.`;
+            message = `System switched on for ${convo_title(convo)}. It answers their next message,`;
+
+            ending = "and they're back under System on.";
         }
 
-        shared.toast(message);
+        //a booked one doesn't budge, whichever way its switch went
+        if(convo.booked) {
+            ending = "and they stay under Booked HILs.";
+        }
+
+        shared.toast(`${message} ${ending}`);
 
         load_thread(false);
 
@@ -1505,8 +1530,10 @@ if(is_tab(ADDRESS_TAB)) {
     CURRENT_TAB = ADDRESS_TAB;
 }
 
-if(ADDRESS.get("view") === "off") {
-    CURRENT_VIEW = "off";
+const address_view: string | null = ADDRESS.get("view");
+
+if(address_view === "booked" || address_view === "off") {
+    CURRENT_VIEW = address_view;
 }
 
 let address_id: string | null = ADDRESS.get("id");

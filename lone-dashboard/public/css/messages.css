@@ -118,7 +118,7 @@ time {
     font-size: var(--size-s);
 }
 
-/*channel switch and system on/off views sit on top of the list and stay put while it scrolls*/
+/*channel switch and the three views sit on top of the list and stay put while it scrolls*/
 .list-head {
     position: sticky;
     top: 0;
@@ -146,12 +146,16 @@ time {
     color: var(--stop);
 }
 
+/*three labels and their counts don't fit inside the wide desktop gutter, so the views keep the phone one*/
 .views {
-    margin: 0 var(--gutter);
+    margin: 0 16px;
 }
 
 .views .segment {
     flex: 1;
+    padding: 0 6px;
+    font-size: var(--size-xs);
+    white-space: nowrap;
 }
 
 .view-count {
@@ -562,7 +566,7 @@ time {
     color: var(--limo);
 }
 
-/*an sms follow up from the shop's ghl number, green so it stands apart from hazel's texts*/
+/*a text off the shop's follow up line, green so it stands apart from the ones on hazel's line*/
 .msg.is-sms .bubble {
     background: var(--go);
 }

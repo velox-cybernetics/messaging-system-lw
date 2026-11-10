@@ -13,19 +13,19 @@ const PAGE_SIZE: number = 50;
 //a refresh after show older asks for everything on screen, so the list doesn't snap back
 const MAX_LIMIT: number = 500;
 
-//on is what the system answers, off is the ones switched off
-type VIEW = "on" | "off";
+//on is what the system answers, booked got a booked hil, off is the rest of the switched off ones
+type VIEW = "on" | "booked" | "off";
 
-const VIEWS: VIEW[] = ["on", "off"];
+const VIEWS: VIEW[] = ["on", "booked", "off"];
 
 type PLACED = {id: string; at: number};
 
-type CONVO = {id: string; tab: shop.TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; flagged_at: number};
+type CONVO = {id: string; tab: shop.TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; booked: boolean; flagged_at: number};
 
 
 //SORTING
 
-//on or off, anything else is a made up view
+//on, booked or off, anything else is a made up view
 function is_view(value: unknown): value is VIEW {
     for(const view of VIEWS) {
         if(value === view) {
@@ -150,6 +150,15 @@ async function read_convos(request: Request): Promise<Response> {
 
     const commands: redis.COMMAND[] = [["SMEMBERS", "off"], ["SMEMBERS", "off_tabs"]];
 
+    //everyone who got a booked hil, this year and last in one go
+    const booked_command: redis.COMMAND = ["SUNION"];
+
+    for(const key of shop.booked_keys(shop.shop_clock(new Date()).date)) {
+        booked_command.push(key);
+    }
+
+    commands.push(booked_command);
+
     for(const each of shop.TABS) {
         commands.push(["ZCARD", `convos:${each}`]);
     }
@@ -157,6 +166,8 @@ async function read_convos(request: Request): Promise<Response> {
     const results: unknown[] = await redis.pipeline(commands);
 
     const off_ids: string[] = redis.as_strings(results[0]);
+
+    const booked_ids: string[] = redis.as_strings(results[2]);
 
     const off_tabs: shop.TAB[] = [];
 
@@ -175,39 +186,66 @@ async function read_convos(request: Request): Promise<Response> {
             each = "forms";
         }
 
-        tab_counts[each] = redis.as_number(results[index + 2]);
+        tab_counts[each] = redis.as_number(results[index + 3]);
     }
 
-    //the off list stays short, so it comes back whole
-    let off_here: string[] = [];
+    const off_set: Set<string> = new Set(off_ids);
 
-    if(off_ids.length > 0) {
+    const booked_set: Set<string> = new Set(booked_ids);
+
+    //booked wins over off, so a booked one thats switched off only gets asked about once
+    const listed: string[] = [];
+
+    for(const booked_id of booked_ids) {
+        listed.push(booked_id);
+    }
+
+    for(const off_id of off_ids) {
+        if(!booked_set.has(off_id)) {
+            listed.push(off_id);
+        }
+    }
+
+    //the booked and off lists stay short, so they come back whole
+    const booked_here: string[] = [];
+
+    const off_here: string[] = [];
+
+    if(listed.length > 0) {
         const score_command: redis.COMMAND = ["ZMSCORE", `convos:${tab}`];
 
-        for(const off_id of off_ids) {
-            score_command.push(off_id);
+        for(const id of listed) {
+            score_command.push(id);
         }
 
-        off_here = newest_first(off_ids, await redis.command(score_command));
+        for(const id of newest_first(listed, await redis.command(score_command))) {
+            if(booked_set.has(id)) {
+                booked_here.push(id);
+            }
+            else {
+                off_here.push(id);
+            }
+        }
     }
 
-    const view_counts: Record<VIEW, number> = {"on": tab_counts[tab] - off_here.length, "off": off_here.length};
+    const view_counts: Record<VIEW, number> = {"on": tab_counts[tab] - booked_here.length - off_here.length, "booked": booked_here.length, "off": off_here.length};
 
     let ids: string[] = [];
 
-    if(view === "off") {
+    if(view === "booked") {
+        ids = booked_here.slice(start, start + limit);
+    }
+    else if(view === "off") {
         ids = off_here.slice(start, start + limit);
     }
     else {
-        const off_here_set: Set<string> = new Set(off_here);
-
-        //taking the off ones out only pulls later ones up, so this many from the top fills the page
-        const top: string[] = redis.as_strings(await redis.command(["ZREVRANGE", `convos:${tab}`, 0, start + limit + off_here.length - 1]));
+        //booked and off ones come out and later ones move up, so this many off the top fills the page
+        const top: string[] = redis.as_strings(await redis.command(["ZREVRANGE", `convos:${tab}`, 0, start + limit + booked_here.length + off_here.length - 1]));
 
         const kept: string[] = [];
 
         for(const id of top) {
-            if(!off_here_set.has(id)) {
+            if(!booked_set.has(id) && !off_set.has(id)) {
                 kept.push(id);
             }
         }
@@ -243,7 +281,7 @@ async function read_convos(request: Request): Promise<Response> {
         const summary: shop.SUMMARY | null = shop.parse_summary(summaries[index]);
 
         if(summary !== null) {
-            convos.push({"id": summary.id, "tab": summary.tab, "channel": summary.channel, "name": summary.name, "last_at": summary.last_at, "last_kind": summary.last_kind, "last_text": summary.last_text, "off": view === "off", "flagged_at": redis.as_number(flagged_at[index])});
+            convos.push({"id": summary.id, "tab": summary.tab, "channel": summary.channel, "name": summary.name, "last_at": summary.last_at, "last_kind": summary.last_kind, "last_text": summary.last_text, "off": off_set.has(summary.id), "booked": booked_set.has(summary.id), "flagged_at": redis.as_number(flagged_at[index])});
         }
     }
 
