@@ -15,7 +15,7 @@ def examples() -> str:
     REASON: Thinking it over gets a few words and the door left open, never the price again, a pitch or a question.
 
     Ex 2:
-    STATE: {"current_date_time":"Wednesday, October 07, 2026 at 10:20 AM","current_user_message":{"user_media":{},"user_text":"Let me talk to my wife first and I'll get back to you"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Camry would run $1600 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors."}}
+    STATE: {"current_date_time":"Wednesday, October 07, 2026 at 10:20 AM","current_user_message":{"user_media":{},"user_text":"Let me talk to my wife first and I'll get back to you"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Camry would run $1450 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors."}}
     Response: "For sure, just let me know what you guys decide."
     REASON: The reason they gave gets a few words of its own, with no comment on it.
 
@@ -40,7 +40,7 @@ def examples() -> str:
     REASON: The have a good one gets a you too and the door left open in one short sentence (tone rule 1), so the you too runs right into it instead of ending on an exclamation point of its own.
 
     Ex 7:
-    STATE: {"current_date_time":"Thursday, October 15, 2026 at 09:50 AM","current_user_message":{"user_media":{},"user_text":"Need to save up a bit first, ill hit you up in a couple months"},"message_history":{"user_message_0":{"user_media":{},"user_text":"colored ppf on my 2023 bmw m3, its white. thinking a grey"},"system_response_to_user_message_0":"Sweet, so colored PPF on the M3 would run $6400 + tax for the full body, and it comes with free side and rear window tint."}}
+    STATE: {"current_date_time":"Thursday, October 15, 2026 at 09:50 AM","current_user_message":{"user_media":{},"user_text":"Need to save up a bit first, ill hit you up in a couple months"},"message_history":{"user_message_0":{"user_media":{},"user_text":"colored ppf on my 2023 bmw m3, its white. thinking a grey"},"system_response_to_user_message_0":"Sweet, so colored PPF on the M3 would run $5950 + tax for the full body, and it comes with free side and rear window tint."}}
     Response: "No worries, just reach out whenever you're ready."
     REASON: Saving up never gets financing, a payment plan or a cheaper option to save it.
 

@@ -59,7 +59,7 @@ def examples() -> str:
     REASON: The shop does PPF, but taking the old film off has no answer, so it's the removal that gets named, not PPF. No yes or no, no pitching new film.
 
     Ex 11:
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Do you guys use XPEL for the PPF?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Mat PPF on my 2024 model 3"},"system_response_to_user_message_0":"Full body matte PPF on the Model 3 would be $6400 + tax, matte runs $500 over the clear film."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Do you guys use XPEL for the PPF?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Mat PPF on my 2024 model 3"},"system_response_to_user_message_0":"Full body matte PPF on the Model 3 would be $6000 + tax, matte runs $500 over the clear film."}}
     Response: "Hmm tbh I'm not sure on XPEL for the PPF 😅 I'm still new here so I'm learning the ropes, but I'll ask the owner"
     REASON: A follow up on a film brand the shop doesn't list, so the brand is what gets named. No yes or no, no repeating the price.
 

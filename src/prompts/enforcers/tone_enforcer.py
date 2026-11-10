@@ -52,7 +52,7 @@ state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how mu
 answer: follows
 state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"do yall tint windshields"},"system_response_to_user_message_0":"Yeah, we do! The windshield goes as dark as 50%, and it's $200 + tax. What are you driving?"},"draft_reply":"Haha no worries, tint on the sides and rear of the Civic would run $450 + tax, and if you wanted to add the windshield that would be an extra $200"}
 answer: follows
-state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf on my 4runner"},"system_response_to_user_message_0":"Colored PPF on the 4Runner typically runs $7400 + tax for the full body, plus it comes with free side and rear window tint. Did you want to hop on the schedule?"},"draft_reply":"For sure, just reach out whenever you're ready 😊"}
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf on my 4runner"},"system_response_to_user_message_0":"Colored PPF on the 4Runner typically runs $6950 + tax for the full body, plus it comes with free side and rear window tint. Did you want to hop on the schedule?"},"draft_reply":"For sure, just reach out whenever you're ready 😊"}
 answer: follows
 state: {"message_context":{},"draft_reply":"Sorry to hear that, let me look into it for you"}
 answer: follows
@@ -62,7 +62,7 @@ state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how mu
 answer: ai_wording
 state: {"message_context":{},"draft_reply":"Great question! I'd be happy to help. Our ceramic coating lasts around 4 years and keeps the paint easier to clean."}
 answer: ai_wording
-state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf on my model y"},"system_response_to_user_message_0":"Colored PPF on the Model Y typically runs $6400 + tax for the full body, plus it comes with free side and rear window tint. What color is it right now? Send me a pic if you can"},"draft_reply":"Understood, I apologize for the confusion. The full body colored PPF on the Model Y would be $6400 + tax."}
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf on my model y"},"system_response_to_user_message_0":"Colored PPF on the Model Y typically runs $5950 + tax for the full body, plus it comes with free side and rear window tint. What color is it right now? Send me a pic if you can"},"draft_reply":"Understood, I apologize for the confusion. The full body colored PPF on the Model Y would be $5950 + tax."}
 answer: ai_wording
 state: {"message_context":{},"draft_reply":"Our hours of operation are Monday through Friday from 9AM to 5PM. I hope this helps!"}
 answer: ai_wording
@@ -74,7 +74,7 @@ state: {"message_context":{},"draft_reply":"So you're looking to wrap your 2020 
 answer: restates
 state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for sides and rear tint on my accord"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Accord is $450 + tax, and if you wanted to add the windshield that would be an extra $200. Do you know how dark you're wanting to go?"},"draft_reply":"You're asking if we can do the windshield too. Yeah, the windshield would be an extra $200."}
 answer: restates
-state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf"},"system_response_to_user_message_0":"For sure, we do colored PPF! What car is it?"},"draft_reply":"Hahaha no worries, that happens! The full body would be $6400 + tax"}
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf"},"system_response_to_user_message_0":"For sure, we do colored PPF! What car is it?"},"draft_reply":"Hahaha no worries, that happens! The full body would be $5950 + tax"}
 answer: off_laugh
 state: {"message_context":{},"draft_reply":"lmao for sure, we can do a chrome delete on it. Do you have a photo of the car?"}
 answer: off_laugh"""

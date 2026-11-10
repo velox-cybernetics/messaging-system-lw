@@ -14,7 +14,7 @@ def examples() -> str:
     REASON: Holding off gets a few words and the door left open, nothing else.
 
     Ex 2:
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Let me talk to my wife first"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end, lets book it"},"system_response_to_user_message_0":"Perfect, so the price of front end PPF on the Accord is $1600 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $320. We've got Monday the 12th, Tuesday the 13th or Wednesday the 14th open for drop off, which day works best for you?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Let me talk to my wife first"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end, lets book it"},"system_response_to_user_message_0":"Perfect, so the price of front end PPF on the Accord is $1450 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $290. We've got Monday the 12th, Tuesday the 13th or Wednesday the 14th open for drop off, which day works best for you?"}}
     Response: "For sure, just let me know what you guys decide."
     REASON: The reason they gave gets a few words of its own, with no comment on it.
 
@@ -43,7 +43,7 @@ def examples() -> str:
     REASON: Needing more time can get Hazel's "Totally get it" (#HAZEL'S TOUCH), then the few words for thinking it over and the door left open.
 
     Ex 8:
-    STATE: {"current_date_time":"Thursday, October 15, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Actually Im gonna hold off for now"},"message_history":{"user_message_0":{"user_media":{},"user_text":"lets book it"},"system_response_to_user_message_0":"Perfect, so the price of front end PPF on the Camry is $1600 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $320. We've got Monday the 19th, Tuesday the 20th or Wednesday the 21st open for drop off, which day works best for you?"}}
+    STATE: {"current_date_time":"Thursday, October 15, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Actually Im gonna hold off for now"},"message_history":{"user_message_0":{"user_media":{},"user_text":"lets book it"},"system_response_to_user_message_0":"Perfect, so the price of front end PPF on the Camry is $1450 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $290. We've got Monday the 19th, Tuesday the 20th or Wednesday the 21st open for drop off, which day works best for you?"}}
     Response: "No worries, just let me know if you change your mind."
     REASON: Calling it off after the drop off days went out gets the same few words and the door left open, nothing about the days.
 
@@ -58,7 +58,7 @@ def examples() -> str:
     REASON: Waiting because of their work week gets a few words and the door left open, never a day, a time or the hours.
 
     Ex 11:
-    STATE: {"current_date_time":"Tuesday, October 13, 2026 at 03:40 PM","current_user_message":{"user_media":{},"user_text":"Hmm colored ppf is a lot, gonna think about it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"lets do the colored ppf"},"system_response_to_user_message_0":"Perfect, so the price of full body colored PPF in dark green on the Model Y is $6400 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $1280. We've got Tuesday the 20th, Wednesday the 21st or Thursday the 22nd open for drop off, which day works best for you?"}}
+    STATE: {"current_date_time":"Tuesday, October 13, 2026 at 03:40 PM","current_user_message":{"user_media":{},"user_text":"Hmm colored ppf is a lot, gonna think about it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"lets do the colored ppf"},"system_response_to_user_message_0":"Perfect, so the price of full body colored PPF in dark green on the Model Y is $5950 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $1190. We've got Tuesday the 20th, Wednesday the 21st or Thursday the 22nd open for drop off, which day works best for you?"}}
     Response: "All good, take your time and just let me know."
     REASON: Never steering them to the cheaper wrap to save it, just a few words and the door open.
 
@@ -68,12 +68,12 @@ def examples() -> str:
     REASON: The reason gets a few words of its own with no comment on it, and no question.
 
     Ex 13:
-    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 04:15 PM","current_user_message":{"user_media":{},"user_text":"let me think about it, do you guys do financing?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"lets book it"},"system_response_to_user_message_0":"Perfect, so the price of full body PPF on the Model 3 is $5900 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $1180. We've got Monday the 26th, Tuesday the 27th or Wednesday the 28th open for drop off, which day works best for you?"}}
+    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 04:15 PM","current_user_message":{"user_media":{},"user_text":"let me think about it, do you guys do financing?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"lets book it"},"system_response_to_user_message_0":"Perfect, so the price of full body PPF on the Model 3 is $5500 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $1100. We've got Monday the 26th, Tuesday the 27th or Wednesday the 28th open for drop off, which day works best for you?"}}
     Response: "Yeah, we do financing through Affirm. Take your time and just let me know."
     REASON: The financing question gets answered plainly first from #BUSINESS DETAILS, which also acknowledges them, never as a reason to go ahead, then the few words for thinking it over and the door left open.
 
     Ex 14:
-    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 05:30 PM","current_user_message":{"user_media":{},"user_text":"need to talk to my wife first. how long is the warranty on the ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"front end, lets book it"},"system_response_to_user_message_0":"Perfect, so the price of front end PPF on the Accord is $1600 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $320. We've got Thursday the 22nd, Monday the 26th or Tuesday the 27th open for drop off, which day works best for you?"}}
+    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 05:30 PM","current_user_message":{"user_media":{},"user_text":"need to talk to my wife first. how long is the warranty on the ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"front end, lets book it"},"system_response_to_user_message_0":"Perfect, so the price of front end PPF on the Accord is $1450 plus tax. Just a heads up, there is a 20% deposit required to lock in your spot, after you pick a day, so that would be $290. We've got Thursday the 22nd, Monday the 26th or Tuesday the 27th open for drop off, which day works best for you?"}}
     Response: "The PPF comes with a lifetime warranty on any bubbling or peeling. Just let me know what you guys decide."
     REASON: Calling it off after the days went out still gets the warranty answered first from #GENERAL SERVICE DETAILS, then the few words for the reason they gave, with no question.
 """

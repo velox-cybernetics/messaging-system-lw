@@ -24,24 +24,24 @@ def examples() -> str:
     DROP_OFF_DATE: Wednesday, October 21
     DROP_OFF_DAY: Wednesday
     MISSING: ["name", "number", "email"]
-    SERVICES_PRICING: {"Front End PPF on the Accord": "$1600 plus tax"}
-    TOTAL: $1600 plus tax
-    DEPOSIT: $320
+    SERVICES_PRICING: {"Front End PPF on the Accord": "$1450 plus tax"}
+    TOTAL: $1450 plus tax
+    DEPOSIT: $290
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Thursday, October 15, 2026 at 02:10 PM","current_user_message":{"user_media":{},"user_text":"the 21st"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf on my 2023 accord"},"system_response_to_user_message_0":"Front end on the Accord would run $1600 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $5900 + tax. Which option are you leaning towards?","user_message_1":{"user_media":{},"user_text":"Front end, lets book it"},"system_response_to_user_message_1":"Sweet, so what day works for the front end PPF on your Accord? We've got Monday the 19th, Tuesday the 20th or Wednesday the 21st open for drop off."}}
-    Response: "Perfect, we do require a 20% deposit to lock in your spot for Wednesday, so that would be $320. Can I get a name, number and email to shoot that invoice over to?"
+    STATE: {"current_date_time":"Thursday, October 15, 2026 at 02:10 PM","current_user_message":{"user_media":{},"user_text":"the 21st"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf on my 2023 accord"},"system_response_to_user_message_0":"Front end on the Accord would run $1450 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $5500 + tax. Which option are you leaning towards?","user_message_1":{"user_media":{},"user_text":"Front end, lets book it"},"system_response_to_user_message_1":"Sweet, so what day works for the front end PPF on your Accord? We've got Monday the 19th, Tuesday the 20th or Wednesday the 21st open for drop off."}}
+    Response: "Perfect, we do require a 20% deposit to lock in your spot for Wednesday, so that would be $290. Can I get a name, number and email to shoot that invoice over to?"
     REASON: Sweet opened the shop's last reply, so it's Perfect. DROP_OFF_DAY is just Wednesday, the coming one and the only one offered, so the 21st that already went out with the days never gets said again (rule 3).
 
     Ex 3:
     DROP_OFF_DATE: Thursday, October 22
     DROP_OFF_DAY: Thursday the 22nd
     MISSING: ["name", "number", "email"]
-    SERVICES_PRICING: {"Full Body Colored PPF in satin dark grey on the Tahoe": "$7400 plus tax"}
-    TOTAL: $7400 plus tax
-    DEPOSIT: $1480
+    SERVICES_PRICING: {"Full Body Colored PPF in satin dark grey on the Tahoe": "$6950 plus tax"}
+    TOTAL: $6950 plus tax
+    DEPOSIT: $1390
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Thursday, October 15, 2026 at 11:30 AM","current_user_message":{"user_media":{},"user_text":"yes that works"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for colored ppf on my 2021 tahoe? its black"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tahoe would run $7400 + tax for the full body, and it comes with free side and rear window tint.","user_message_1":{"user_media":{},"user_text":"Alright lets do it"},"system_response_to_user_message_1":"Perfect, so for the satin dark grey colored PPF on your Tahoe we've got Thursday the 22nd open for drop off, does that work for you?"}}
-    Response: "Sounds good, we do require a 20% deposit to lock in your spot for Thursday the 22nd, so that would be $1480. Can I get a name, number and email to shoot that invoice over to?"
+    STATE: {"current_date_time":"Thursday, October 15, 2026 at 11:30 AM","current_user_message":{"user_media":{},"user_text":"yes that works"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for colored ppf on my 2021 tahoe? its black"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tahoe would run $6950 + tax for the full body, and it comes with free side and rear window tint.","user_message_1":{"user_media":{},"user_text":"Alright lets do it"},"system_response_to_user_message_1":"Perfect, so for the satin dark grey colored PPF on your Tahoe we've got Thursday the 22nd open for drop off, does that work for you?"}}
+    Response: "Sounds good, we do require a 20% deposit to lock in your spot for Thursday the 22nd, so that would be $1390. Can I get a name, number and email to shoot that invoice over to?"
     REASON: Their yes to the one day offered is their pick, so it's the same deposit line and ask as any other pick.
 
     Ex 4:
@@ -60,12 +60,12 @@ def examples() -> str:
     DROP_OFF_DATE: Tuesday, November 3
     DROP_OFF_DAY: Tuesday, November 3rd
     MISSING: ["name", "number", "email"]
-    SERVICES_PRICING: {"Full Body PPF on the Macan": "$6900 plus tax", "PPF Windshield Skin on the Macan": "$450 plus tax"}
-    TOTAL: $7350 plus tax
-    DEPOSIT: $1470
+    SERVICES_PRICING: {"Full Body PPF on the Macan": "$6500 plus tax", "PPF Windshield Skin on the Macan": "$450 plus tax"}
+    TOTAL: $6950 plus tax
+    DEPOSIT: $1390
     REPLY_BEFORE:
     STATE: {"current_date_time":"Friday, October 23, 2026 at 10:05 AM","current_user_message":{"user_media":{},"user_text":"yeah that one works"},"message_history":{"user_message_0":{"user_media":{},"user_text":"ok cool, im ready to book it"},"system_response_to_user_message_0":"Perfect, so what day works for the full body PPF and the windshield skin on your Macan? We've got Monday the 26th, Tuesday the 27th or Wednesday the 28th open for drop off.","user_message_1":{"user_media":{},"user_text":"none of those work either sorry 😩 work is crazy"},"system_response_to_user_message_1":"No worries, for the full body and the windshield skin we've also got Tuesday, November 3rd open for drop off, would that work for you?"}}
-    Response: "Sweet, we do require a 20% deposit to lock in your spot for Tuesday, November 3rd, so that would be $1470. Can I get a name, number and email to shoot that invoice over to?"
+    Response: "Sweet, we do require a 20% deposit to lock in your spot for Tuesday, November 3rd, so that would be $1390. Can I get a name, number and email to shoot that invoice over to?"
     REASON: The day they picked is next month, so DROP_OFF_DAY names its month. Perfect and No worries opened the shop's last two replies, so it's Sweet.
 
     Ex 6:
@@ -96,12 +96,12 @@ def examples() -> str:
     DROP_OFF_DATE: Wednesday, October 28
     DROP_OFF_DAY: Wednesday
     MISSING: ["name", "number", "email"]
-    SERVICES_PRICING: {"Front End PPF on the Model Y": "$1600 plus tax", "Ceramic Tint on the sides and rear of the Tundra": "$450 plus tax"}
-    TOTAL: $2050 plus tax
-    DEPOSIT: $410
+    SERVICES_PRICING: {"Front End PPF on the Model Y": "$1450 plus tax", "Ceramic Tint on the sides and rear of the Tundra": "$450 plus tax"}
+    TOTAL: $1900 plus tax
+    DEPOSIT: $380
     REPLY_BEFORE:
     STATE: {"current_date_time":"Thursday, October 22, 2026 at 07:10 PM","current_user_message":{"user_media":{},"user_text":"wednesday the 28th. can i leave my bike rack on the tundra?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Lets do both, my wife will bring the tundra"},"system_response_to_user_message_0":"Perfect, so what day works for the front end PPF on your Model Y and the tint on your Tundra? We've got Tuesday the 27th, Wednesday the 28th or Thursday the 29th open for drop off."}}
-    Response: "Sweet, we do require a 20% deposit to lock in your spot for Wednesday, so that would be $410. Can I get a name, number and email to shoot that invoice over to?"
+    Response: "Sweet, we do require a 20% deposit to lock in your spot for Wednesday, so that would be $380. Can I get a name, number and email to shoot that invoice over to?"
     REASON: Nothing in the shop's info answers the bike rack, so it's left out and never guessed, and the reply opens the way it would without it.
 
     Ex 9:
@@ -132,7 +132,7 @@ def examples() -> str:
     DROP_OFF_DATE: Wednesday, October 21
     DROP_OFF_DAY: Wednesday
     MISSING: ["name", "number", "email"]
-    SERVICES_PRICING: {"Full Body PPF on the Corvette": "$5900 plus tax", "Ceramic Coating on top of the PPF": ""}
+    SERVICES_PRICING: {"Full Body PPF on the Corvette": "$5500 plus tax", "Ceramic Coating on top of the PPF": ""}
     TOTAL:
     DEPOSIT:
     REPLY_BEFORE:
@@ -168,11 +168,11 @@ def examples() -> str:
     DROP_OFF_DATE: Wednesday, October 21
     DROP_OFF_DAY: Wednesday
     MISSING: ["number"]
-    SERVICES_PRICING: {"Front End PPF on the Accord": "$1600 plus tax"}
-    TOTAL: $1600 plus tax
-    DEPOSIT: $320
+    SERVICES_PRICING: {"Front End PPF on the Accord": "$1450 plus tax"}
+    TOTAL: $1450 plus tax
+    DEPOSIT: $290
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Thursday, October 15, 2026 at 02:20 PM","current_user_message":{"user_media":{},"user_text":"its sarah kim, sarah.k22@yahoo.com"},"message_history":{"user_message_0":{"user_media":{},"user_text":"the 21st"},"system_response_to_user_message_0":"Perfect, we do require a 20% deposit to lock in your spot for Wednesday, so that would be $320. Can I get a name, number and email to shoot that invoice over to?"}}
+    STATE: {"current_date_time":"Thursday, October 15, 2026 at 02:20 PM","current_user_message":{"user_media":{},"user_text":"its sarah kim, sarah.k22@yahoo.com"},"message_history":{"user_message_0":{"user_media":{},"user_text":"the 21st"},"system_response_to_user_message_0":"Perfect, we do require a 20% deposit to lock in your spot for Wednesday, so that would be $290. Can I get a name, number and email to shoot that invoice over to?"}}
     Response: "Sweet, and what's the best number for you?"
     REASON: Perfect opened the shop's last reply, so it's Sweet, and the number is the only one left.
 
@@ -180,11 +180,11 @@ def examples() -> str:
     DROP_OFF_DATE: Tuesday, November 3
     DROP_OFF_DAY: Tuesday, November 3rd
     MISSING: ["number", "email"]
-    SERVICES_PRICING: {"Full Body PPF on the Macan": "$6900 plus tax", "PPF Windshield Skin on the Macan": "$450 plus tax"}
-    TOTAL: $7350 plus tax
-    DEPOSIT: $1470
+    SERVICES_PRICING: {"Full Body PPF on the Macan": "$6500 plus tax", "PPF Windshield Skin on the Macan": "$450 plus tax"}
+    TOTAL: $6950 plus tax
+    DEPOSIT: $1390
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Friday, October 23, 2026 at 10:15 AM","current_user_message":{"user_media":{},"user_text":"Danny"},"message_history":{"user_message_0":{"user_media":{},"user_text":"none of those work either sorry 😩 work is crazy"},"system_response_to_user_message_0":"No worries, for the full body and the windshield skin we've also got Tuesday, November 3rd open for drop off, would that work for you?","user_message_1":{"user_media":{},"user_text":"yeah that one works"},"system_response_to_user_message_1":"Sweet, we do require a 20% deposit to lock in your spot for Tuesday, November 3rd, so that would be $1470. Can I get a name, number and email to shoot that invoice over to?"}}
+    STATE: {"current_date_time":"Friday, October 23, 2026 at 10:15 AM","current_user_message":{"user_media":{},"user_text":"Danny"},"message_history":{"user_message_0":{"user_media":{},"user_text":"none of those work either sorry 😩 work is crazy"},"system_response_to_user_message_0":"No worries, for the full body and the windshield skin we've also got Tuesday, November 3rd open for drop off, would that work for you?","user_message_1":{"user_media":{},"user_text":"yeah that one works"},"system_response_to_user_message_1":"Sweet, we do require a 20% deposit to lock in your spot for Tuesday, November 3rd, so that would be $1390. Can I get a name, number and email to shoot that invoice over to?"}}
     Response: "Perfect, and what's the best number and email for you?"
     REASON: Only their name came in, so the number and the email both get asked for in the one question.
 

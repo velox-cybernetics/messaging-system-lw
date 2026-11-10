@@ -35,7 +35,7 @@ def fix_notes() -> str:
     - Price hold:
         - Rule: with PRICE_HOLD: yes in the input, the fixed reply has no price at all, and fixing anything else never puts one back.
         - Why: the owner gets them talking before any number comes up (#PRICE HOLD above).
-        - How: the question that takes a held price's place is the one #PRICE HOLD gives, so "Front end PPF on the G37 is $1600 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and full body is $5900 + tax, which covers all the painted surfaces. Which option are you leaning towards?" becomes "The front end covers the full hood, fenders, bumper, headlights and mirrors, and the full body covers all the painted surfaces and comes with free side and rear window tint. Are you looking for just the front end or full body on the G37?"."""
+        - How: the question that takes a held price's place is the one #PRICE HOLD gives, so "Front end PPF on the G37 is $1450 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and full body is $5500 + tax, which covers all the painted surfaces. Which option are you leaning towards?" becomes "The front end covers the full hood, fenders, bumper, headlights and mirrors, and the full body covers all the painted surfaces and comes with free side and rear window tint. Are you looking for just the front end or full body on the G37?"."""
 
 #same rules and examples as the main generator, then the playbook for fixing what got flagged
 def prompt() -> str:

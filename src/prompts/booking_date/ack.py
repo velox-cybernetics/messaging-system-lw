@@ -18,7 +18,7 @@ def examples() -> str:
     Ex 2:
     OPEN_DATES: []
     REPLY_BEFORE:
-    STATE: {"current_date_time":"Wednesday, October 14, 2026 at 10:20 AM","current_user_message":{"user_media":{},"user_text":"Front end, lets book it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf on my 2023 accord"},"system_response_to_user_message_0":"Front end on the Accord would run $1600 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $5900 + tax. Which option are you leaning towards?"}}
+    STATE: {"current_date_time":"Wednesday, October 14, 2026 at 10:20 AM","current_user_message":{"user_media":{},"user_text":"Front end, lets book it"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for ppf on my 2023 accord"},"system_response_to_user_message_0":"Front end on the Accord would run $1450 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and full body is $5500 + tax. Which option are you leaning towards?"}}
     Response: "Sounds good, let me look at the schedule and get back to you with the next opening for drop off."
 
     Ex 3:

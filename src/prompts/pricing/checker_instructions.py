@@ -152,7 +152,7 @@ def examples() -> str:
     REASON: Wanting to book, the regular reply handles that (false case 8).
 
     SERVICE_DETAILS: every service the shop offers, one per line
-    STATE: {"current_date_time":"Monday, November 02, 2026 at 12:06 PM","current_user_message":{"user_media":{},"user_text":"Maybe. What is your schedule like right now?"},"message_history":{"user_message_0":{"user_text":"hello my name is Scott Hunt, I am interested in your services, the vehicle I have is 2026 Ram 2500."},"system_response_to_user_message_0":"Heyy Scott, this is Hazel with the Lone Wraps team, saw your quote request on the 2500. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Full Clear bra on hood and front fenders of 2026 Ram 2500."},"system_response_to_user_message_1":"Sweet, so front end PPF on the 2500 would run $1800 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and it comes with a lifetime warranty. Did you want to hop on the schedule?"}}
+    STATE: {"current_date_time":"Monday, November 02, 2026 at 12:06 PM","current_user_message":{"user_media":{},"user_text":"Maybe. What is your schedule like right now?"},"message_history":{"user_message_0":{"user_text":"hello my name is Scott Hunt, I am interested in your services, the vehicle I have is 2026 Ram 2500."},"system_response_to_user_message_0":"Heyy Scott, this is Hazel with the Lone Wraps team, saw your quote request on the 2500. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Full Clear bra on hood and front fenders of 2026 Ram 2500."},"system_response_to_user_message_1":"Sweet, so front end PPF on the 2500 would run $1650 + tax, that covers the full hood, fenders, bumper, headlights and mirrors, and it comes with a lifetime warranty. Did you want to hop on the schedule?"}}
     answer: False
     REASON: Asking what the schedule looks like right after the shop's schedule question is asking what's open to get on it, and the owner's line in #BOOKING DETAILS answers that, so it's covered, never a question nobody can answer (false cases 8 and 11).
 
@@ -177,7 +177,7 @@ def examples() -> str:
     REASON: partials answers it: the headlights are part of the front end, so the regular reply points it to the front end price (false case 4).
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"How does the automatic car wash affect Ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Mat PPF on my 2024 model 3"},"system_response_to_user_message_0":"Full body matte PPF on the Model 3 would be $6400 plus tax, matte runs $500 over the clear film."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"How does the automatic car wash affect Ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Mat PPF on my 2024 model 3"},"system_response_to_user_message_0":"Full body matte PPF on the Model 3 would be $6000 plus tax, matte runs $500 over the clear film."}}
     answer: False
     REASON: The regular reply answers how the film holds up in a car wash with a small inference from SERVICE_DETAILS (durable, double the thickness of a vinyl wrap, self healing, edges tucked), so it is covered (false case 4).
 
@@ -187,7 +187,7 @@ def examples() -> str:
     REASON: Unlike a wrap, how PPF holds up in a brush car wash is answered with a small inference from SERVICE_DETAILS (durable, self healing, edges tucked), so it is covered (false case 4).
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Can I use my own material? Ppf"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Full matte ppf on my 2023 tahoe"},"system_response_to_user_message_0":"Full body matte PPF on the Tahoe would be $7400 plus tax, matte runs $500 over the clear film."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Can I use my own material? Ppf"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Full matte ppf on my 2023 tahoe"},"system_response_to_user_message_0":"Full body matte PPF on the Tahoe would be $7000 plus tax, matte runs $500 over the clear film."}}
     answer: True
     REASON: SERVICE_DETAILS says nothing about customer supplied PPF, only a wrap has a customer_material field.
 
@@ -230,7 +230,7 @@ def examples() -> str:
     REASON: A ceramic coating protective film mixes up the coating and PPF, and both have details, so the regular reply clears up that they're two different things and answers the wrap against them (false case 4).
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Is this your 50% off quote as per the ad?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Can you give me quote for full front and full body on my 2024 model 3. Don't want to change the color"},"system_response_to_user_message_0":"Front end PPF on the Model 3 is $1600 plus tax and full body is $5900 plus tax, both clear so the color stays the same."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Is this your 50% off quote as per the ad?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Can you give me quote for full front and full body on my 2024 model 3. Don't want to change the color"},"system_response_to_user_message_0":"Front end PPF on the Model 3 is $1450 plus tax and full body is $5500 plus tax, both clear so the color stays the same."}}
     answer: False
     REASON: An old promo they bring up, the price stands (false case 7).
 
@@ -266,12 +266,12 @@ def examples() -> str:
     REASON: Taking the wrap off has no price, but the colored PPF install does, so the regular reply prices the new film (false case 5).
 
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"What would you charge to install a colored ppf kit I already bought?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Colored ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tacoma would run $7400 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"What would you charge to install a colored ppf kit I already bought?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Colored ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tacoma would run $6950 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
     answer: True
     REASON: customer_material says they can bring their own kit and pay for labor, but there's no labor number, and the labor price is all they asked (true case 2).
 
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Is there a deposit to get started on the colored ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Colored ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tacoma would run $7400 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Is there a deposit to get started on the colored ppf?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Colored ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tacoma would run $6950 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
     answer: False
     REASON: #BOOKING DETAILS has the 20% deposit for every regular job, colored PPF included, so it's covered (false case 11).
 
@@ -282,7 +282,7 @@ def examples() -> str:
     REASON: color_ppf_price has the colored price and the coating details have the coating, so the regular reply prices both (false case 4).
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Does the ppf heal itself if it gets scratched?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2024 audi a5"},"system_response_to_user_message_0":"Front end PPF on the A5 is $1600 plus tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Does the ppf heal itself if it gets scratched?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2024 audi a5"},"system_response_to_user_message_0":"Front end PPF on the A5 is $1450 plus tax, that covers the full hood, fenders, bumper, headlights and mirrors."}}
     answer: False
     REASON: self_healing has it.
 
@@ -293,17 +293,17 @@ def examples() -> str:
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"When it’s time to remove the film will it damage my paint? "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Looking for a color change but I also want protection for my car "},"system_response_to_user_message_0":"Colored PPF is exactly that, it changes the color like a wrap and protects the paint like PPF. On the Model Y it's $6400 plus tax for the full body, which covers all the painted surfaces, we clay bar your car and give it a decontamination wash beforehand, and it comes with free side and rear window tint. What color were you thinking?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"When it’s time to remove the film will it damage my paint? "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Looking for a color change but I also want protection for my car "},"system_response_to_user_message_0":"Colored PPF is exactly that, it changes the color like a wrap and protects the paint like PPF. On the Model Y it's $5950 plus tax for the full body, which covers all the painted surfaces, we clay bar your car and give it a decontamination wash beforehand, and it comes with free side and rear window tint. What color were you thinking?"}}
     answer: False
     REASON: The film coming off down the road and whether that hurts the paint is in removal (false case 4).
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"And if I ever want it off down the road can you guys take it off? What would that run?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Full body ppf on my 2023 bmw x5"},"system_response_to_user_message_0":"Sweet, so full body PPF on the X5 would run $6900 plus tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Did you want to hop on the schedule?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"And if I ever want it off down the road can you guys take it off? What would that run?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Full body ppf on my 2023 bmw x5"},"system_response_to_user_message_0":"Sweet, so full body PPF on the X5 would run $6500 plus tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. Did you want to hop on the schedule?"}}
     answer: False
     REASON: They're only asking about later on, and removal answers it with pictures first, then a price (false case 4). Wanting old film that's on the car now taken off would still be true case 2.
 
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Can you apply this over my current ceramic coating? "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Colored ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tacoma would run $7400 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Can you apply this over my current ceramic coating? "},"message_history":{"user_message_0":{"user_media":{},"user_text":"Colored ppf on my 2023 tacoma"},"system_response_to_user_message_0":"Sweet, so colored PPF on the Tacoma would run $6950 plus tax for the full body, which covers all the painted surfaces, and we clay bar your truck and give it a decontamination wash beforehand. It also comes with free side and rear window tint. What color were you thinking?"}}
     answer: False
     REASON: A coating already on their paint is in existing_ceramic_coating, unlike getting a ceramic coating done (false case 4).
 
@@ -425,7 +425,7 @@ def examples() -> str:
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Window Tint", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Ok I will pass on the window tint and go somewhere else for that"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for front end ppf and tint on the sides and rear of my 2023 accord?"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Accord would run $1600 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and ceramic tint on the sides and rear is $450 on top.","user_message_1":{"user_media":{},"user_text":"Does the ppf come with a warranty?"},"system_response_to_user_message_1":"Yeah, lifetime warranty on any bubbling or peeling from the install."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Ok I will pass on the window tint and go somewhere else for that"},"message_history":{"user_message_0":{"user_media":{},"user_text":"How much for front end ppf and tint on the sides and rear of my 2023 accord?"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Accord would run $1450 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and ceramic tint on the sides and rear is $450 on top.","user_message_1":{"user_media":{},"user_text":"Does the ppf come with a warranty?"},"system_response_to_user_message_1":"Yeah, lifetime warranty on any bubbling or peeling from the install."}}
     answer: False
     REASON: Turning down the tint and getting it somewhere else is an objection, it asks for nothing the shop has to look up, so the regular reply takes it in stride and goes on with the PPF (false case 15).
 
@@ -441,7 +441,7 @@ def examples() -> str:
 
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Window Tint", "service_details": {...}}
-    STATE: {"current_date_time":"Wednesday, October 28, 2026 at 04:30 PM","current_user_message":{"user_media":{},"user_text":"can i do the full body\ncan you tint my side markers and lights too"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for ppf on my 2026 huracan"},"system_response_to_user_message_0":"Front end PPF on the Huracan would run $2080 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and the full body would run $7670 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. The full body also comes with free side and rear window tint. Which option are you leaning towards?"}}
+    STATE: {"current_date_time":"Wednesday, October 28, 2026 at 04:30 PM","current_user_message":{"user_media":{},"user_text":"can i do the full body\ncan you tint my side markers and lights too"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for ppf on my 2026 huracan"},"system_response_to_user_message_0":"Front end PPF on the Huracan would run $1885 + tax, which covers the full hood, fenders, bumpers, headlights and mirrors, and the full body would run $7150 + tax, which covers all the painted surfaces, and we clay bar your car and give it a decontamination wash beforehand. The full body also comes with free side and rear window tint. Which option are you leaning towards?"}}
     answer: False
     REASON: Picking the full body is a go ahead on a job the shop priced, and headlight_taillight_tint answers the side markers and lights, the shop doesn't tint them, and saying so is an answer (false cases 4 and 8).
 """

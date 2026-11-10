@@ -65,7 +65,7 @@ def fix_guide() -> str:
     - What the check saw: the reply asks for something they already gave, in this message or earlier: the vehicle, the color it is now, a pic they sent, the color they want, which service, the coverage or the windows.
     - Why it's a rule: asking for something they already sent tells them nobody read their messages, and it makes them do the same work twice. It's one of the quickest ways a customer decides they're talking to a bot.
     - How to fix it: take that ask out and go by what they gave: name their vehicle, use the color they said, take in the pic. When the job still needs something they haven't given, ask for only that piece, never what they already gave.
-    - Example: they said "2019 f150, its black", so "Sweet, front end PPF on the F150 would run $1600 + tax. What year is the F150, and what color is it?" becomes "Sweet, front end PPF on the F150 would run $1600 + tax".
+    - Example: they said "2019 f150, its black", so "Sweet, front end PPF on the F150 would run $1450 + tax. What year is the F150, and what color is it?" becomes "Sweet, front end PPF on the F150 would run $1450 + tax".
 
     ###QUESTION (already_answered)
     - What the check saw: their message already answered the shop's last question, a yes or a no to the schedule question included, and the reply asks it again.
@@ -110,7 +110,7 @@ def fix_guide() -> str:
     - What the check saw: a laugh the shop never uses: "ha", "hah", "hahaha", "heh", "hehe" or "lmao".
     - Why it's a rule: the shop only laughs with "haha", "lol" or 😂, so any other laugh sounds like someone else grabbed the phone, and a few of them read sarcastic over text.
     - How to fix it: swap it for "haha", "lol" or 😂, or drop it when the reply reads right without it.
-    - Example: "Hahaha no worries, that happens! The full body would be $6400 + tax" becomes "Haha no worries, that happens! The full body would be $6400 + tax".
+    - Example: "Hahaha no worries, that happens! The full body would be $5950 + tax" becomes "Haha no worries, that happens! The full body would be $5950 + tax".
 
     ##LEAK FIX
     - What the check saw: the writer's own notes in the reply next to the text for the customer: a plan, orders to itself, labels, a summary, the reply drafted in quotes with notes around it, or talk about the rules, the details or the customer.

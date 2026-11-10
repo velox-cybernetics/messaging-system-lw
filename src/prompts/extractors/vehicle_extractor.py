@@ -188,7 +188,7 @@ def examples() -> str:
     REASON: It's their truck, but the color is hard to make out, so COLOR stays empty.
 
     Ex 35:
-    SHOP_LAST_REPLY: Colored PPF is more, a wrap on the Corvette typically runs $2950 plus tax and colored PPF typically runs $6400 plus tax for the full body, it just depends on what color it is right now. Could you send a pic of it?
+    SHOP_LAST_REPLY: Colored PPF is more, a wrap on the Corvette typically runs $2950 plus tax and colored PPF typically runs $5950 plus tax for the full body, it just depends on what color it is right now. Could you send a pic of it?
     USER_MESSAGE:
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A photo of a lime green Chevrolet Corvette Z06 parked in a garage, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"}}
     Response: MAKE: Chevrolet | MODEL: Corvette Z06 | COLOR: Lime Green | OTHER_MODELS:

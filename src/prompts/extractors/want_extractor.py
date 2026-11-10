@@ -67,7 +67,7 @@ def examples() -> str:
     REASON: It's a tint shade, never the color of the vehicle they want.
 
     Ex 10:
-    SHOP_LAST_REPLY: Sweet, so colored PPF on the Model Y would run $6400 plus tax for the full body, do you have an exact color in mind? If you do, can you shoot a pic of it over
+    SHOP_LAST_REPLY: Sweet, so colored PPF on the Model Y would run $5950 plus tax for the full body, do you have an exact color in mind? If you do, can you shoot a pic of it over
     USER_MESSAGE: thinking this one, the blue
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A screenshot of a color PPF product page showing a gloss blue swatch.\nservice_ques: colored PPF\ntext_overlays: Ghost Films, Gloss Midnight Blue\nbright_vehicle: no"}}
     Response: WANT: Ghost Films Gloss Midnight Blue
@@ -95,7 +95,7 @@ def examples() -> str:
     REASON: A part of the car, never a color for the vehicle.
 
     Ex 14:
-    SHOP_LAST_REPLY: Sweet, so colored PPF on the Model Y would run $6400 + tax for the full body, do you have an exact color in mind? If you do, can you shoot a pic of it over
+    SHOP_LAST_REPLY: Sweet, so colored PPF on the Model Y would run $5950 + tax for the full body, do you have an exact color in mind? If you do, can you shoot a pic of it over
     USER_MESSAGE: can you do it this color
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A screenshot of an incoming FaceTime call from a man in a blue hoodie making a silly face, with decline and accept buttons at the bottom.\nservice_ques: none visible\ntext_overlays: Big Mike, FaceTime Video..., Decline, Accept\nbright_vehicle: no"}}
     Response: WANT:

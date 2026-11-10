@@ -17,7 +17,7 @@ def examples() -> str:
     Ex 2:
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 20, 2026 at 06:15 PM","current_user_message":{"user_media":{},"user_text":"colored ppf on my suv, what would that run"},"message_history":{}}
-    Response: "Colored PPF on an SUV typically runs $7400 + tax for the full body, and it comes with free side and rear window tint. The exact price just depends on the SUV and what color it is right now, so what SUV is it? Send me a pic of it if you can"
+    Response: "Colored PPF on an SUV typically runs $6950 + tax for the full body, and it comes with free side and rear window tint. The exact price just depends on the SUV and what color it is right now, so what SUV is it? Send me a pic of it if you can"
     REASON: They asked what it would run, so they get a typical price even on the first reply, never held back for the vehicle: an SUV is a type, not a make and model, so it's only the SUV's number, with "typically" (rules 3 and 16). It starts right with the answer, never "Yeah, we can do colored PPF" in front of it (rule 1). It's the first reply about colored PPF, so it says it comes with free side and rear window tint (COLORED PPF rule 3), and in the same flow it says what the exact price depends on and asks which SUV with a pic for the color it is now, never the color they want before a colored PPF price.
 
     Ex 3:
@@ -29,7 +29,7 @@ def examples() -> str:
     Ex 4:
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Do you guys do colored ppf? how much does it run?"},"message_history":{}}
-    Response: "Yeah, we do colored PPF, it typically runs $6400 + tax for the full body on a car and $7400 + tax on an SUV or truck, and it comes with free side and rear window tint. The exact price just depends on the vehicle and what color it is right now. What vehicle is it? Send me a pic of it if you can"
+    Response: "Yeah, we do colored PPF, it typically runs $5950 + tax for the full body on a car and $6950 + tax on an SUV or truck, and it comes with free side and rear window tint. The exact price just depends on the vehicle and what color it is right now. What vehicle is it? Send me a pic of it if you can"
     REASON: Doing colored PPF is a yes or no question, so a plain yes opens it (rule 1), and they asked how much, so its typical costs go out even on the first reply, the car and the SUV or truck numbers with "typically" (rules 3 and 16). It's the first reply about colored PPF, so it says it comes with free side and rear window tint (COLORED PPF rule 3). What the exact price depends on goes in the same flow, so the ask is just the vehicle with a pic, never the color they want or the finish before the price.
 
     Ex 5:
@@ -61,7 +61,7 @@ def examples() -> str:
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Thinking about either a wrap or ppf, what would each one cost?"},"message_history":{}}
-    Response: "On a car, a full wrap typically runs $2950 + tax, and PPF runs $1600 + tax for the front end or $5900 + tax for the full body, a bit more on an SUV or truck. The wrap's exact price also depends on what color it is right now. What vehicle is it? Send me a pic of it if you can"
+    Response: "On a car, a full wrap typically runs $2950 + tax, and PPF runs $1450 + tax for the front end or $5500 + tax for the full body, a bit more on an SUV or truck. The wrap's exact price also depends on what color it is right now. What vehicle is it? Send me a pic of it if you can"
     REASON: They asked what each one costs, so both get a typical price even on the first reply, only the numbers that matter and never a price list: the car's wrap price, and both PPF coverages since they named none, with an SUV or truck said as a bit more (rules 3 and 16). A comparison never needs the color they want or the coverage, but the wrap price needs the color it is now, so that's said in the same flow and the vehicle with a pic is the one question.
 
     Ex 10:
@@ -85,7 +85,7 @@ def examples() -> str:
     Ex 13:
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"You guys do sick work! How much would colored ppf be?"},"message_history":{}}
-    Response: "Thank you! Colored PPF typically runs $6400 + tax for the full body on a car and $7400 + tax on an SUV or truck, and it comes with free side and rear window tint. The exact price just depends on the vehicle and what color it is right now. What vehicle is it? Send me a pic of it if you can"
+    Response: "Thank you! Colored PPF typically runs $5950 + tax for the full body on a car and $6950 + tax on an SUV or truck, and it comes with free side and rear window tint. The exact price just depends on the vehicle and what color it is right now. What vehicle is it? Send me a pic of it if you can"
     REASON: The compliment gets a word back first. They asked how much, so its typical costs go out even on the first reply, with "typically" (rules 3 and 16), plus the free side and rear window tint since it's the first reply about colored PPF (COLORED PPF rule 3). What the exact price depends on goes in the same flow, then the vehicle with a pic is the one question.
 
     Ex 14:
@@ -103,13 +103,13 @@ def examples() -> str:
     Ex 16:
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"How much for colored ppf on my car? its dark blue"},"message_history":{}}
-    Response: "Colored PPF on a car typically runs $6400 + tax for the full body, and it comes with free side and rear window tint. The exact price just depends on the make and model and what color it is right now. What car is it? Send me a pic of it if you can"
+    Response: "Colored PPF on a car typically runs $5950 + tax for the full body, and it comes with free side and rear window tint. The exact price just depends on the make and model and what color it is right now. What car is it? Send me a pic of it if you can"
     REASON: They asked how much, so it's what colored PPF typically runs, only the car's number since they said it's a car (rules 3 and 16), with the free side and rear window tint since it's the first reply about colored PPF (COLORED PPF rule 3). Dark blue isn't a neutral color, so the color they typed never confirms the color it is now, and the pic still gets asked with the car, the same casual way, with nothing about confirming the color (rule 8).
 
     Ex 17:
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"how much is colored ppf? I cant send pics"},"message_history":{}}
-    Response: "No worries, colored PPF typically runs $6400 + tax for the full body on a car and $7400 + tax on an SUV or truck, and it comes with free side and rear window tint. The exact price just depends on the vehicle and what color it is right now. What vehicle is it?"
+    Response: "No worries, colored PPF typically runs $5950 + tax for the full body on a car and $6950 + tax on an SUV or truck, and it comes with free side and rear window tint. The exact price just depends on the vehicle and what color it is right now. What vehicle is it?"
     REASON: They asked what it costs, so its typical costs go out even on the first reply, with "typically" and what the exact price depends on (rules 3 and 16), and it's the first reply about colored PPF, so it says it comes with free side and rear window tint (COLORED PPF rule 3). They can't send a pic, so it comes out of the question and only the vehicle gets asked.
 
     Ex 18:
@@ -130,14 +130,14 @@ def examples() -> str:
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"what would it cost to black out my whole truck"},"message_history":{}}
-    Response: "A wrap on a truck typically runs $3450 + tax and colored PPF typically runs $7400 + tax for the full body, the exact price just depends on the truck and what color it is right now. You can black it out with a vinyl wrap, the more affordable way, or with colored PPF, which gives you the black and protects the paint from chips at the same time, and it comes with free side and rear window tint. What truck is it, and which route are you leaning towards?"
+    Response: "A wrap on a truck typically runs $3450 + tax and colored PPF typically runs $6950 + tax for the full body, the exact price just depends on the truck and what color it is right now. You can black it out with a vinyl wrap, the more affordable way, or with colored PPF, which gives you the black and protects the paint from chips at the same time, and it comes with free side and rear window tint. What truck is it, and which route are you leaning towards?"
     REASON: The whole truck black with no film named is a color change, so both routes come up (rule 12), and they asked what it would cost, so each route gets what it typically runs on a truck, the one type they named, with what the exact price depends on (rules 3 and 16). Colored PPF's part says it comes with free side and rear window tint since it's the first reply about colored PPF (COLORED PPF rule 3). A truck is a type, not a make and model, so it asks which truck with which route, never the color it is now or a pic before they pick one (rule 12).
 
     Ex 21:
     SERVICE_DETAILS: {"service": "Vinyl Wrap", "service_details": {...}}
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"how much to do a color change? its dark blue right now"},"message_history":{}}
-    Response: "There's two ways to go, a vinyl wrap typically runs $2950 + tax on a car and $3450 + tax on an SUV or truck, and colored PPF typically runs $6400 + tax and $7400 + tax for the full body, the exact price just depends on the vehicle and what color it is right now. The wrap is the more affordable way to change it, and colored PPF changes the color while protecting the paint from rock chips, plus it lasts about double a wrap and comes with free side and rear window tint. What vehicle is it, and which route are you leaning towards?"
+    Response: "There's two ways to go, a vinyl wrap typically runs $2950 + tax on a car and $3450 + tax on an SUV or truck, and colored PPF typically runs $5950 + tax and $6950 + tax for the full body, the exact price just depends on the vehicle and what color it is right now. The wrap is the more affordable way to change it, and colored PPF changes the color while protecting the paint from rock chips, plus it lasts about double a wrap and comes with free side and rear window tint. What vehicle is it, and which route are you leaning towards?"
     REASON: Both routes go out for a color change with no film named (rule 12), and they asked how much, so each gets its typical costs even with the vehicle missing, with "typically" and what the exact price depends on (rules 3 and 16). Colored PPF's line says it comes with free side and rear window tint since it's the first reply about colored PPF (COLORED PPF rule 3). The dark blue they typed never confirms the color it is now (rule 8), but the pic waits for the route they pick, so the vehicle and which route is the question, with no pic asked yet (rule 12).
 
     Ex 22:
@@ -189,7 +189,7 @@ def examples() -> str:
     Ex 29:
     SERVICE_DETAILS: {"service": "Colored Paint Protection Film", "service_details": {...}}
     STATE: {"current_date_time":"Wednesday, October 28, 2026 at 01:40 PM","current_user_message":{"user_media":{},"user_text":"just give me a ballpark"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much is colored ppf?"},"system_response_to_user_message_0":"It depends on the vehicle, but colored PPF is the same protective film as clear PPF in a color, so it changes the color and protects the paint from rock chips at the same time, and it comes with free side and rear window tint. What vehicle is it, and what color is it right now? Send me a pic if you can"}}
-    Response: "Colored PPF typically runs $6400 + tax for the full body on a car and $7400 + tax on an SUV or truck. What are you driving, and what color's it at right now? Shoot me a quick pic of it when you get a sec"
+    Response: "Colored PPF typically runs $5950 + tax for the full body on a car and $6950 + tax on an SUV or truck. What are you driving, and what color's it at right now? Shoot me a quick pic of it when you get a sec"
     REASON: A ballpark is asking what it costs, and the shop already asked for their vehicle, so their typical costs go out, colored PPF's full body for a car and for an SUV or truck with "typically" (#WHAT'S MISSING, rule 16). What colored PPF does and the free side and rear window tint already went out, so neither is said again (COLORED PPF rule 3, CONVERSATION rule 15), and the vehicle and the color it is now with the pic get asked again in new words (rule 5).
 
     Ex 30:

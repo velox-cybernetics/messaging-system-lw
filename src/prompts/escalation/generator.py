@@ -54,7 +54,7 @@ def examples() -> str:
     REASON: Nothing is named but how it went, so sorry to hear it is enough. Never arguing, defending the shop or asking them not to leave the review.
 
     Ex 10:
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"The ppf on my hood is lifting at the edges already. Is that covered or what"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Camry would run $1600 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors."}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"The ppf on my hood is lifting at the edges already. Is that covered or what"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Front end ppf on my 2023 camry"},"system_response_to_user_message_0":"Sweet, so front end PPF on the Camry would run $1450 plus tax, which covers the full hood, fenders, bumpers, headlights and mirrors."}}
     Response: "Sorry to hear about the edges on the hood, let me look into that for you."
     REASON: No yes or no on the warranty covering it, even though they asked, a person sorts that out.
 
