@@ -13,6 +13,9 @@ BOOKING_WORDS: list[str] = ["schedule", "scheduled", "book", "booked", "booking"
 #a reply asking them for one of these is waiting on a pic
 PIC_WORDS: list[str] = ["pic", "pics", "photo", "photos", "picture", "pictures", "video"]
 
+#one of these with a pic word asks for the pic, like send me a pic, never like in the picture
+PIC_ASK_WORDS: list[str] = ["send", "shoot", "snap"]
+
 #how a reply says the color books are getting checked for the color they sent
 COLOR_CHECK_PATTERN = re.compile(r"\b(let me|i'll|i will) check the color books\b|\bcheck the color books to see\b", re.IGNORECASE)
 
@@ -460,10 +463,22 @@ def asks_booking(sentence: str) -> bool:
 
     return False
 
-#a reply that asks them for a pic, a photo or a video anywhere in it, as a question or not
+#whether the sentence has one of the words in it, a mark stuck to the word never hides it
+def has_word(sentence: str, words: list[str]) -> bool:
+    for word in sentence.lower().split():
+        if(word.strip(",.?!") in words):
+            return True
+
+    return False
+
+#a reply that asks them for a pic, a photo or a video, never one that only mentions theirs
 def asks_for_pic(reply: str) -> bool:
-    for word in reply.lower().split():
-        if(word.strip(",.?!") in PIC_WORDS):
+    for sentence in split_sentences(reply):
+        if(not has_word(sentence, PIC_WORDS)):
+            continue
+
+        #a question about a pic asks for it, and so does telling them to send, shoot or snap one
+        if(sentence.strip().endswith("?") or has_word(sentence, PIC_ASK_WORDS)):
             return True
 
     return False

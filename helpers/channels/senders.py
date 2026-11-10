@@ -56,6 +56,9 @@ TEXTBELT_MAX_LENGTH: int = 1024
 #a link or bare domain anywhere in an alert, textbelt won't send those on a key not cleared for it
 LINK_PATTERN = re.compile(r"(?:https?://|www\.)?(?:[a-z0-9-]+\.)+[a-z]{2,}\b", re.IGNORECASE)
 
+#filled once the dev heard textbelt quit sending, emptied when it sends again, one text per outage
+TEXTBELT_DOWN: list[str] = []
+
 
 #SENDING
 
@@ -452,7 +455,10 @@ def send_textbelt_text(label: str, recipient: str, text: str) -> bool:
         response = requests.post(TEXTBELT_SEND_URL, data=payload, timeout=20)
 
         if(response.status_code >= 400 or not response.json().get("success")):
-            print(f"[{label}] textbelt send to {recipient} failed {response.status_code}: {response.text[:300]}")
+            #textbelts refill link carries the key, so it comes out before the reason hits the logs
+            reason: str = response.text.replace(TEXTBELT_API_KEY, "KEY")[:300]
+
+            print(f"[{label}] textbelt send to {recipient} failed {response.status_code}: {reason}")
 
             return False
 
@@ -496,17 +502,33 @@ def send_alert(label: str, recipient: str, text: str, attachments: list[str] | N
 
     return send_message(label, recipient, send_url, BLOOIO_API_KEY, payload)
 
+#the owners texts go over textbelt, and the first one it won't send tells the dev its down
+def send_owner_text(label: str, text: str) -> bool:
+    if(send_textbelt_texts(label, OWNER_NUMBER, text)):
+        #textbelt is back, so the next time it quits the dev hears about it again
+        TEXTBELT_DOWN.clear()
+
+        return True
+
+    #only the dev hears, the owners blooio thread caps at 4 unanswered texts and his color checks need it
+    if(len(TEXTBELT_DOWN) == 0):
+        TEXTBELT_DOWN.append(label)
+
+        send_alert("DEV NOTIFY", DEV_NUMBER, f"OWNER TEXT FAILED\nLabel: {label}\nTextbelt would not send it, so the owner gets no texts till it's fixed, the logs say why")
+
+    return False
+
 #a person has to take this one, so the owner gets who, where, what they said and why
 def notify_owner(user: str, channel: str, details: str, reason: str) -> bool:
     text: str = f"HIL ALERT\nUser: {user}\nChannel: {channel}\nDetails: {details}\nReason: {reason}"
 
-    return send_textbelt_texts("OWNER NOTIFY", OWNER_NUMBER, text)
+    return send_owner_text("OWNER NOTIFY", text)
 
 #the owner gets the reply the final check stopped and why, so he can answer them himself
 def notify_blocked(user: str, channel: str, reply: str, reason: str) -> bool:
     text: str = f"REPLY BLOCKED\nUser: {user}\nChannel: {channel}\nReply: {reply}\nReason: {reason}"
 
-    return send_textbelt_texts("BLOCKED NOTIFY", OWNER_NUMBER, text)
+    return send_owner_text("BLOCKED NOTIFY", text)
 
 #something broke and they got no reply, so the developer gets who, what they said and the error
 def notify_dev(user: str, channel: str, details: str, error: str) -> bool:
@@ -524,13 +546,13 @@ def notify_side_ask(user: str, channel: str, details: str, reply: str) -> bool:
 def notify_estimate(user: str, channel: str, services: str, vehicle: str, drop_off_date: str, name: str, number: str, email: str) -> bool:
     text: str = f"READY TO SEND ESTIMATE\nChannel: {channel}\nCustomer: {user}\nServices: {services}\nVehicle: {vehicle}\nDrop Off: {drop_off_date}\nName: {name}\nNumber: {number}\nEmail: {email}"
 
-    return send_textbelt_texts("ESTIMATE NOTIFY", OWNER_NUMBER, text)
+    return send_owner_text("ESTIMATE NOTIFY", text)
 
 #they want on the schedule, so the owner gets who, the job, the vehicle and what they said
 def notify_schedule_request(user: str, channel: str, name: str, vehicle: str, services: str, details: str) -> bool:
     text: str = f"SCHEDULE REQUEST\nChannel: {channel}\nCustomer: {user}\nName: {name}\nVehicle: {vehicle}\nServices: {services}\nDetails: {details}"
 
-    return send_textbelt_texts("SCHEDULE NOTIFY", OWNER_NUMBER, text)
+    return send_owner_text("SCHEDULE NOTIFY", text)
 
 #the owner gets their color pics and links, and answers Y or M with the code
 def notify_color_check(code: str, channel: str, user: str, customer: str, service: str, media: list[str], links: list[str]) -> bool:

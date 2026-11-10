@@ -275,6 +275,11 @@ def send_color_news(id: str) -> None:
 
         if(owner.color_check_status(id) == owner.MATERIALS_STATUS):
             sent = send_materials(id, "", channel)
+        elif(log.read_state(f"restricted_{id}")):
+            #a person took them after the owners yes, so the schedule question stays home
+            print("COLOR NEWS HELD: a person has them now, so the good news waits and nothing asks them onto the schedule")
+
+            return
         else:
             sent = send_good_news(id, channel)
 
