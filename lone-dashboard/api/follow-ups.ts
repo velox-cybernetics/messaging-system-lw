@@ -8,14 +8,6 @@ import * as shop from "./_helpers/shop.js";
 
 //GLOBALS
 
-//keep in step with the followup python file, picked at night, sent in the morning, shop time
-const PICK_HOUR: number = 22;
-
-const SEND_HOUR: number = 10;
-
-//the nights pick gets checked again this many minutes before the morning send
-const RECHECK_MINUTES: number = 10;
-
 //number counts follow ups in a row since they last wrote, sms means it went out from ghl
 type FOLLOW_UP = {at: number; number: number; sms: boolean};
 
@@ -62,7 +54,7 @@ function customer_in(customers: Map<string, CUSTOMER>, id: string, channel: stri
     return customer;
 }
 
-//their newest follow up that went out, or when blooio started holding them when thats later
+//their newest point on the track, the next one, the last one sent, or when blooio started holding them
 function newest(customer: CUSTOMER): number {
     const last: FOLLOW_UP | undefined = customer.sent[customer.sent.length - 1];
 
@@ -76,30 +68,11 @@ function newest(customer: CUSTOMER): number {
         at = last.at;
     }
 
+    if(customer.due !== null && customer.due.at > at) {
+        at = customer.due.at;
+    }
+
     return at;
-}
-
-//the ones getting a follow up first, soonest first, then everyone else by their newest send or hold
-function by_next(a: CUSTOMER, b: CUSTOMER): number {
-    if(a.due !== null && b.due !== null) {
-        let order: number = a.due.at - b.due.at;
-
-        if(!order) {
-            order = newest(b) - newest(a);
-        }
-
-        return order;
-    }
-
-    if(a.due !== null) {
-        return -1;
-    }
-
-    if(b.due !== null) {
-        return 1;
-    }
-
-    return newest(b) - newest(a);
 }
 
 
@@ -222,11 +195,11 @@ async function read_follow_ups(request: Request): Promise<Response> {
     for(const customer of customers.values()) {
         let spot: number = list.length;
 
-        //walks back past everyone who goes after them, ties keep the order they came in
+        //walks back past everyone older than them, ties keep the order they came in
         while(spot > 0) {
             const before: CUSTOMER | undefined = list[spot - 1];
 
-            if(before === undefined || !(by_next(before, customer) > 0)) {
+            if(before === undefined || newest(before) >= newest(customer)) {
                 break;
             }
 
@@ -236,7 +209,7 @@ async function read_follow_ups(request: Request): Promise<Response> {
         list.splice(spot, 0, customer);
     }
 
-    return http.json({"pick_hour": PICK_HOUR, "send_hour": SEND_HOUR, "recheck_minutes": RECHECK_MINUTES, "customers": list});
+    return http.json({"customers": list});
 }
 
 
