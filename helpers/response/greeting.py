@@ -16,7 +16,7 @@ MARKS: list[str] = [",", ".", "!"]
 INTRODUCTION_WORDS: list[str] = ["hazel", "lone wraps", "form", "forms", "quote request", "reaching out", "reached out"]
 
 #the set intro already greets them, so the answer after it skips straight to the point
-OPENERS: list[str] = ["for sure", "sounds good", "sweet", "perfect", "awesome", "ooh love that", "ooh", "yess", "yeah", "yep"]
+OPENERS: list[str] = ["for sure", "sounds good", "sweet", "perfect", "awesome", "yeah", "yep"]
 
 #what an opener can drag along with it, so the answer starts right at the actual thing
 OPENER_FOLLOWERS: list[str] = ["we can do that", "so"]
@@ -37,7 +37,7 @@ def find_greeting(reply: str) -> str:
 
         end: int = len(greeting)
 
-        #hazel stretches her heyy, and its still the hey greeting
+        #a stretched heyy is still the hey greeting
         while(lower_reply[end:end + 1] == greeting[-1]):
             end += 1
 
@@ -238,11 +238,11 @@ def form_intro(current_message_batch: list, channel: str, vehicle_models: list[s
 
     first_name: str = form_first_name(form)
 
-    #hazels heyy, with their name when the form has a real one
-    greeting: str = "Heyy"
+    #a plain hey, with their name when the form has a real one
+    greeting: str = "Hey"
 
     if(first_name != ""):
-        greeting = f"Heyy {first_name},"
+        greeting = f"Hey {first_name},"
 
     request: str = "saw your quote request"
 
@@ -280,7 +280,7 @@ def replied_before(message_history: dict) -> bool:
 def fix_greeting(reply: str, channel: str, message_history: dict, current_message_batch: list, vehicle_models: list[str], follow_up: bool = False) -> str:
     first_reply: bool = not replied_before(message_history)
 
-    #heyy can open a first reply to someone who texted first, or a follow up after things went quiet
+    #a hey can open a first reply to someone who texted first, or a follow up after things went quiet
     if(follow_up or (first_reply and channel not in state_form.FORM_CHANNELS)):
         return reply
 

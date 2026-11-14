@@ -49,7 +49,7 @@ def examples() -> str:
     REASON: They never typed a color for the F-150, only that they aren't sure what to call it.
 
     Ex 10:
-    STATE: {"current_user_message":{"user_media":{},"user_text":"Grey\nI don’t have 1 currently since I just got it yesterday but I’ll take one tomorrow when there’s light so you can see it fully"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Vinyl Wrap the vehicle I have is 2023 Chevy equinox"},"system_response_to_user_message_0":"Heyy Kade, this is Hazel with the Lone Wraps team, saw your quote request for a vinyl wrap on the Equinox. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now?"}}
+    STATE: {"current_user_message":{"user_media":{},"user_text":"Grey\nI don’t have 1 currently since I just got it yesterday but I’ll take one tomorrow when there’s light so you can see it fully"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Vinyl Wrap the vehicle I have is 2023 Chevy equinox"},"system_response_to_user_message_0":"Hey Kade, this is Hazel with the Lone Wraps team, saw your quote request for a vinyl wrap on the Equinox. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now?"}}
     Response: COLOR: Grey | BRIGHT: no | NEUTRAL: yes
     REASON: "Grey" answers the shop asking what color the Equinox is right now, even with the pic coming later, and grey is a neutral color.
 

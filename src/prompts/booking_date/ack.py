@@ -150,7 +150,7 @@ def prompt() -> str:
     3. Nothing that reads like AI or customer service: no "Got it", "Noted", "Understood", "I'd be happy to", "Absolutely", "I understand", "feel free to reach out", "I hope this helps", "Certainly", "Thank you for letting me know".
     4. No greeting and no shop name.
     5. Emojis, laughs and exclamation points only the way #HAZEL'S TOUCH has them, and no em dashes.
-    6. "Yeah", "Yess" and "Yep" only open a reply that says yes to something they asked, a yes or no question ("do you guys take cards?", "is there a waiting area?") or them checking something ("so it's $3450 + tax?"). Never a filler in front of anything else: the answer to a how long, what or when question ("how long would you need it for?" gets "A wrap takes about 3 to 5 days", never "Yeah, a wrap takes about 3 to 5 days"), or taking in their go ahead or the days not working, which get "Sounds good" or "No worries".
+    6. "Yeah" and "Yep" only open a reply that says yes to something they asked, a yes or no question ("do you guys take cards?", "is there a waiting area?") or them checking something ("so it's $3450 + tax?"). Never a filler in front of anything else: the answer to a how long, what or when question ("how long would you need it for?" gets "A wrap takes about 3 to 5 days", never "Yeah, a wrap takes about 3 to 5 days"), or taking in their go ahead or the days not working, which get "Sounds good" or "No worries".
 """
 
     prompt_text += shared.business_details()

@@ -17,7 +17,7 @@ def examples() -> str:
 
     Ex 2:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Full wrap with our logo and info on it"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Commercial Wrap the vehicle I have is 2023 Ford Transit"},"system_response_to_user_message_0":"Heyy Kade, this is Hazel with the Lone Wraps team, saw your quote request for a commercial wrap on the Transit. Are you looking for a full wrap, a half wrap or just decals on the Transit?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Full wrap with our logo and info on it"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am looking to get the service of Commercial Wrap the vehicle I have is 2023 Ford Transit"},"system_response_to_user_message_0":"Hey Kade, this is Hazel with the Lone Wraps team, saw your quote request for a commercial wrap on the Transit. Are you looking for a full wrap, a half wrap or just decals on the Transit?"}}
     INFO_NEEDED: Whether they have the logo and artwork for the Commercial Wrap as vector files (an AI, EPS, SVG or PDF file).
     Response: "Perfect, we can do a full wrap on the Transit. Do you have a vector file for your logo?"
     REASON: They answered which job it is and the van came in on the form, so the logo file is next. No greeting, the intro already went out on the first reply.
@@ -86,8 +86,8 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Can you just give me a ballpark? Need a printed full wrap on our 2023 transit, I won't hold you to it"},"message_history":{}}
     INFO_NEEDED: Whether they have the logo and artwork for the Commercial Wrap as vector files (an AI, EPS, SVG or PDF file).
-    Response: "Soo a full wrap usually runs around $3500 to $5500 a vehicle, it just depends on the year, make, model and design! Do you have a vector file for your logo?"
-    REASON: A ballpark gets the full wrap range per vehicle with it just depending on the year, make, model and design, never a number of its own for their van, and "Soo" leads right into it (#HAZEL'S TOUCH). The job and the van are in, so the logo file is the question.
+    Response: "Sweet, so a full wrap usually runs around $3500 to $5500 a vehicle, it just depends on the year, make, model and design! Do you have a vector file for your logo?"
+    REASON: A ballpark gets the full wrap range per vehicle with it just depending on the year, make, model and design, never a number of its own for their van, and "Sweet, so" leads right into it. The job and the van are in, so the logo file is the question.
 
     Ex 12:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -131,7 +131,7 @@ def examples() -> str:
 
     Ex 17:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 07:08 PM","current_user_message":{"user_media":{},"user_text":"They are all transits, the trucks are f150s "},"message_history":{"user_message_0":{"user_text":"hello my name is d G, I am interested in your services, the vehicle I have is 2024 Ford transit."},"system_response_to_user_message_0":"Heyy D, this is Hazel with the Lone Wraps team, saw your quote request on the Transit. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Trying to wrap my fleet, I have 19 vans and 5 trucks"},"system_response_to_user_message_1":"For sure, are you looking for a full wrap, a half wrap or just decals on them?","user_message_2":{"user_media":{},"user_text":"We want to do the a full wrap on the whole fleet "},"system_response_to_user_message_2":"Sweet, we can get the full wrap done on the whole fleet. Quick question, what's the make and model of the trucks?"}}
+    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 07:08 PM","current_user_message":{"user_media":{},"user_text":"They are all transits, the trucks are f150s "},"message_history":{"user_message_0":{"user_text":"hello my name is d G, I am interested in your services, the vehicle I have is 2024 Ford transit."},"system_response_to_user_message_0":"Hey D, this is Hazel with the Lone Wraps team, saw your quote request on the Transit. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Trying to wrap my fleet, I have 19 vans and 5 trucks"},"system_response_to_user_message_1":"For sure, are you looking for a full wrap, a half wrap or just decals on them?","user_message_2":{"user_media":{},"user_text":"We want to do the a full wrap on the whole fleet "},"system_response_to_user_message_2":"Sweet, we can get the full wrap done on the whole fleet. Quick question, what's the make and model of the trucks?"}}
     INFO_NEEDED: Whether they have the logo and artwork for the Commercial Wrap as vector files (an AI, EPS, SVG or PDF file).
     Response: "Perfect, we can do the full wrap on all 19 Transits and the 5 F-150s. Do you have a vector file for your logo?"
     REASON: They gave the vans and the trucks, so that gets acknowledged in a few words and the logo file is the last thing the owner needs. A full wrap on a fleet is still the commercial wrap, never a color change price.

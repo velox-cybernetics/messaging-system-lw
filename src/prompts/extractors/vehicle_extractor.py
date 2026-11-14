@@ -212,7 +212,7 @@ def examples() -> str:
     REASON: The tint is only for the Pilot, so the Camry they drive never goes in OTHER_MODELS.
 
     Ex 39:
-    SHOP_LAST_REPLY: Heyy Kayla, this is Hazel with the Lone Wraps team, saw your quote request on the Gladiator. What are you looking to get done?
+    SHOP_LAST_REPLY: Hey Kayla, this is Hazel with the Lone Wraps team, saw your quote request on the Gladiator. What are you looking to get done?
     USER_MESSAGE: Its currently white but id like to change it to pink
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A photo of a Jeep Gladiator pickup truck in a glossy light pink wrap or paint with black trim, grille, fender flares, door handles and black wheels, seen from a front three quarter view on a residential street. RUBICON is written in black on the hood and dark window tint is on the windows.\nservice_ques: a color change wrap\ntext_overlays: RUBICON\nbright_vehicle: yes"}}
     Response: MAKE: | MODEL: | COLOR: | OTHER_MODELS:

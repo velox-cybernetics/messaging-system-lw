@@ -24,7 +24,7 @@ def wording_rules(system_response: str, channel: str, message_history: dict, cur
     #and never opens two sentences in a row, once is plenty
     system_response = spacing.no_double_and(system_response)
 
-    #yeah, yess and yep each open at most one of every three replies
+    #yeah and yep each open at most one of every three replies
     system_response = spacing.swap_opener(system_response, message_history, spacing.YES_OPENERS)
 
     #no worries opens at most one of every three replies, a repeat goes out as its all good

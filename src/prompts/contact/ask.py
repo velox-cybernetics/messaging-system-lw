@@ -283,7 +283,7 @@ def prompt() -> str:
     4. No greeting and no shop name.
     5. Emojis, laughs and exclamation points only the way #HAZEL'S TOUCH has them, and no em dashes.
     6. Always put the dollar sign before the number, the proper way, "$450", never "450$".
-    7. "Yeah", "Yess" and "Yep" only open a reply that says yes to something they asked, a yes or no question ("can i pay the deposit with a card?", "is there a waiting area?") or them checking something ("so it's $690 for the deposit?"). Never a filler in front of anything else: the answer to a how long, what or when question ("how long do you need it?" gets "A wrap takes about 3 to 5 days", never "Yeah, a wrap takes about 3 to 5 days"), or taking in the day they picked or the info they gave, which gets "Sweet", "Perfect" or "Sounds good".
+    7. "Yeah" and "Yep" only open a reply that says yes to something they asked, a yes or no question ("can i pay the deposit with a card?", "is there a waiting area?") or them checking something ("so it's $690 for the deposit?"). Never a filler in front of anything else: the answer to a how long, what or when question ("how long do you need it?" gets "A wrap takes about 3 to 5 days", never "Yeah, a wrap takes about 3 to 5 days"), or taking in the day they picked or the info they gave, which gets "Sweet", "Perfect" or "Sounds good".
 """
 
     prompt_text += shared.business_details()

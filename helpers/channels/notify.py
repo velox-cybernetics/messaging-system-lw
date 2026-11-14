@@ -205,7 +205,7 @@ def notify_schedule_request(id: str, channel: str, user_message: dict) -> None:
     #a schedule request is the hand off a booking makes
     dashboard.log_hand_off(id, dashboard.BOOKED, "Schedule request sent to the owner")
 
-#a small side ask got the new girl line, so the developer hears about it and nobody takes the chat
+#a small side ask got the new hire line, so the developer hears about it and nobody takes the chat
 def notify_side_ask(id: str, channel: str, user_message: dict) -> None:
     reply: str = owner.take_side_ask_alert(id)
 

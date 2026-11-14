@@ -687,7 +687,7 @@ def written_followup(id: str, channel: str, record: dict[str, str]) -> str:
     #never asks there color before what the exact price needs, same as every other reply
     followup = routing.cut_early_color_ask(state, id, followup)
 
-    #a follow up picks the conversation back up, so hazels heyy stays on it
+    #a follow up picks the conversation back up, so its hey stays on it
     followup = wording.wording_rules(followup, channel, state["message_history"], [], [], follow_up=True)
 
     return replies.cleared_reply(id, channel, followup)

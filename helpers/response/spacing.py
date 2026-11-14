@@ -107,7 +107,7 @@ REPLIES_BETWEEN_OPENER: int = 2
 TEXT_SENTENCES: int = 3
 
 #the ways a reply opens with a yes, yeah first since its the usual one
-YES_OPENERS: list[str] = ["Yeah", "Yess", "Yep"]
+YES_OPENERS: list[str] = ["Yeah", "Yep"]
 
 #the ways a reply opens acknowledging them, sweet first since its the usual one
 ACK_OPENERS: list[str] = ["Sweet", "Perfect"]

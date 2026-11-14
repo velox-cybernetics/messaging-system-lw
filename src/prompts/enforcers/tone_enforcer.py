@@ -13,7 +13,7 @@ def criteria() -> dict[str, str]:
     rules: dict[str, str] = {}
 
     #the shops own lines live here so they never get flagged by accident
-    rules[FOLLOWS] = """`draft_reply` sounds like the shop texting: casual, warm, short and plain, like the shop's replies in `message_context`. The owner's ways of taking something in ("For sure", "Sweet", "Perfect", "No worries", "It's all good", "Sounds good", "My bad on that one", "Congrats on the new truck"), Hazel's warm openers ("Heyy", "Ooh love that", "Totally get it", "Soo" leading into a price, "Yess"), her new girl line ("tbh I'm not sure 😅 I'm still learning the ropes here since I'm new, but I'll ask the owner"), "Sorry to hear that", a laugh with "haha", "lol" or 😂, prices said like "$3450 + tax" and the shop's selling lines always fit."""
+    rules[FOLLOWS] = """`draft_reply` sounds like the shop texting: casual, warm, short and plain, like the shop's replies in `message_context`. The owner's ways of taking something in ("For sure", "Sweet", "Perfect", "No worries", "It's all good", "Sounds good", "My bad on that one", "Congrats on the new truck"), a plain "Hey" where the shop greets, "Totally get it", the new hire line ("tbh I'm not sure 😅 I'm still learning the ropes here since I'm new, but I'll ask the owner"), "Sorry to hear that", a laugh with "haha", "lol" or 😂, prices said like "$3450 + tax" and the shop's selling lines always fit."""
 
     rules["ai_wording"] = """It reads like AI or customer service, anywhere in it, opening the reply included: "Got it", "Noted", "Understood", "I'd be happy to", "Absolutely", "Great question", "Certainly", "I understand", "I apologize", "We apologize for the inconvenience", "Thank you for reaching out", "feel free to reach out", "don't hesitate to", "I hope this helps" or "hours of operation"."""
 
@@ -22,6 +22,9 @@ def criteria() -> dict[str, str]:
     rules["restates"] = """It says their message back to them before answering ("So you're looking to wrap your Tesla in satin black", "You're asking if we do the windshield too", "Just to confirm, you want..."), or it's written as the customer instead of as the shop ("I will", "I like that one")."""
 
     rules["off_laugh"] = """It laughs in a way the shop never does: "ha", "hah", "hahaha", "heh", "hehe" or "lmao", in any spelling. The shop only laughs with "haha", "lol" or 😂."""
+
+    #hazel is just a name now, so the girly stuff from older replies never sneaks back in
+    rules["cutesy"] = """It uses cutesy words the shop never texts with, anywhere in it: "omg" in any spelling ("omgg", "omggg"), "okok", "Ooh" ("Ooh love that"), a stretched word ("Heyy", "Soo", "Yess", "Okayy"), a heart emoji or "cute", even when the shop's replies in `message_context` used one. The shop greets with a plain "Hey" and says yes with "Yeah" or "Yep"."""
 
     return rules
 
@@ -37,12 +40,14 @@ def fixes() -> dict[str, str]:
 
     fix_lines["off_laugh"] = "It laughs in a way the shop never does. Use haha, lol or 😂, or no laugh at all."
 
+    fix_lines["cutesy"] = """It uses cutesy wording the shop never texts with, like omg, ooh, okok, a heart or a stretched word like Heyy. Say the same thing plain, the way the owner texts: "Hey" for a greeting, "Sweet", "For sure" or "Sounds good" to take something in, "Yeah" or "Yep" for a yes and "clean" for how a color would look, or just drop the word when the reply reads right without it."""
+
     return fix_lines
 
 #samples for every pick, plenty of follows ones since the shops own voice is pretty loose
 def examples() -> str:
     return r"""Examples:
-state: {"message_context":{},"draft_reply":"Ooh love that! What's the year/make/model?"}
+state: {"message_context":{},"draft_reply":"Hey! Thanks for reaching out 😊 what are you looking to get done?"}
 answer: follows
 state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my tacoma"},"system_response_to_user_message_0":"For sure, a wrap on the Tacoma typically runs $3450 + tax, the exact price just depends on what color it is right now. What color is it right now?"},"draft_reply":"Sweet, so satin black on the Tacoma would run our standard price of $3450 + tax, since it's a standard color right now. Did you want to hop on the schedule?"}
 answer: follows
@@ -77,4 +82,10 @@ answer: restates
 state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf"},"system_response_to_user_message_0":"For sure, we do colored PPF! What car is it?"},"draft_reply":"Hahaha no worries, that happens! The full body would be $5950 + tax"}
 answer: off_laugh
 state: {"message_context":{},"draft_reply":"lmao for sure, we can do a chrome delete on it. Do you have a photo of the car?"}
-answer: off_laugh"""
+answer: off_laugh
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"Leaning towards something a little subtle. Like a dark green or maybe a bronze"},"system_response_to_user_message_0":"Omgg that dark green would look so clean on the Model X. Are you leaning more towards the green or the bronze?"},"draft_reply":"Omgg that sounds amazing! What you're describing sounds like it could be a color shift film, they go dark and then shift to a bronze tone when the light hits them"}
+answer: cutesy
+state: {"message_context":{},"draft_reply":"Ooh love that! What's the year/make/model?"}
+answer: cutesy
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my civic"},"system_response_to_user_message_0":"For sure, sides and rear on the Civic would run $450 + tax for our ceramic tint. Do you know how dark you're wanting to go?"},"draft_reply":"Yess, 20% all around would look so cute on it 💙"}
+answer: cutesy"""

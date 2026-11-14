@@ -193,7 +193,7 @@ SAME_WORDS_ASKS: list[str] = ["Do you know how dark you're wanting to go?"]
 #SIDE ASKS
 
 #the sweat smile only goes out on her line, and her line always says she'll ask the owner
-NEW_GIRL_EMOJI: str = "😅"
+NEW_HIRE_EMOJI: str = "😅"
 
 OWNER_ASK_WORDS: str = "ask the owner"
 
@@ -863,9 +863,9 @@ def enforced_reply(state: dict, id: str, text: str, response: str, regen_label: 
 
 #HAND OFFS
 
-#the reply has the new girls line, where she isn't sure and says she'll ask the owner
+#the reply has the new hire line, where she isn't sure and says she'll ask the owner
 def owner_ask(reply: str) -> bool:
-    return NEW_GIRL_EMOJI in reply or OWNER_ASK_WORDS in reply.lower()
+    return NEW_HIRE_EMOJI in reply or OWNER_ASK_WORDS in reply.lower()
 
 #true when everything she'd ask the owner about is small, like the wifi or parking
 def small_ask(state: dict, reply: str) -> bool:
@@ -882,7 +882,7 @@ def small_ask(state: dict, reply: str) -> bool:
 
     return probability_yes > SMALL_ASK_THRESHOLD
 
-#true when they ask again about the small thing the new girl said she'd ask the owner
+#true when they ask again about the small thing the new hire line said she'd ask the owner
 def side_ask_persists(state: dict) -> bool:
     persist_question: dict = {"type": "noul", "instructions": f"Is the customer asking again about, following up on or pushing for an answer on something small a system_response in `message_history` said she wasn't sure on and would ask the owner about, in `current_user_message`?\n{side_ask_examples.persist_examples()}"}
 

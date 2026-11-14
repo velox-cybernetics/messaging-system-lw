@@ -634,7 +634,7 @@ def notify_dev(user: str, channel: str, details: str, error: str) -> bool:
 
     return send_alert("DEV NOTIFY", DEV_NUMBER, text)
 
-#a small ask like wifi or parking got the new girl line, the developer hears and the system keeps it
+#a small ask like wifi or parking got the new hire line, the developer hears and the system keeps it
 def notify_side_ask(user: str, channel: str, details: str, reply: str) -> bool:
     text: str = f"SIDE QUESTION\nUser: {user}\nChannel: {channel}\nDetails: {details}\nReply: {reply}"
 

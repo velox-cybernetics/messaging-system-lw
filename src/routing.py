@@ -10,12 +10,6 @@ from src import branches
 from src import temp_booking
 
 
-#GLOBALS
-
-#only follows an answer, a reply that opens with it gets a plain good news instead
-ALSO_GOOD_NEWS: str = "Also have some good news, "
-
-
 #BOOKING CHECKS
 
 #their make or model is on file
@@ -259,18 +253,16 @@ def good_news_fits(system_response: str, id: str) -> bool:
 
     return not log.read_state(f"restricted_{id}")
 
-#a reply the generator wrote without the good news in it never goes out in its place
-def written_good_news(reply: str) -> bool:
-    return "good news" in reply.lower()
+#the generator wrote something the reply didn't already say, so the news made it in
+def news_written(reply: str, system_response: str) -> bool:
+    for sentence in spacing.split_sentences(reply):
+        #marks on the ends come off, cutting a question off the reply can leave a new period
+        text: str = sentence.strip(" \n.,!?")
 
-#good news that opens the reply drops the also, theres no answer for it to follow
-def good_news_opener(reply: str) -> str:
-    if(not reply.startswith(ALSO_GOOD_NEWS)):
-        return reply
+        if(text != "" and text not in system_response):
+            return True
 
-    rest: str = reply[len(ALSO_GOOD_NEWS):]
-
-    return f"Good news, {rest}"
+    return False
 
 #the reply keeps its answer and ends on the good news, empty when the good news didn't get written
 def with_good_news(state: dict, id: str, system_response: str) -> str:
@@ -278,7 +270,7 @@ def with_good_news(state: dict, id: str, system_response: str) -> str:
     if(log.read_info(f"date_pending_{id}")):
         good_news: str = branches.color_approved_reply(state, "", True)
 
-        if(not written_good_news(good_news)):
+        if(not news_written(good_news, "")):
             return ""
 
         #the good news already acknowledges them, so the opener on the days comes off
@@ -288,10 +280,10 @@ def with_good_news(state: dict, id: str, system_response: str) -> str:
 
     reply: str = branches.color_approved_reply(state, system_response, False)
 
-    if(not written_good_news(reply)):
+    if(not news_written(reply, system_response)):
         return ""
 
-    return good_news_opener(reply)
+    return reply
 
 
 #ROUTING
