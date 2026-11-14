@@ -235,3 +235,51 @@ a.who-name {
         width: 6.5rem;
     }
 }
+
+/*phones get a week of days, the channel folds under the name so nothing scrolls sideways*/
+@media (max-width: 640px) {
+    .follow-ups {
+        padding-top: 20px;
+        padding-bottom: 24px;
+    }
+
+    .follow-ups h1 {
+        font-size: 1.75rem;
+    }
+
+    .track {
+        margin-top: 20px;
+    }
+
+    .who-column {
+        width: 40%;
+    }
+
+    .who {
+        padding-right: 8px;
+    }
+
+    .who-channel {
+        display: block;
+        overflow: hidden;
+        color: var(--haze);
+        font-size: var(--size-xs);
+        font-weight: 400;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .pager .button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+
+
+/**********TIMES**********/
+/*a tapped day's times come up in the toast, one line each*/
+.toast {
+    white-space: pre-line;
+}

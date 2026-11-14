@@ -36,12 +36,23 @@ const SVG: "http://www.w3.org/2000/svg" = "http://www.w3.org/2000/svg";
 
 const CHART_HEIGHT: number = 240;
 
+//phones get a shorter chart so the totals still sit close under it
+const PHONE_CHART_HEIGHT: number = 180;
+
 const AXIS_WIDTH: number = 36;
 
 const LABEL_HEIGHT: number = 26;
 
-//room for the widest label like Oct 10 or 12 AM plus a gap, at 12px
-const MIN_LABEL_GAP: number = 48;
+//about how wide one character of a 12px label runs, so labels can be spaced without measuring
+const LABEL_CHAR_WIDTH: number = 7;
+
+//the least room left between two labels
+const LABEL_GAP: number = 8;
+
+//keep in step with the phone layout in the base css
+const PHONE: string = "(max-width: 640px)";
+
+const PHONE_QUERY: MediaQueryList = window.matchMedia(PHONE);
 
 //numbers don't need to be to the second, a burst of messages reloads at most this often
 const RELOAD_GAP_MS: number = 30000;
@@ -170,17 +181,35 @@ function month_label(bar: BAR): string {
 }
 
 //empty when a label would crowd the axis, day bars show shop hours on the viewers clock
-function bar_label(bar: BAR, index: number, today: string): string {
+function bar_label(bar: BAR, index: number, today: string, slot: number): string {
     switch(RANGE_PICKED) {
-        case "day":
-            if(index % 3 === 0) {
+        case "day": {
+            let every: number = 3;
+
+            //3 hours of phone slots can't fit a label like 12 AM, so every 6 keeps them evenly spaced
+            if(slot * 3 < 5 * LABEL_CHAR_WIDTH + LABEL_GAP) {
+                every = 6;
+            }
+
+            if(index % every === 0) {
                 return shared.shop_hour_text(today, Number(bar.key));
             }
 
             return "";
+        }
 
-        case "week":
-            return `${shared.day_text(bar.key, {"weekday": "short"})} ${Number(bar.key.slice(8))}`;
+        case "week": {
+            const weekday: string = shared.day_text(bar.key, {"weekday": "short"});
+
+            const full: string = `${weekday} ${Number(bar.key.slice(8))}`;
+
+            //phone slots are too narrow for Wed 10, so the whole week shows just the weekday, the tip has the date
+            if(6 * LABEL_CHAR_WIDTH + LABEL_GAP > slot) {
+                return weekday;
+            }
+
+            return full;
+        }
 
         case "month":
             return month_label(bar);
@@ -403,7 +432,7 @@ function leave_chart(event: PointerEvent): void {
 
 //the whole svg chart, drawn again from scratch on every render or resize
 function render_chart(): void {
-    //phones hide the chart so it has no width, the resize observer draws it once it shows
+    //no width while the page is still laying out, the resize observer draws it once it has one
     const width: number = CHART.clientWidth;
 
     if(LATEST === null || width === 0) {
@@ -427,13 +456,28 @@ function render_chart(): void {
 
     const top: number = nice_top(tallest);
 
-    const plot_height: number = CHART_HEIGHT - 8;
+    let chart_height: number = CHART_HEIGHT;
+
+    if(PHONE_QUERY.matches) {
+        chart_height = PHONE_CHART_HEIGHT;
+    }
+
+    const plot_height: number = chart_height - 8;
 
     const slot: number = (width - AXIS_WIDTH) / bars.length;
 
-    const bar_width: number = Math.max(2, Math.min(28, (slot * 0.72) / series.length - 2));
+    let pair_gap: number = 3;
 
-    const group_width: number = bar_width * series.length + (series.length - 1) * 3;
+    let bar_width: number = Math.max(2, Math.min(28, (slot * 0.72) / series.length - 2));
+
+    //phone slots run 7 to 12px, so the pair squeezes together to keep each bar thick enough to see
+    if(slot < 16) {
+        pair_gap = 1;
+
+        bar_width = Math.max(2, (slot * 0.8 - pair_gap) / series.length);
+    }
+
+    const group_width: number = bar_width * series.length + (series.length - 1) * pair_gap;
 
     let grow_class: string = "";
 
@@ -441,12 +485,12 @@ function render_chart(): void {
         grow_class = "grow";
     }
 
-    const drawing: SVGSVGElement = make_svg("svg", {"width": width, "height": CHART_HEIGHT + LABEL_HEIGHT, "viewBox": `0 0 ${width} ${CHART_HEIGHT + LABEL_HEIGHT}`, "role": "img", "class": grow_class});
+    const drawing: SVGSVGElement = make_svg("svg", {"width": width, "height": chart_height + LABEL_HEIGHT, "viewBox": `0 0 ${width} ${chart_height + LABEL_HEIGHT}`, "role": "img", "class": grow_class});
 
     GROW_NEXT = false;
 
     for(const quarter of [0, 1, 2, 3, 4]) {
-        const y: number = CHART_HEIGHT - (quarter / 4) * plot_height;
+        const y: number = chart_height - (quarter / 4) * plot_height;
 
         let line_class: string = "grid";
 
@@ -466,6 +510,13 @@ function render_chart(): void {
     //narrow screens skip some labels so the shown ones never run together
     let last_label_x: number = -Infinity;
 
+    let last_label_width: number = 0;
+
+    //every slot and its bar top, for a finger sliding across the chart
+    const groups: SVGGElement[] = [];
+
+    const tops: number[] = [];
+
     let index: number = 0;
 
     for(const bar of bars) {
@@ -473,12 +524,12 @@ function render_chart(): void {
 
         const group: SVGGElement = make_svg("g", {"class": "slot"});
 
-        group.append(make_svg("rect", {"x": left, "y": 0, "width": slot, "height": CHART_HEIGHT, "class": "hit"}));
+        group.append(make_svg("rect", {"x": left, "y": 0, "width": slot, "height": chart_height, "class": "hit"}));
 
-        let bar_top: number = CHART_HEIGHT;
+        let bar_top: number = chart_height;
 
         if(bar.future) {
-            group.append(make_svg("rect", {"x": left + (slot - group_width) / 2, "y": CHART_HEIGHT - 2, "width": group_width, "height": 2, "class": "later"}));
+            group.append(make_svg("rect", {"x": left + (slot - group_width) / 2, "y": chart_height - 2, "width": group_width, "height": 2, "class": "later"}));
         }
         else {
             let position: number = 0;
@@ -486,11 +537,11 @@ function render_chart(): void {
             for(const each of series) {
                 const height: number = (bar[each.field] / top) * plot_height;
 
-                const y: number = CHART_HEIGHT - height;
+                const y: number = chart_height - height;
 
                 bar_top = Math.min(bar_top, y);
 
-                group.append(make_svg("rect", {"x": left + (slot - group_width) / 2 + position * (bar_width + 3), "y": y, "width": bar_width, "height": height, "rx": Math.min(2, bar_width / 4), "class": `column ${each.class_name}`}));
+                group.append(make_svg("rect", {"x": left + (slot - group_width) / 2 + position * (bar_width + pair_gap), "y": y, "width": bar_width, "height": height, "rx": Math.min(2, bar_width / 4), "class": `column ${each.class_name}`}));
 
                 position = position + 1;
             }
@@ -509,22 +560,60 @@ function render_chart(): void {
 
         drawing.append(group);
 
-        const label: string = bar_label(bar, index, today);
+        groups.push(group);
+
+        tops.push(bar_top);
+
+        const label: string = bar_label(bar, index, today, slot);
 
         const label_x: number = left + slot / 2;
 
-        if(label && label_x - last_label_x >= MIN_LABEL_GAP) {
-            const text: SVGTextElement = make_svg("text", {"x": label_x, "y": CHART_HEIGHT + 18, "class": "tick", "text-anchor": "middle"});
+        const label_width: number = label.length * LABEL_CHAR_WIDTH;
+
+        if(label && label_x - last_label_x >= (last_label_width + label_width) / 2 + LABEL_GAP) {
+            const text: SVGTextElement = make_svg("text", {"x": label_x, "y": chart_height + 18, "class": "tick", "text-anchor": "middle"});
+
+            //a little spill past the chart is fine, more runs into the panels edge on a phone so it ends at the chart edge
+            if(label_x + label_width / 2 > width + LABEL_GAP) {
+                text.setAttribute("x", String(width));
+
+                text.setAttribute("text-anchor", "end");
+            }
 
             text.textContent = label;
 
             drawing.append(text);
 
             last_label_x = label_x;
+
+            last_label_width = label_width;
         }
 
         index = index + 1;
     }
+
+    //a finger sliding along the chart walks the numbers bar to bar, thin phone bars are hard to hit on their own
+    function slide(event: PointerEvent): void {
+        if(event.pointerType === "mouse") {
+            return;
+        }
+
+        const under: number = Math.floor((event.clientX - drawing.getBoundingClientRect().left - AXIS_WIDTH) / slot);
+
+        const bar: BAR | undefined = bars[under];
+
+        const group: SVGGElement | undefined = groups[under];
+
+        const bar_top: number | undefined = tops[under];
+
+        if(bar === undefined || group === undefined || bar_top === undefined || bar.future || group.classList.contains("is-active")) {
+            return;
+        }
+
+        point_at_bar(group, bar, series, today, AXIS_WIDTH + under * slot, slot, bar_top);
+    }
+
+    drawing.addEventListener("pointermove", slide);
 
     drawing.addEventListener("pointerleave", leave_chart);
 

@@ -16,8 +16,8 @@
             <nav class="nav" aria-label="Pages">
                 <a href="/"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-6M12 20V5M19 20v-9M3 20h18" /></svg>Overview</a>
                 <a href="/messages" aria-current="page"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 5h15v11h-9l-6 4z" /></svg>Messages</a>
-                <a href="/follow-ups" class="desktop-only"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>Follow ups</a>
-                <a href="/system" class="desktop-only"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></svg>System info</a>
+                <a href="/follow-ups"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>Follow ups</a>
+                <a href="/system"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></svg>System info</a>
             </nav>
             <button type="button" class="sign-out">Sign out</button>
         </header>
@@ -30,15 +30,28 @@
 
             <div class="split">
                 <!--LIST-->
-                <section class="list" aria-label="Conversations">
+                <section class="list" id="list-pane" aria-label="Conversations">
+                    <div class="channel-bar" id="channel-bar" hidden>
+                        <p class="channel-note">Whole channel</p>
+                        <button type="button" class="switch" id="channel-switch" role="switch" aria-checked="true">
+                            <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+                            <span id="channel-switch-label">System on</span>
+                        </button>
+                    </div>
                     <div class="list-head" id="list-head" hidden>
-                        <div class="channel-bar" id="channel-bar">
-                            <p class="channel-note">Whole channel</p>
-                            <button type="button" class="switch" id="channel-switch" role="switch" aria-checked="true">
-                                <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
-                                <span id="channel-switch-label">System on</span>
+                        <!--SEARCH-->
+                        <form class="search" id="search" role="search">
+                            <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                <circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8" />
+                                <path d="m15.5 15.5 4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                            </svg>
+                            <input type="search" id="search-text" placeholder="Search names, cars, services" aria-label="Search this channel's conversations" maxlength="100" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+                            <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>
+                                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                                    <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                                </svg>
                             </button>
-                        </div>
+                        </form>
                         <div class="segments views" role="group" aria-label="Conversation lists">
                             <button type="button" class="segment" id="view-on" aria-pressed="true">System on<span class="view-count" id="view-on-count"></span></button>
                             <button type="button" class="segment" id="view-booked" aria-pressed="false">Booked HILs<span class="view-count" id="view-booked-count"></span></button>

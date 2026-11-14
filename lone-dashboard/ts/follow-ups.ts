@@ -19,7 +19,10 @@ type DAY = {sent: FOLLOW_UP[]; due: FOLLOW_UP | null; held: number | null};
 //today and the 13 days before it, then tomorrow for the next ones
 const DAYS_BACK: number = 13;
 
-//keep in step with the phone layout in the base css, phones don't load this page
+//phones fit a week, today and the 6 days before it, then tomorrow
+const PHONE_DAYS_BACK: number = 6;
+
+//keep in step with the phone layout in the base css
 const PHONE: string = "(max-width: 640px)";
 
 const PHONE_QUERY: MediaQueryList = window.matchMedia(PHONE);
@@ -126,8 +129,8 @@ function day_head(date: string, today: string): HTMLTableCellElement {
     return shared.make_element("th", {"scope": "col", "class": class_name, "title": full}, [weekday, day_number, hidden]);
 }
 
-//dot when one went out, green by sms, ring for the next, amber ring when held, times on hover
-function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HTMLTableCellElement {
+//dot when one went out, green by sms, ring for the next, amber ring when held, times on hover or a tap
+function day_cell(day: DAY | undefined, class_name: string, is_new: boolean, title: string): HTMLTableCellElement {
     if(!day) {
         return shared.make_element("td", {"class": class_name});
     }
@@ -176,7 +179,8 @@ function day_cell(day: DAY | undefined, class_name: string, is_new: boolean): HT
 
     const mark: HTMLSpanElement = shared.make_element("span", {"class": mark_class, "title": lines.join("\n")}, [hidden]);
 
-    return shared.make_element("td", {"class": class_name}, [mark]);
+    //fingers can't hover, so a tap on the day reads the times out in a toast
+    return shared.make_element("td", {"class": class_name, "data-times": `${title}\n${lines.join("\n")}`}, [mark]);
 }
 
 //the viewers day a moment falls on, made empty the first time
@@ -210,7 +214,7 @@ function has_new_send(customer: CUSTOMER, day: DAY | undefined): boolean {
 }
 
 //null when all of theirs is older than the first day
-function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTableRowElement | null {
+function customer_row(customer: CUSTOMER, days: string[], today: string, phone: boolean): HTMLTableRowElement | null {
     const by_date: Map<string, DAY> = new Map<string, DAY>();
 
     for(const sent of customer.sent) {
@@ -265,10 +269,8 @@ function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTa
             class_name = "day is-today";
         }
 
-        cells.push(day_cell(day, class_name, has_new_send(customer, day)));
+        cells.push(day_cell(day, class_name, has_new_send(customer, day), title));
     }
-
-    const name_cell: HTMLTableCellElement = shared.make_element("th", {"scope": "row", "class": "who", "title": title}, [who]);
 
     let channel: string | undefined = shared.CHANNEL_NAMES[customer.channel];
 
@@ -276,29 +278,52 @@ function customer_row(customer: CUSTOMER, days: string[], today: string): HTMLTa
         channel = customer.channel;
     }
 
+    //phones fold the channel under the name to make room for the days
+    if(phone) {
+        const channel_line: HTMLSpanElement = shared.make_element("span", {"class": "who-channel"}, [channel]);
+
+        const folded_cell: HTMLTableCellElement = shared.make_element("th", {"scope": "row", "class": "who", "title": title}, [who, channel_line]);
+
+        return shared.make_element("tr", {}, [folded_cell].concat(cells));
+    }
+
+    const name_cell: HTMLTableCellElement = shared.make_element("th", {"scope": "row", "class": "who", "title": title}, [who]);
+
     const channel_cell: HTMLTableCellElement = shared.make_element("td", {"class": "channel"}, [channel]);
 
     return shared.make_element("tr", {}, [name_cell, channel_cell].concat(cells));
 }
 
-//one page of the two week track, newest first, plus the arrows under it
+//one page of the two week track, a week on phones, newest first, plus the arrows under it
 function render(): void {
     if(!LATEST) {
         return;
+    }
+
+    const phone: boolean = PHONE_QUERY.matches;
+
+    let days_back: number = DAYS_BACK;
+
+    let span_text: string = "two weeks";
+
+    if(phone) {
+        days_back = PHONE_DAYS_BACK;
+
+        span_text = "week";
     }
 
     const today: string = shared.local_date(Date.now());
 
     const days: string[] = [];
 
-    for(let index: number = 0; index < DAYS_BACK + 2; index++) {
-        days.push(add_days(today, index - DAYS_BACK));
+    for(let index: number = 0; index < days_back + 2; index++) {
+        days.push(add_days(today, index - days_back));
     }
 
     const rows: HTMLTableRowElement[] = [];
 
     for(const customer of LATEST.customers) {
-        const row: HTMLTableRowElement | null = customer_row(customer, days, today);
+        const row: HTMLTableRowElement | null = customer_row(customer, days, today, phone);
 
         if(row !== null) {
             rows.push(row);
@@ -320,7 +345,7 @@ function render(): void {
     if(rows.length === 0) {
         PAGER.hidden = true;
 
-        TRACK.replaceChildren(shared.make_element("p", {"class": "track-note"}, ["No follow ups went out in the last two weeks."]));
+        TRACK.replaceChildren(shared.make_element("p", {"class": "track-note"}, [`No follow ups went out in the last ${span_text}.`]));
 
         return;
     }
@@ -370,15 +395,24 @@ function render(): void {
 
     const caption: HTMLTableCaptionElement = shared.make_element("caption", {"class": "visually-hidden"}, ["Follow ups by customer and day"]);
 
-    const columns: HTMLTableColElement[] = [shared.make_element("col", {"class": "who-column"}), shared.make_element("col", {"class": "channel-column"})];
-
-    const colgroup: HTMLTableColElement = shared.make_element("colgroup", {}, columns.concat(day_columns));
+    let columns: HTMLTableColElement[] = [shared.make_element("col", {"class": "who-column"}), shared.make_element("col", {"class": "channel-column"})];
 
     const customer_head: HTMLTableCellElement = shared.make_element("th", {"scope": "col"}, [shared.make_element("span", {"class": "visually-hidden"}, ["Customer"])]);
 
     const channel_head: HTMLTableCellElement = shared.make_element("th", {"scope": "col"}, [shared.make_element("span", {"class": "visually-hidden"}, ["Channel"])]);
 
-    const head: HTMLTableSectionElement = shared.make_element("thead", {}, [shared.make_element("tr", {}, [customer_head, channel_head].concat(day_heads))]);
+    let heads: HTMLTableCellElement[] = [customer_head, channel_head];
+
+    //no channel column on phones, it sits under the name
+    if(phone) {
+        columns = [shared.make_element("col", {"class": "who-column"})];
+
+        heads = [customer_head];
+    }
+
+    const colgroup: HTMLTableColElement = shared.make_element("colgroup", {}, columns.concat(day_columns));
+
+    const head: HTMLTableSectionElement = shared.make_element("thead", {}, [shared.make_element("tr", {}, heads.concat(day_heads))]);
 
     const body: HTMLTableSectionElement = shared.make_element("tbody", {}, page_rows);
 
@@ -402,6 +436,21 @@ function flip_page(step: number): void {
     }
 
     render();
+}
+
+//a tap on a marked day shows its times, the only way to get them without hover
+function show_times(event: MouseEvent): void {
+    if(!(event.target instanceof Element)) {
+        return;
+    }
+
+    const cell: HTMLElement | null = event.target.closest<HTMLElement>("td[data-times]");
+
+    if(cell === null || cell.dataset.times === undefined) {
+        return;
+    }
+
+    shared.toast(cell.dataset.times);
 }
 
 
@@ -444,25 +493,20 @@ function tick(): void {
     }
 }
 
-//phones wait till the screen gets wide enough, nothing loads before then
-function start_page(): void {
-    PREVIOUS.addEventListener("click", function(): void { flip_page(-1); });
-
-    NEXT.addEventListener("click", function(): void { flip_page(1); });
-
-    load();
-
-    shared.on_pulse(reload_soon);
-
-    window.setInterval(tick, 60 * 1000);
-}
-
 
 //START
 
-if(PHONE_QUERY.matches) {
-    PHONE_QUERY.addEventListener("change", start_page, {"once": true});
-}
-else {
-    start_page();
-}
+PREVIOUS.addEventListener("click", function(): void { flip_page(-1); });
+
+NEXT.addEventListener("click", function(): void { flip_page(1); });
+
+TRACK.addEventListener("click", show_times);
+
+//crossing the phone width swaps between the week and the two weeks
+PHONE_QUERY.addEventListener("change", render);
+
+load();
+
+shared.on_pulse(reload_soon);
+
+window.setInterval(tick, 60 * 1000);

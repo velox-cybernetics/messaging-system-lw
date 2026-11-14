@@ -54,6 +54,10 @@ time {
         color: var(--paint);
     }
 
+    .search-clear:hover {
+        color: var(--paint);
+    }
+
     .convo:hover {
         background: var(--smoke);
     }
@@ -118,22 +122,22 @@ time {
     font-size: var(--size-s);
 }
 
-/*channel switch and the three views sit on top of the list and stay put while it scrolls*/
-.list-head {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--seam);
-    background: var(--limo);
-}
-
+/*the channel switch scrolls away with the list, the search and the three views stay put on top of it*/
 .channel-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px var(--gutter);
+    padding: 10px var(--gutter) 0;
+}
+
+.list-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 10px 0 12px;
+    border-bottom: 1px solid var(--seam);
+    background: var(--limo);
 }
 
 .channel-note {
@@ -256,6 +260,71 @@ time {
 .more {
     display: flex;
     margin: 16px auto 24px;
+}
+
+
+
+/**********SEARCH**********/
+/*one box over the three lists, it narrows all of them and their counts turn into how many matched*/
+.search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 0 16px 10px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--haze);
+    pointer-events: none;
+}
+
+/*a search on its way breathes the glass*/
+.search.is-busy .search-icon {
+    animation: breathe 1.4s ease-in-out infinite;
+}
+
+.search input {
+    width: 100%;
+    min-height: 40px;
+    padding: 0 40px;
+    border: 1px solid var(--seam);
+    border-radius: 999px;
+    background: var(--smoke);
+    font-size: var(--size-s);
+    appearance: none;
+}
+
+.search input::placeholder {
+    color: var(--haze);
+}
+
+/*the browsers own x goes, ours looks the same everywhere*/
+.search input::-webkit-search-cancel-button,
+.search input::-webkit-search-decoration {
+    appearance: none;
+}
+
+.search-clear {
+    position: absolute;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--haze);
+}
+
+/*a searched word lit up in a row or in what the customer wrote, grey so it never reads as one of the signal colors*/
+mark {
+    padding: 0 2px;
+    border-radius: 3px;
+    background: #3d3d3d;
+    color: var(--white);
 }
 
 
@@ -728,11 +797,36 @@ time {
     }
 
     .channel-bar {
-        padding: 8px var(--edge-right) 8px var(--edge-left);
+        padding: 8px var(--edge-right) 0 var(--edge-left);
+    }
+
+    .list-head {
+        padding-top: 8px;
+    }
+
+    .search {
+        margin: 0 var(--edge-right) 10px var(--edge-left);
+    }
+
+    /*16px keeps ios from zooming the whole page in when the box gets tapped*/
+    .search input {
+        min-height: 44px;
+        font-size: var(--size-m);
+    }
+
+    .search-clear {
+        right: 2px;
+        width: 40px;
+        height: 40px;
     }
 
     .views {
         margin: 0 var(--edge-right) 0 var(--edge-left);
+    }
+
+    /*a bigger tap for each of the three lists*/
+    .views .segment {
+        min-height: 36px;
     }
 
     .messages:not(.show-thread) .thread,

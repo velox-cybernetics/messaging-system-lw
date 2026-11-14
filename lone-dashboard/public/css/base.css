@@ -439,22 +439,3 @@ button,
     opacity: 0.5;
     filter: grayscale(1);
 }
-
-
-
-/**********DESKTOP ONLY**********/
-/*follow ups and system info only open on a computer, the phone tab bar leaves them out and opening one says so*/
-.desktop-note {
-    display: none;
-}
-
-@media (max-width: 640px) {
-    .nav .desktop-only,
-    .desktop-page {
-        display: none;
-    }
-
-    .desktop-note {
-        display: block;
-    }
-}

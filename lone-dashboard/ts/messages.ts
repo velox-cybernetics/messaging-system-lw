@@ -10,7 +10,8 @@ type TAB = "forms" | "instagram" | "messenger";
 //each tab splits into the convos the system answers, the ones with a booked hil and the ones switched off
 type VIEW = "on" | "booked" | "off";
 
-type CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; booked: boolean; flagged_at: number};
+//snippet and hits only come with a search, the message it matched in and the words to mark
+type CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; booked: boolean; flagged_at: number; snippet?: string; hits?: string[]};
 
 //same convo plus whether its whole channel is switched off
 type THREAD_CONVO = {id: string; tab: TAB; channel: string; name: string; last_at: number; last_kind: "in" | "out"; last_text: string; off: boolean; booked: boolean; tab_off: boolean; flagged_at: number};
@@ -21,7 +22,7 @@ type PART = {text?: string; media?: MEDIA};
 
 type ENTRY = {at: number; kind: "in"; parts: PART[]; off?: boolean} | {at: number; kind: "out"; parts: PART[]; failed?: boolean; ghl?: boolean; sms?: boolean} | {at: number; kind: "hil" | "booked"; reason: string} | {at: number; kind: "switch"; on: boolean; by?: "ghl"} | {at: number; kind: "flag"; feedback: string} | {at: number; kind: "upvote"; reason: string; generator: string; example: number};
 
-type CONVO_PAGE = {tab: TAB; view: VIEW; counts: Record<TAB, number>; view_counts: Record<VIEW, number>; off_tabs: TAB[]; more: boolean; convos: CONVO[]};
+type CONVO_PAGE = {tab: TAB; view: VIEW; query: string; counts: Record<TAB, number>; view_counts: Record<VIEW, number>; off_tabs: TAB[]; more: boolean; convos: CONVO[]};
 
 type THREAD = {convo: THREAD_CONVO; entries: ENTRY[]};
 
@@ -48,11 +49,24 @@ const TAB_NAMES: Record<TAB, string> = {"forms": "Forms", "instagram": "Instagra
 
 const VIEWS: VIEW[] = ["on", "booked", "off"];
 
+//the three lists by name, for what an empty search says
+const VIEW_NAMES: Record<VIEW, string> = {"on": "System on", "booked": "Booked HILs", "off": "System off"};
+
 //only web links get linked, so a customer can't slip a script link in
 const WEB_LINK: RegExp = /^https?:\/\//i;
 
+//same words and plain forms as the apis search helper, so a mark lands on the exact word it matched
+const WORD: RegExp = /[\p{L}\p{N}'’]+/gu;
+
+const ACCENTS: RegExp = /\p{M}/gu;
+
+const APOSTROPHES: RegExp = /['’]/g;
+
 //within this many px of the bottom, a refresh keeps the thread scrolled down
 const NEAR_BOTTOM_PX: number = 80;
+
+//the search waits till typing stops this long, so a fast typist sends one search not ten
+const SEARCH_WAIT_MS: number = 250;
 
 //render takes a few minutes to deploy, so the check goes every 15s and gives up after 15 minutes
 const UPVOTE_CHECK_MS: number = 15 * 1000;
@@ -98,6 +112,8 @@ const TABS_NAV: HTMLElement = shared.by_id<HTMLElement>("tabs");
 
 const LIST: HTMLUListElement = shared.by_id<HTMLUListElement>("convos");
 
+const LIST_PANE: HTMLElement = shared.by_id<HTMLElement>("list-pane");
+
 const LIST_NOTE: HTMLParagraphElement = shared.by_id<HTMLParagraphElement>("list-note");
 
 const MORE_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("more");
@@ -137,6 +153,12 @@ const VIEW_OFF_BUTTON: HTMLButtonElement = shared.by_id<HTMLButtonElement>("view
 const VIEW_OFF_COUNT: HTMLSpanElement = shared.by_id<HTMLSpanElement>("view-off-count");
 
 const VIEW_BUTTONS: Record<VIEW, VIEW_PARTS> = {"on": {"button": VIEW_ON_BUTTON, "count": VIEW_ON_COUNT}, "booked": {"button": VIEW_BOOKED_BUTTON, "count": VIEW_BOOKED_COUNT}, "off": {"button": VIEW_OFF_BUTTON, "count": VIEW_OFF_COUNT}};
+
+const SEARCH_FORM: HTMLFormElement = shared.by_id<HTMLFormElement>("search");
+
+const SEARCH_TEXT: HTMLInputElement = shared.by_id<HTMLInputElement>("search-text");
+
+const SEARCH_CLEAR: HTMLButtonElement = shared.by_id<HTMLButtonElement>("search-clear");
 
 const LOG: HTMLElement = shared.by_id<HTMLElement>("log");
 
@@ -206,6 +228,18 @@ let CURRENT_CONVO: THREAD_CONVO | null = null;
 //tabs with there whole channel switched off, as of the last list load
 let OFF_TABS: Set<TAB> = new Set<TAB>();
 
+//whats in the search box trimmed, empty means the plain list
+let CURRENT_QUERY: string = "";
+
+//the wait before a search goes out
+let SEARCH_TIMER: number = 0;
+
+//the words each search result matched by convo id, so a thread opened from the results gets them marked too
+const HITS: Map<string, string[]> = new Map<string, string[]>();
+
+//the hits the open thread has marked right now, so a list refresh only redoes the thread when they change
+let LOG_MARKS: string = "";
+
 //the one upvote going, null till theres one
 let CURRENT_UPVOTE: UPVOTE | null = null;
 
@@ -248,11 +282,96 @@ function remember_place(): void {
         query.set("view", CURRENT_VIEW);
     }
 
+    if(CURRENT_QUERY) {
+        query.set("q", CURRENT_QUERY);
+    }
+
     if(CURRENT_ID) {
         query.set("id", CURRENT_ID);
     }
 
     history.replaceState(null, "", `/messages?${query}`);
+}
+
+
+//MARKS
+
+//lowercase, no accents and no apostrophes, same as plain_word in the apis search helper
+function plain_word(word: string): string {
+    return word.normalize("NFD").replace(ACCENTS, "").replace(APOSTROPHES, "").toLowerCase();
+}
+
+//the text with every hit word wrapped in a mark, just the text when theres nothing to mark
+function marked(text: string, hits: string[]): (string | HTMLElement)[] {
+    const pieces: (string | HTMLElement)[] = [];
+
+    let last: number = 0;
+
+    if(hits.length > 0) {
+        for(const found of text.matchAll(WORD)) {
+            if(hits.includes(plain_word(found[0]))) {
+                pieces.push(text.slice(last, found.index));
+
+                pieces.push(shared.make_element("mark", {}, [found[0]]));
+
+                last = found.index + found[0].length;
+            }
+        }
+    }
+
+    pieces.push(text.slice(last));
+
+    return pieces;
+}
+
+//the open convos hits, none without a search or when it isn't one of the results
+function open_hits(): string[] {
+    const hits: string[] | undefined = HITS.get(CURRENT_ID);
+
+    if(CURRENT_QUERY === "" || hits === undefined) {
+        return [];
+    }
+
+    return hits;
+}
+
+//marks the hits in what the customer wrote in the open thread, or takes them off once the search is gone
+function mark_log(): void {
+    const hits: string[] = open_hits();
+
+    LOG_MARKS = hits.join(" ");
+
+    for(const bubble of LOG.querySelectorAll<HTMLElement>(".msg.is-in .bubble")) {
+        let text: string | null = bubble.textContent;
+
+        if(text === null) {
+            text = "";
+        }
+
+        bubble.replaceChildren();
+
+        for(const piece of marked(text, hits)) {
+            bubble.append(piece);
+        }
+    }
+}
+
+//the newest marked message in the open thread, null when nothing is marked
+function newest_mark(): HTMLElement | null {
+    const marks: NodeListOf<HTMLElement> = LOG.querySelectorAll<HTMLElement>(".msg.is-in mark");
+
+    if(marks.length === 0) {
+        return null;
+    }
+
+    return marks.item(marks.length - 1).closest<HTMLElement>(".msg");
+}
+
+//scrolls the log so that message sits in the middle of it
+function center_in_log(message: HTMLElement): void {
+    const box: DOMRect = message.getBoundingClientRect();
+
+    LOG.scrollTop += box.top - LOG.getBoundingClientRect().top - (LOG.clientHeight - box.height) / 2;
 }
 
 
@@ -469,6 +588,9 @@ function render_log(entries: ENTRY[]): void {
     for(const node of nodes) {
         LOG.append(node);
     }
+
+    //what the customer wrote gets the search hits marked
+    mark_log();
 }
 
 //everything above the open thread, name, channel, switch, flag and the upvote ring
@@ -564,7 +686,13 @@ async function load_thread(fresh: boolean): Promise<void> {
 
         render_log(data.entries);
 
-        if(fresh || near_bottom) {
+        const mark: HTMLElement | null = newest_mark();
+
+        //a search result opens on the message it matched in, anything else on the newest message
+        if(fresh && mark !== null) {
+            center_in_log(mark);
+        }
+        else if(fresh || near_bottom) {
             LOG.scrollTop = LOG.scrollHeight;
         }
     }
@@ -608,6 +736,8 @@ function render_channel(): void {
 
     const off: boolean = OFF_TABS.has(CURRENT_TAB);
 
+    CHANNEL_BAR.hidden = false;
+
     LIST_HEAD.hidden = false;
 
     CHANNEL_BAR.classList.toggle("is-off", off);
@@ -629,8 +759,29 @@ function render_channel(): void {
     }
 }
 
+//what an empty search says, plus how many matched under the other two lists
+function search_note(view_counts: Record<VIEW, number>): string {
+    const elsewhere: string[] = [];
+
+    for(const view of VIEWS) {
+        if(view !== CURRENT_VIEW && view_counts[view] > 0) {
+            elsewhere.push(`${view_counts[view]} under ${VIEW_NAMES[view]}`);
+        }
+    }
+
+    if(elsewhere.length === 0) {
+        return `Nothing on ${TAB_NAMES[CURRENT_TAB]} matches "${CURRENT_QUERY}".`;
+    }
+
+    return `Nothing under ${VIEW_NAMES[CURRENT_VIEW]} matches "${CURRENT_QUERY}", ${elsewhere.join(" and ")}.`;
+}
+
 //what an empty list says for the open view
 function empty_note(view_counts: Record<VIEW, number>): string {
+    if(CURRENT_QUERY !== "") {
+        return search_note(view_counts);
+    }
+
     const name: string = TAB_NAMES[CURRENT_TAB];
 
     if(CURRENT_VIEW === "booked") {
@@ -677,7 +828,13 @@ function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
         row_class = "convo is-new";
     }
 
-    const name: HTMLSpanElement = shared.make_element("span", {"class": "convo-name"}, [convo_title(convo)]);
+    let hits: string[] = [];
+
+    if(convo.hits !== undefined) {
+        hits = convo.hits;
+    }
+
+    const name: HTMLSpanElement = shared.make_element("span", {"class": "convo-name"}, marked(convo_title(convo), hits));
 
     const time: HTMLTimeElement = shared.make_element("time", {"datetime": new Date(convo.last_at).toISOString()}, [shared.when_short(convo.last_at)]);
 
@@ -686,6 +843,9 @@ function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
     let preview_class: string = "convo-preview";
 
     let preview_text: string = convo.last_text;
+
+    //only a search snippet gets marks, the plain preview can be the systems words and those never get searched
+    let preview_hits: string[] = [];
 
     if(!preview_text) {
         preview_text = "Sent media";
@@ -697,7 +857,16 @@ function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
         preview_text = `System: ${convo.last_text}`;
     }
 
-    const preview: HTMLSpanElement = shared.make_element("span", {"class": preview_class}, [preview_text]);
+    //a search shows the message it matched in instead of the last one
+    if(convo.snippet) {
+        preview_class = "convo-preview";
+
+        preview_text = convo.snippet;
+
+        preview_hits = hits;
+    }
+
+    const preview: HTMLSpanElement = shared.make_element("span", {"class": preview_class}, marked(preview_text, preview_hits));
 
     //false gets left out
     let badges: HTMLSpanElement | false = false;
@@ -720,7 +889,11 @@ function convo_row(convo: CONVO, is_new: boolean): HTMLLIElement {
 
 //append is for Show older, anything else rebuilds the list
 async function load_list(append: boolean = false): Promise<void> {
-    if(!append && SHOWN_CONVOS.length === 0) {
+    //a search breathes its own glass, so the loading note is only for the plain list
+    if(CURRENT_QUERY !== "") {
+        SEARCH_FORM.classList.add("is-busy");
+    }
+    else if(!append && SHOWN_CONVOS.length === 0) {
         LIST_NOTE.textContent = "Loading conversations…";
 
         LIST_NOTE.hidden = false;
@@ -728,18 +901,25 @@ async function load_list(append: boolean = false): Promise<void> {
 
     try {
         //a refresh asks for everything on screen, so a list grown past 50 stays that long
-        let query: string = `limit=${Math.max(50, SHOWN_CONVOS.length)}`;
+        let paging: string = `limit=${Math.max(50, SHOWN_CONVOS.length)}`;
 
         if(append) {
-            query = `start=${SHOWN_CONVOS.length}`;
+            paging = `start=${SHOWN_CONVOS.length}`;
         }
 
-        const data: CONVO_PAGE = await shared.ask_server<CONVO_PAGE>(`/api/convos?tab=${CURRENT_TAB}&view=${CURRENT_VIEW}&${query}`);
+        //only sent with a search, the plain list asks the same as always
+        if(CURRENT_QUERY !== "") {
+            paging = `${paging}&q=${encodeURIComponent(CURRENT_QUERY)}`;
+        }
 
-        //another tab or view got picked while this one loaded
-        if(data.tab !== CURRENT_TAB || data.view !== CURRENT_VIEW) {
+        const data: CONVO_PAGE = await shared.ask_server<CONVO_PAGE>(`/api/convos?tab=${CURRENT_TAB}&view=${CURRENT_VIEW}&${paging}`);
+
+        //another tab, view or search got picked while this one loaded
+        if(data.tab !== CURRENT_TAB || data.view !== CURRENT_VIEW || data.query !== CURRENT_QUERY) {
             return;
         }
+
+        SEARCH_FORM.classList.remove("is-busy");
 
         for(const entry of TAB_BUTTONS) {
             let count: number = data.counts[entry[0]];
@@ -796,6 +976,21 @@ async function load_list(append: boolean = false): Promise<void> {
             LIST.append(convo_row(convo, is_new));
         }
 
+        if(!append) {
+            HITS.clear();
+        }
+
+        for(const convo of data.convos) {
+            if(convo.hits !== undefined) {
+                HITS.set(convo.id, convo.hits);
+            }
+        }
+
+        //the open thread only gets redone when its marks changed
+        if(open_hits().join(" ") !== LOG_MARKS) {
+            mark_log();
+        }
+
         //a refresh rebuilds the rows, so the one that had focus gets it back
         if(focused_id) {
             const focused_row: HTMLButtonElement | null = LIST.querySelector<HTMLButtonElement>(`.convo[data-id="${CSS.escape(focused_id)}"]`);
@@ -810,8 +1005,18 @@ async function load_list(append: boolean = false): Promise<void> {
         LIST_NOTE.hidden = SHOWN_CONVOS.length > 0;
 
         MORE_BUTTON.hidden = !data.more;
+
+        let more_text: string = "Show older conversations";
+
+        if(CURRENT_QUERY !== "") {
+            more_text = "Show more matches";
+        }
+
+        MORE_BUTTON.textContent = more_text;
     }
     catch(error: unknown) {
+        SEARCH_FORM.classList.remove("is-busy");
+
         let message: string = "Couldn't load conversations. It retries on its own.";
 
         if(shared.is_server_error(error)) {
@@ -909,6 +1114,80 @@ function go_back(): void {
 
     for(const row of LIST.querySelectorAll(".convo")) {
         row.setAttribute("aria-current", "false");
+    }
+}
+
+
+//SEARCH
+
+//the wait is over or enter got pressed, the list starts over from the top for whats in the box now
+function run_search(): void {
+    window.clearTimeout(SEARCH_TIMER);
+
+    const query: string = SEARCH_TEXT.value.trim();
+
+    if(query === CURRENT_QUERY) {
+        return;
+    }
+
+    CURRENT_QUERY = query;
+
+    SHOWN_CONVOS = [];
+
+    remember_place();
+
+    LIST_PANE.scrollTop = 0;
+
+    load_list();
+}
+
+//each key waits a moment for the next one, an emptied box brings the plain list back right away
+function wait_search(): void {
+    window.clearTimeout(SEARCH_TIMER);
+
+    SEARCH_CLEAR.hidden = SEARCH_TEXT.value === "";
+
+    if(SEARCH_TEXT.value.trim() === "") {
+        run_search();
+    }
+    else {
+        SEARCH_TIMER = window.setTimeout(run_search, SEARCH_WAIT_MS);
+    }
+}
+
+//enter searches right away and puts a phones keyboard away so the results show
+function submit_search(event: SubmitEvent): void {
+    event.preventDefault();
+
+    run_search();
+
+    SEARCH_TEXT.blur();
+}
+
+//the x empties the box and leaves it ready for the next search
+function clear_search(): void {
+    SEARCH_TEXT.value = "";
+
+    SEARCH_CLEAR.hidden = true;
+
+    run_search();
+
+    SEARCH_TEXT.focus();
+}
+
+//escape empties the box, or leaves it when its already empty
+function search_keys(event: KeyboardEvent): void {
+    if(event.key !== "Escape") {
+        return;
+    }
+
+    event.preventDefault();
+
+    if(SEARCH_TEXT.value !== "") {
+        clear_search();
+    }
+    else {
+        SEARCH_TEXT.blur();
     }
 }
 
@@ -1544,6 +1823,19 @@ if(address_id === null) {
 
 CURRENT_ID = address_id;
 
+//a search in the address comes back in the box
+let address_query: string | null = ADDRESS.get("q");
+
+if(address_query === null) {
+    address_query = "";
+}
+
+SEARCH_TEXT.value = address_query;
+
+SEARCH_CLEAR.hidden = address_query === "";
+
+CURRENT_QUERY = address_query.trim();
+
 for(const tab of TABS) {
     build_tab(tab);
 }
@@ -1590,6 +1882,14 @@ COMPOSE_FORM.addEventListener("submit", send_text);
 COMPOSE_TEXT.addEventListener("keydown", send_on_enter);
 
 COMPOSE_TEXT.addEventListener("input", fit_compose);
+
+SEARCH_FORM.addEventListener("submit", submit_search);
+
+SEARCH_TEXT.addEventListener("input", wait_search);
+
+SEARCH_TEXT.addEventListener("keydown", search_keys);
+
+SEARCH_CLEAR.addEventListener("click", clear_search);
 
 //a reload mid upvote picks its ring back up first, so its line keeps waiting in the first draw
 resume_upvote();

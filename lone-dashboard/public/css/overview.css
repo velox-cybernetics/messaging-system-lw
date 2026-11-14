@@ -186,9 +186,14 @@
     margin-top: 12px;
 }
 
+/*a finger slides along the bars without the page scrolling sideways, and a long press doesn't select the labels*/
 .chart svg {
     display: block;
     overflow: visible;
+    touch-action: pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .chart .axis {
@@ -400,11 +405,17 @@
 
 
 /**********PHONES**********/
-/*tab bar layout in base.css drops the chart, the panel keeps status or booking rate and totals sit right under*/
+/*tab bar layout in base.css, the chart stays but draws shorter, ranges and the picker get thumb sized tap areas*/
 @media (max-width: 640px) {
-    .chart,
-    .legend {
-        display: none;
+    .ranges .segment {
+        min-height: 44px;
+    }
+
+    /*taller tap area for the picker without moving the title*/
+    .select select {
+        margin: -5px 0;
+        padding-top: 7px;
+        padding-bottom: 7px;
     }
 }
 
@@ -425,7 +436,6 @@
 
     .ranges .segment {
         flex: 1;
-        min-height: 36px;
         padding: 0;
     }
 
@@ -457,5 +467,17 @@
 
     .label {
         font-size: var(--size-xs);
+    }
+}
+
+/*small phones: one group per row so a number and its label never squeeze*/
+@media (max-width: 420px) {
+    .strip {
+        grid-template-columns: 1fr;
+    }
+
+    .group + .group {
+        border-top: 1px solid var(--seam);
+        border-left: 0;
     }
 }
