@@ -25,7 +25,7 @@ def examples() -> str:
 
     Ex 3:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"full wrap"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey how much do you guys charge for business wraps?"},"system_response_to_user_message_0":"Decals usually run $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Are you looking for a full wrap, a half wrap or just decals?"}}
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"full wrap"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey how much do you guys charge for business wraps?"},"system_response_to_user_message_0":"Decals are roughly $550 to $1500, that's just a rough range though, it really depends on how big the logo is compared to the vehicle. A half wrap usually runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Are you looking for a full wrap, a half wrap or just decals?"}}
     INFO_NEEDED: How many vehicles the Commercial Wrap is for.
     Response: "Perfect, we can do a full wrap. How many vehicles is it for?"
     REASON: They answered which job it is, so it gets acknowledged and how many is next. Nothing says what the vehicles are, so it asks about vehicles in general.
@@ -48,8 +48,8 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"We'd like to keep it around $800 for our trucks, just logos"},"message_history":{}}
     INFO_NEEDED: How many vehicles the Commercial Wrap is for.
-    Response: "For sure, we can do just logos, those usually run $450 to $900 a truck, it just depends on the year, make, model and design. How many trucks is it for?"
-    REASON: A budget gets the decals range per truck with it just depending on the year, make, model and design, never whether it fits. Just logos gets its yes, and how many is the question.
+    Response: "For sure, we can do just logos, those are roughly $550 to $1500 a truck. That's just a rough range though, it really depends on how big the logo is compared to the truck. How many trucks is it for?"
+    REASON: A budget gets the decals range per truck as just a rough range that really depends on how big the logo is relative to the truck, never whether it fits. Just logos gets its yes, and how many is the question.
 
     Ex 7:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -150,10 +150,10 @@ def examples() -> str:
 
     Ex 20:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
-    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 10:47 PM","current_user_message":{"user_media":{},"user_text":"Wait that’s the business wrap price? "},"message_history":{"user_message_0":{"user_text":"hello my name is g p, I am interested in your services, the vehicle I have is Honda Accord 2021."},"system_response_to_user_message_0":"Heyy G, this is Hazel with the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"I have a g wagon "},"system_response_to_user_message_1":"Yeah, what are you looking to get done on the G Wagon?","user_message_2":{"user_media":{},"user_text":"I want to wrap my business on there or do a vinyl wraps whatever makes more sense. "},"system_response_to_user_message_2":"For sure, are you looking for a full wrap, a half wrap or just decals on it?","user_message_3":{"user_media":{},"user_text":"Full wrap "},"system_response_to_user_message_3":"Sweet, a full wrap on the G Wagon typically runs $3450 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color are you wanting to go, and what color is it right now? Send me a pic if you can"}}
+    STATE: {"current_date_time":"Tuesday, October 20, 2026 at 10:47 PM","current_user_message":{"user_media":{},"user_text":"Wait that’s the business wrap price? "},"message_history":{"user_message_0":{"user_text":"hello my name is g p, I am interested in your services, the vehicle I have is Honda Accord 2021."},"system_response_to_user_message_0":"Heyy G, this is Hazel with the Lone Wraps team, saw your quote request on the Accord. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"I have a g wagon "},"system_response_to_user_message_1":"Yeah, what are you looking to get done on the G Wagon?","user_message_2":{"user_media":{},"user_text":"I want to wrap my business on there or do a vinyl wraps whatever makes more sense. "},"system_response_to_user_message_2":"For sure, are you looking for a full wrap, a half wrap or just decals on it?","user_message_3":{"user_media":{},"user_text":"Full wrap "},"system_response_to_user_message_3":"Sweet, a full wrap on the G Wagon typically runs $3450 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now?"}}
     INFO_NEEDED: How many vehicles the Commercial Wrap is for.
     Response: "My bad, that was the price for a regular color change wrap. A full business wrap usually runs $3500 to $5500 a vehicle, it just depends on the year, make, model and design. Is it just the G Wagon, or do you have more you want done?"
-    REASON: The last reply gave their business wrap a regular wrap's price, so it gets owned in a few plain words, never a yes as if it was right, then the full wrap's usual range and how many (rule 10). Nothing about colors or a pic of the color it is now.
+    REASON: The last reply gave their business wrap a regular wrap's price, so it gets owned in a few plain words, never a yes as if it was right, then the full wrap's usual range and how many (rule 10). Nothing about the color it is now or a pic of it.
 """
 
 

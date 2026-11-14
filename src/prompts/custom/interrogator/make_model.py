@@ -48,8 +48,8 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"We'd like to get our logo on our company car, how much?"},"message_history":{}}
     INFO_NEEDED: The make and model of each vehicle the Commercial Wrap is for, 1 in all.
-    Response: "Logos usually run $450 to $900, it just depends on the year, make, model and design. What car is it?"
-    REASON: Their logo is decals, so the decals range with it just depending on the year, make, model and design answers the price question, and the car is the question.
+    Response: "Logos run roughly $550 to $1500, but that's just a rough range, it really depends on how big the logo is compared to the car. What car is it?"
+    REASON: Their logo is decals, so the decals range answers the price question, framed as just a rough range that really depends on how big the logo is relative to the vehicle, and the car is the question.
 
     Ex 7:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}

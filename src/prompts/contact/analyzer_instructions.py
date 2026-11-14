@@ -7,7 +7,7 @@ CONTACT_INFO_INSTRUCTIONS: str = """
 
 NO_CONTACT_INFO_INSTRUCTIONS: str = """
 
-    The customer doesn't give their name, number or email for the invoice. That is a message with none of them in it ("thanks", "ok", "do I need to bring anything?", "ill send it when I get home", "can you text it to me instead?"), an email only said in words with no name or number typed out along with it ("jake at gmail dot com"), the shop's own number or email ((855) 494-1645, lonewraps@gmail.com), or a name, number or email they give for something other than the invoice.
+    The customer doesn't give their name, number or email for the invoice. That is a message with none of them in it ("thanks", "ok", "do I need to bring anything?", "ill send it when I get home", "can you text it to me instead?"), an email only said in words with no name or number typed out along with it ("jake at gmail dot com"), the shop's own number or email ((855) 494-1645, info@lonewraps.com), or a name, number or email they give for something other than the invoice.
 """
 
 WONT_GIVE_INFO_INSTRUCTIONS: str = """

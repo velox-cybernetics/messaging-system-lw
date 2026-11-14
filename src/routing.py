@@ -88,7 +88,7 @@ def color_check_waiting(id: str) -> bool:
 
     color_check: str = owner.color_check_status(id)
 
-    return branches.color_check_due(color_job_on, critical_info, color_check)
+    return branches.color_check_due(color_job_on, critical_info, color_check, id)
 
 #anything the price still misses, read off file fresh since the branch just took in a route
 def price_needs_more(id: str) -> bool:
@@ -98,7 +98,7 @@ def price_needs_more(id: str) -> bool:
 
     color_check: str = owner.color_check_status(id)
 
-    return branches.pricing_interrogator(color_job_on, critical_info, color_check) is not None
+    return branches.pricing_interrogator(color_job_on, critical_info, color_check, id) is not None
 
 #a held booking ends on the schedule question once a price that needs nothing else goes out
 def held_booking_question(system_response: str, id: str) -> str:
@@ -233,8 +233,8 @@ def cut_early_color_ask(state: dict, id: str, system_response: str) -> str:
 
     kept_reply: str = repeats.drop_questions(system_response, color_asks)
 
-    #the pic of their vehicle is already asked for, so that ask stands as is
-    if(branches.COLOR_NOW_NEED in needs and spacing.asks_for_pic(kept_reply)):
+    #the color now ask is already in, the pic once they said a saturated color, so it stands as is
+    if(branches.COLOR_NOW_NEED in needs and branches.color_now_asked(kept_reply, critical_info)):
         return kept_reply
 
     #the ask for what the price waits on is the one question the reply ends on

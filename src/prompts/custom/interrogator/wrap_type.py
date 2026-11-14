@@ -12,8 +12,8 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Hey I’m looking to get my 2023 ford transit van a business wrap. What does typical pricing look like?"},"message_history":{}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "For sure, we can do that. Decals usually run $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you looking for?"
-    REASON: What pricing looks like is a how much question, so "For sure" acknowledges them instead of a filler "Yeah" (tone rule 7), and the range of each of the three answers the price question since they haven't picked one, with it just depending on the year, make, model and design even though the Transit is in. A business wrap doesn't say which job it is, so that's the question.
+    Response: "For sure, we can do that. Decals are roughly $550 to $1500, that's just a rough range though, it really depends on how big the logo is compared to the vehicle. A half wrap usually runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you looking for?"
+    REASON: What pricing looks like is a how much question, so "For sure" acknowledges them instead of a filler "Yeah" (tone rule 7), and the range of each of the three answers the price question since they haven't picked one: decals as just a rough range that really depends on how big the logo is relative to the vehicle, and the half and full wrap just depending on the year, make, model and design even though the Transit is in. A business wrap doesn't say which job it is, so that's the question.
 
     Ex 2:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -34,23 +34,23 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"I have a 2021 Mercedes sprinter van that I'm looking to get some decal work done. I don't want a full color change, but just a good rap that represents our window replacement brand. Wanted to get a rough price on what that would cost."},"message_history":{}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "For sure, we can either just do decals or a half wrap. Decals usually run $450 to $900 and a half wrap $1950 to $3100, it just depends on the year, make, model and design. Which one are you leaning towards?"
-    REASON: No full color change rules out the full wrap, so only the two that are left get asked, in warm, plain words, and the rough price is the range of those two with it just depending on the year, make, model and design.
+    Response: "For sure, we can either just do decals or a half wrap. Decals run roughly $550 to $1500, but that's just a rough range, it really depends on how big the logo is compared to the van. A half wrap usually runs $1950 to $3100, it just depends on the year, make, model and design. Which one are you leaning towards?"
+    REASON: No full color change rules out the full wrap, so only the two that are left get asked, in warm, plain words, and the rough price is the range of those two: decals as just a rough range that really depends on how big the logo is relative to the vehicle, and the half wrap just depending on the year, make, model and design.
 
     Ex 5:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"I'm thinking half to full?? We have a trailer that we'd love to wrap with the Momentum Gymnastics logo. Not sure if it would be better as a full wrap or just a few big logos??"},"message_history":{}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "Some big logos are the cheaper option, which is $450 to $900, a half wrap runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the size of the trailer. A full wrap does look the most put together though. Which one are you leaning towards?"
-    REASON: Which one is better gets a straight, friendly answer with the range of each one they're weighing, and a trailer goes by its size instead of the year, make and model, then which one they're leaning towards.
+    Response: "Some big logos are the cheaper option, which is roughly $550 to $1500, but that's just a rough range, it really depends on how big the logos are compared to the trailer. A half wrap runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the size of the trailer. A full wrap does look the most put together though. Which one are you leaning towards?"
+    REASON: Which one is better gets a straight, friendly answer with the range of each one they're weighing: the logos as just a rough range that really depends on how big they are relative to the trailer, and the half and full wrap going by the size of the trailer instead of the year, make and model, then which one they're leaning towards.
 
     Ex 6:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Whats the difference between a half wrap and decals?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Hey I’m looking to get my 2023 ford transit van a business wrap"},"system_response_to_user_message_0":"Yeah, we can do that. Are you looking for a full wrap, a half wrap or just decals?"}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
     ALREADY_ASKED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "Decals are just the logo and lettering put on over the paint and usually run $450 to $900, and a half wrap is printed vinyl that covers part of the van with the design for $1950 to $3100, it just depends on the year, make, model and design. Which one are you leaning towards?"
-    REASON: The last reply asked which job it is and they asked about it, so the difference gets answered in a line with the range of the two they asked about and it just depending on the year, make, model and design, and which one they're leaning towards follows what they asked instead of asking the same question again (rule 6).
+    Response: "Decals are just the logo and lettering put on over the paint, roughly $550 to $1500, but that's a rough range, it really depends on how big the logo is compared to the van. A half wrap is printed vinyl that covers part of the van with the design for $1950 to $3100, it just depends on the year, make, model and design. Which one are you leaning towards?"
+    REASON: The last reply asked which job it is and they asked about it, so the difference gets answered in a line with the range of the two they asked about, decals as just a rough range that really depends on how big the logo is relative to the vehicle and the half wrap just depending on the year, make, model and design, and which one they're leaning towards follows what they asked instead of asking the same question again (rule 6).
 
     Ex 7:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -64,8 +64,8 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Hey we are looking to get a truck wrapped for the business, we'd like to keep it around $800"},"message_history":{}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "For sure, decals usually run $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you thinking?"
-    REASON: A budget gets the range of each of the three with it just depending on the year, make, model and design so they can see where it lands, never whether it fits, and which job it is is the question.
+    Response: "For sure, decals are roughly $550 to $1500, just a rough range since it really depends on how big the logo is compared to the truck. A half wrap usually runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you thinking?"
+    REASON: A budget gets the range of each of the three so they can see where it lands, never whether it fits: decals as just a rough range that really depends on how big the logo is relative to the vehicle, and the half and full wrap just depending on the year, make, model and design. Which job it is is the question.
 
     Ex 9:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -95,16 +95,16 @@ def examples() -> str:
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Whats the difference?"},"message_history":{"user_message_0":{"user_text":"hello my name is Kade Smith, I am interested in your services, the vehicle I have is 2022 Ram promaster."},"system_response_to_user_message_0":"Heyy Kade, this is Hazel with the Lone Wraps team, saw your quote request on the ProMaster. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Want to put our company info on it"},"system_response_to_user_message_1":"We can do that, are you looking for a full wrap, a half wrap or just decals on the ProMaster?"}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
     ALREADY_ASKED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "Decals are just your logo and info put on over the paint and usually run $450 to $900, a half wrap is printed vinyl over part of the van with the design for $1950 to $3100, and a full wrap covers the whole van for $3500 to $5500, it just depends on the year, make, model and design. Which one are you leaning towards?"
-    REASON: They asked the difference before picking one, so each of the three gets explained in a few words with its range and it just depending on the year, make, model and design, and which one they're leaning towards follows their question instead of asking the same one again (rule 6).
+    Response: "Decals are just your logo and info put on over the paint, roughly $550 to $1500, but that's just a rough range since it really depends on how big the logo is compared to the van. A half wrap is printed vinyl over part of the van with the design for $1950 to $3100, and a full wrap covers the whole van for $3500 to $5500, those just depend on the year, make, model and design. Which one are you leaning towards?"
+    REASON: They asked the difference before picking one, so each of the three gets explained in a few words with its range, decals as just a rough range that really depends on how big the logo is relative to the vehicle and the half and full wrap just depending on the year, make, model and design, and which one they're leaning towards follows their question instead of asking the same one again (rule 6).
 
     Ex 13:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"Depends on the cost"},"message_history":{"user_message_0":{"user_text":"hello my name is Tristan Doe, I am interested in your services, the vehicle I have is 2024 Ford transit."},"system_response_to_user_message_0":"Heyy Tristan, this is Hazel with the Lone Wraps team, saw your quote request on the Transit. What are you looking to get done?","user_message_1":{"user_media":{},"user_text":"Want to put my company info on it"},"system_response_to_user_message_1":"We can do that, are you looking for a full wrap, a half wrap or just decals on the Transit?"}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
     ALREADY_ASKED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "Decals usually run $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you leaning towards?"
-    REASON: Picking one hangs on the cost, so the range of each of the three answers it, with it just depending on the year, make, model and design even though the Transit came in on the form, and which one they're leaning towards follows what they said instead of asking the same question again (rule 6).
+    Response: "Decals are roughly $550 to $1500, but that's just a rough range, it really depends on how big the logo is compared to the Transit. A half wrap usually runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you leaning towards?"
+    REASON: Picking one hangs on the cost, so the range of each of the three answers it, decals as just a rough range that really depends on how big the logo is relative to the vehicle, and the half and full wrap just depending on the year, make, model and design even though the Transit came in on the form, and which one they're leaning towards follows what they said instead of asking the same question again (rule 6).
 
     Ex 14:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -118,8 +118,8 @@ def examples() -> str:
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"which one holds up better in the sun? our trucks sit outside all day"},"message_history":{"user_message_0":{"user_media":{},"user_text":"need our landscaping logo on our 2021 silverados"},"system_response_to_user_message_0":"Yeah, we can do that. Are you looking for a full wrap, a half wrap or just decals?"}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
     ALREADY_ASKED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "They all hold up great, but a full wrap keeps all the paint covered from the sun and the step up from a half wrap isn't a whole lot. Decals usually run $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you leaning towards?"
-    REASON: Which one is better gets the owner's take with the range of each of the three, and which one they're leaning towards follows their question instead of asking the same one again (rule 6).
+    Response: "They all hold up great, but a full wrap keeps all the paint covered from the sun and the step up from a half wrap isn't a whole lot. Decals are roughly $550 to $1500, that's just a rough range since it really depends on how big the logo is compared to the truck. A half wrap usually runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one are you leaning towards?"
+    REASON: Which one is better gets the owner's take with the range of each of the three, decals as just a rough range that really depends on how big the logo is relative to the vehicle and the half and full wrap just depending on the year, make, model and design, and which one they're leaning towards follows their question instead of asking the same one again (rule 6).
 
     Ex 16:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -154,8 +154,8 @@ def examples() -> str:
     STATE: {"current_date_time":"Tuesday, October 20, 2026 at 06:12 PM","current_user_message":{"user_media":{},"user_text":"wait so that $3650 has my roofing logo in it?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"looking to get my roofing company on my 2021 range rover, or maybe just wrap it matte grey"},"system_response_to_user_message_0":"For sure, are you looking for a full wrap, a half wrap or just decals on it?","user_message_1":{"user_media":{},"user_text":"how much would it be?"},"system_response_to_user_message_1":"A wrap on the Range Rover would run $3650 + tax. What color are you wanting to go?"}}
     INFO_NEEDED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
     ALREADY_ASKED: Whether the Commercial Wrap is decals, a half wrap or a full wrap.
-    Response: "My bad, that was the price for a regular color change wrap. Decals usually run $450 to $900, a half wrap $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one sounds best for the Range Rover?"
-    REASON: The last reply gave their business wrap a regular wrap's price, so it gets owned in a few plain words, never a yes as if it was right, and with no job picked yet every job's range goes out (rule 10). Which job it is was already asked, so it comes back a new way, and the color question from that reply is dropped.
+    Response: "My bad, that was the price for a regular color change wrap. Decals are roughly $550 to $1500, but that's a rough range, it really depends on how big your logo is compared to the vehicle. A half wrap usually runs $1950 to $3100 and a full wrap $3500 to $5500, it just depends on the year, make, model and design. Which one sounds best for the Range Rover?"
+    REASON: The last reply gave their business wrap a regular wrap's price, so it gets owned in a few plain words, never a yes as if it was right, and with no job picked yet every job's range goes out (rule 10), decals as just a rough range that really depends on how big the logo is relative to the vehicle and the half and full wrap just depending on the year, make, model and design. Which job it is was already asked, so it comes back a new way, and the color question from that reply is dropped.
 
     Ex 21:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}

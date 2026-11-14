@@ -43,7 +43,7 @@ NO_CONTACT_INFO_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"can you just text me the invoice?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"monday"},"system_response_to_user_message_0":"Sweet, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Monday?"}}
     category: no_contact_info
 
-    state: {"current_user_message":{"user_media":{},"user_text":"is lonewraps@gmail.com where i send pics of the car?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"wednesday the 28th"},"system_response_to_user_message_0":"Sweet, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Wednesday the 28th?"}}
+    state: {"current_user_message":{"user_media":{},"user_text":"is info@lonewraps.com where i send pics of the car?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"wednesday the 28th"},"system_response_to_user_message_0":"Sweet, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Wednesday the 28th?"}}
     category: no_contact_info
 
     state: {"current_user_message":{"user_media":{},"user_text":"actually nevermind, ill hold off for now"},"message_history":{"user_message_0":{"user_media":{},"user_text":"first one"},"system_response_to_user_message_0":"Sounds good, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Monday the 19th?"}}
@@ -113,7 +113,7 @@ BUSINESS_OPERATIONS_EXAMPLES: str = r"""
     state: {"current_user_message":{"user_media":{},"user_text":"do you guys take cards?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"monday"},"system_response_to_user_message_0":"Sweet, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Monday?"}}
     category: business_operations
 
-    state: {"current_user_message":{"user_media":{},"user_text":"is lonewraps@gmail.com where i send pics of the car?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"wednesday the 28th"},"system_response_to_user_message_0":"Sweet, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Wednesday the 28th?"}}
+    state: {"current_user_message":{"user_media":{},"user_text":"is info@lonewraps.com where i send pics of the car?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"wednesday the 28th"},"system_response_to_user_message_0":"Sweet, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Wednesday the 28th?"}}
     category: business_operations
 
     state: {"current_user_message":{"user_media":{},"user_text":"can I finance the deposit through affirm?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Tuesday works"},"system_response_to_user_message_0":"Sounds good, can I get a name, number and email to shoot that invoice over to so we can lock in your date for Tuesday the 13th?"}}

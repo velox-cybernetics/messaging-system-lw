@@ -137,7 +137,7 @@ OTHER_PICK: str = "other"
 
 #COLOR NOW
 
-#pic asks with nothing back before we settle for the color now they typed
+#pic asks with nothing back before we settle for the saturated color they typed, never a third
 COLOR_PIC_ASK_LIMIT: int = 2
 
 #marks a color now that came from their text, no pic means no bright_vehicle read
@@ -148,6 +148,9 @@ TYPED_COLOR_FIELD_NAMES: list[str] = ["color", "bright", "neutral"]
 
 #a typed color says so on file, plus whether its bright since no pic said it
 TYPED_COLOR_INFO_NAMES: list[str] = ["color_from", "color_bright"]
+
+#a saturated color they typed sits here while its pic gets asked for, so the asks know only the pic is missing
+WAITING_COLOR_NAME: str = "waiting_color"
 
 
 #PRICE FIRST
@@ -162,8 +165,11 @@ COLOR_NOW_NEED: str = "color_now"
 #asked after every price need so its never one, but the job still waits on it
 COLOR_WANT_NEED: str = "color_want"
 
-#the owners first ask, then how he words it again, so a repeat ask goes out in new words
-VEHICLE_COLOR_NOW_ASKS: list[str] = ["What car is it, and what color is it right now? Send me a pic if you can", "What are you driving, and what color's it at right now? Shoot me a quick pic of it when you get a sec", "Which car is it, and what color's it at the moment? Snap a pic of it and send it over whenever you get a chance"]
+#the owners first ask, then how he words it again, the color now always goes in words first
+VEHICLE_COLOR_NOW_ASKS: list[str] = ["What car is it, and what color is it right now?", "What are you driving, and what color's it at right now?", "Which car is it, and what color's it at the moment?"]
+
+#a saturated color came in with the job, so the car gets asked along with a pic of it
+VEHICLE_PIC_ASKS: list[str] = ["What car is it? Send me a pic of it if you can", "What are you driving? Shoot me a quick pic of it when you get a sec"]
 
 VEHICLE_ROUTE_ASKS: list[str] = ["What vehicle is it, and which route are you leaning towards?", "What are you driving, and are you leaning more towards the wrap or the colored PPF?"]
 
@@ -172,7 +178,10 @@ VEHICLE_ASKS: list[str] = ["What car is it?", "What are you driving?", "Which ca
 ROUTE_ASKS: list[str] = ["Which route are you leaning towards?", "Are you leaning more towards the wrap or the colored PPF?"]
 
 #the vehicle slot is the model on file, or just the make when thats all there is
-COLOR_NOW_ASKS: list[str] = ["What color is the {vehicle} right now? Send me a pic if you can", "What color's the {vehicle} at right now? Shoot me a quick pic of it when you get a sec", "When you get a chance, can you snap a pic of the {vehicle} and send it over, that way I can see the exact color on it"]
+COLOR_NOW_ASKS: list[str] = ["What color is the {vehicle} right now?", "What color's the {vehicle} at right now?", "What color is the {vehicle} at the moment?"]
+
+#they already said a saturated color, so its just the pic of it now, softly, as a question so a repeat gets new words
+COLOR_PIC_ASKS: list[str] = ["Can you send me a pic of the {vehicle} when you get a chance?", "When you get a sec, could you snap a quick pic of the {vehicle} and send it over, that way I can see the exact color on it?"]
 
 
 #ASKED AGAIN
@@ -945,7 +954,7 @@ def color_codes_in(on_file: dict) -> list[str]:
 def color_job_on_file(id: str) -> list[str]:
     return color_codes_in(log.read_state(f"s_p_color_job_{id}"))
 
-#a color job still missing the color it is now, the only time a vehicle pic gets asked for
+#a color job still missing the color it is now, the only time the color or a pic of it gets asked for
 def color_now_missing(id: str) -> bool:
     return len(color_job_on_file(id)) > 0 and log.read_info(f"criticalInfo_{id}").get("color") is None
 
@@ -961,6 +970,13 @@ def note_color_pic_ask(id: str, reply: str) -> None:
     asks: int = log.next_count(f"color_pic_asks_{id}")
 
     print(f"COLOR PIC ASKS: {asks}")
+
+#the color now is done once its on file or the pic asks ran out, either way the job moves on
+def color_now_settled(critical_info: dict[str, str], id: str) -> bool:
+    if(critical_info.get("color") is not None):
+        return True
+
+    return color_pic_asks(id) >= COLOR_PIC_ASK_LIMIT
 
 #the color now they typed anywhere in the chat, plus bright and neutral, empty if never typed
 def typed_color_read(user_message: dict, message_history: dict) -> tuple[str, bool, bool]:
@@ -993,6 +1009,9 @@ def typed_color_check(user_message: dict, message_history: dict, id: str) -> str
     #till the pic asks run out only a neutral color goes by what they typed
     if(not neutral and color_pic_asks(id) < COLOR_PIC_ASK_LIMIT):
         print(f"TYPED COLOR: {typed_color} isn't neutral, so the pic of it still gets asked for")
+
+        #kept so the asks know they already said it and only the pic is missing
+        log.write_info(f"criticalInfo_{id}", [typed_color], [WAITING_COLOR_NAME])
 
         return ""
 
@@ -1135,14 +1154,15 @@ def color_route(state: dict, codes: list[str], id: str) -> None:
     if(picked in COLOR_ROUTES and confidence >= COLOR_ROUTE_THRESHOLD):
         log.write_info(f"criticalInfo_{id}", [picked], ["route"])
 
-#vehicle, route, pic and exact color are in, and the owner hasn't been asked about it yet
-def color_check_due(color_job_on: bool, critical_info: dict[str, str], color_check: str) -> bool:
+#vehicle, route, color now and exact color are in, and the owner hasn't been asked about it yet
+def color_check_due(color_job_on: bool, critical_info: dict[str, str], color_check: str, id: str) -> bool:
     vehicle_known: bool = critical_info.get("make") is not None or critical_info.get("model") is not None
 
     #the owner checks the color in there picked film, so the check waits on the route too
     route_picked: bool = critical_info.get("route") is not None
 
-    exact_color_in: bool = critical_info.get("color") is not None and critical_info.get("want") is not None
+    #the color now counts as in once the pic asks ran out, even with nothing typed
+    exact_color_in: bool = color_now_settled(critical_info, id) and critical_info.get("want") is not None
 
     return color_job_on and vehicle_known and route_picked and exact_color_in and color_check == ""
 
@@ -1160,17 +1180,21 @@ def price_needs(critical_info: dict[str, str], id: str) -> list[str]:
     if(len(color_job_on_file(id)) > 0 and critical_info.get("route") is None):
         needs.append(ROUTE_NEED)
 
-    if(critical_info.get("color") is None and color_pic_asks(id) < COLOR_PIC_ASK_LIMIT):
+    if(not color_now_settled(critical_info, id)):
         needs.append(COLOR_NOW_NEED)
 
     return needs
 
 #the ways to ask for the first thing the price waits on, grouped the way the owner asks them
-def price_ask_words(needs: list[str]) -> list[str]:
+def price_ask_words(needs: list[str], color_waiting: bool) -> list[str]:
     if(needs[0] == VEHICLE_NEED):
         #no film picked yet, so the vehicle ask comes with the route ask and the color waits
         if(ROUTE_NEED in needs):
             return VEHICLE_ROUTE_ASKS
+
+        #they already said a saturated color, so the car gets asked with a pic of it
+        if(COLOR_NOW_NEED in needs and color_waiting):
+            return VEHICLE_PIC_ASKS
 
         if(COLOR_NOW_NEED in needs):
             return VEHICLE_COLOR_NOW_ASKS
@@ -1179,6 +1203,10 @@ def price_ask_words(needs: list[str]) -> list[str]:
 
     if(needs[0] == ROUTE_NEED):
         return ROUTE_ASKS
+
+    #the color is already said, so its only the pic of it thats missing
+    if(color_waiting):
+        return COLOR_PIC_ASKS
 
     return COLOR_NOW_ASKS
 
@@ -1194,7 +1222,9 @@ def price_ask(critical_info: dict[str, str], needs: list[str], message_history: 
 
     asks: list[str] = []
 
-    for ask in price_ask_words(needs):
+    color_waiting: bool = critical_info.get(WAITING_COLOR_NAME) is not None
+
+    for ask in price_ask_words(needs, color_waiting):
         asks.append(ask.format(vehicle=vehicle))
 
     earlier_replies: list[str] = spacing.sent_replies(message_history)
@@ -1204,6 +1234,13 @@ def price_ask(critical_info: dict[str, str], needs: list[str], message_history: 
             return ask
 
     return asks[-1]
+
+#the reply already asks what the color now waits on, the pic once they said a saturated color
+def color_now_asked(reply: str, critical_info: dict[str, str]) -> bool:
+    if(critical_info.get(WAITING_COLOR_NAME) is not None):
+        return spacing.asks_for_pic(reply)
+
+    return len(spacing.color_now_asks(reply)) > 0
 
 
 #PRICE HOLD
@@ -1316,12 +1353,10 @@ def pricing_lack_info(state: dict, id: str) -> str:
     return enforced_reply(state, id, lack_info_text, response, "LACK INFO REGEN", regen_prompt, models.generator, PRICING_REGEN_MAX_TOKENS, PRICING_REGEN_EFFORT, line_breaks=False, shop_last_reply=None)
 
 #the prompt that asks for what the price or booking still waits on, None when nothings missing
-def pricing_interrogator(color_job_on: bool, critical_info: dict[str, str], color_check: str) -> str | None:
+def pricing_interrogator(color_job_on: bool, critical_info: dict[str, str], color_check: str, id: str) -> str | None:
     make: str | None = critical_info.get("make")
 
     model: str | None = critical_info.get("model")
-
-    color: str | None = critical_info.get("color")
 
     want: str | None = critical_info.get("want")
 
@@ -1330,8 +1365,8 @@ def pricing_interrogator(color_job_on: bool, critical_info: dict[str, str], colo
     #color changes go vinyl or colored PPF, and that pick comes before any color talk
     route_needed: bool = color_job_on and route is None
 
-    #only a pic tells us the color it is now, so a wrap or colored PPF price waits on one
-    color_needed: bool = color_job_on and color is None
+    #a wrap or colored PPF price waits on the color now till its on file or the pic asks ran out
+    color_needed: bool = color_job_on and not color_now_settled(critical_info, id)
 
     if(make is None and model is None):
         #no car yet, so ask for it, with the color thrown in when the job needs that too
@@ -1442,10 +1477,10 @@ def pricing_reply(state: dict, critical_info: dict[str, str], id: str) -> tuple:
 
     color_check: str = owner.color_check_status(id)
 
-    interrogator_prompt: str | None = pricing_interrogator(color_job_on, critical_info, color_check)
+    interrogator_prompt: str | None = pricing_interrogator(color_job_on, critical_info, color_check, id)
 
     #the owner gets the exact color they sent once, so he can see if we can get it
-    if(color_check_due(color_job_on, critical_info, color_check)):
+    if(color_check_due(color_job_on, critical_info, color_check, id)):
         owner.request_color_check(id, critical_info.get("route", ""))
 
     #somethings still missing, so the reply answers what it can and asks for the rest

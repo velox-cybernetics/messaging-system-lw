@@ -18,11 +18,11 @@ def examples() -> str:
     REASON: A link sent right after the shop asked for the exact color, with "this one" pointing to it, is the color they want. The link's words name it, and the link itself never goes in the field.
 
     Ex 3:
-    SHOP_LAST_REPLY: Yeah, we can do that, a wrap on the Camaro typically runs $2950 plus tax, it just depends on what color it is right now. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color are you wanting to go, and could you send a pic of it?
+    SHOP_LAST_REPLY: Yeah, we can do that, a wrap on the Camaro typically runs $2950 plus tax, it just depends on what color it is right now. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is the Camaro right now?
     USER_MESSAGE: here she is
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A photo of a red Chevrolet Camaro in a driveway, front three quarter view.\nservice_ques: none visible\ntext_overlays: none\nbright_vehicle: yes"}}
     Response: WANT:
-    REASON: The shop asked for a pic of their car and "here she is" says it is theirs, so it's the color it is now, never the color they want.
+    REASON: The shop asked what color their Camaro is right now and "here she is" says it is theirs, so it's the color it is now, never the color they want.
 
     Ex 4:
     SHOP_LAST_REPLY: Sweet, so satin green on the 570S would run $4160 plus tax, do you have an exact green in mind? If you do, can you shoot a pic of it over
@@ -123,18 +123,18 @@ def examples() -> str:
     REASON: "Wrong one, meant this" swaps out the green the shop took in, so the solid color with it is the color they want now.
 
     Ex 18:
-    SHOP_LAST_REPLY: For sure, gloss black would look clean on the 4Runner. There's two ways to get there: a vinyl wrap is the more affordable route in pretty much any color and finish, and colored PPF changes the color while protecting the paint from rock chips at the same time. What color is the 4Runner right now? Send me a pic if you can
+    SHOP_LAST_REPLY: For sure, gloss black would look clean on the 4Runner. There's two ways to get there: a vinyl wrap is the more affordable route in pretty much any color and finish, and colored PPF changes the color while protecting the paint from rock chips at the same time. What color is the 4Runner right now?
     USER_MESSAGE: Color change probably Blue
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A photo of a satin blue Toyota 4Runner with TOYOTA lettering on the grille and black wheels, parked on a gravel road with trees behind it, front three quarter view.\nservice_ques: satin blue color change wrap\ntext_overlays: TOYOTA\nbright_vehicle: no"}}
     Response: WANT:
-    REASON: The shop asked what color the 4Runner is right now and for a pic of it, so the pic is their 4Runner as it is now and the blue they typed answers that. "Color change" is the job, never pointing to the pic, and a service_ques like a color change wrap only says it may be wrapped now. The color they want is still the gloss black the shop took in.
+    REASON: The shop asked what color the 4Runner is right now, so the pic is their 4Runner as it is now and the blue they typed answers that. "Color change" is the job, never pointing to the pic, and a service_ques like a color change wrap only says it may be wrapped now. The color they want is still the gloss black the shop took in.
 
     Ex 19:
-    SHOP_LAST_REPLY: Sweet, olive green would look sick on the Wrangler. What color is the Wrangler right now? Send me a pic if you can
+    SHOP_LAST_REPLY: Sweet, olive green would look sick on the Wrangler. What color is the Wrangler right now?
     USER_MESSAGE: this is the green I want
     USER_MEDIA: {"media_element_0":{"media_description":"brief_description: A photo of a satin olive green Jeep Wrangler on a dirt trail, side view.\nservice_ques: a color change wrap\ntext_overlays: none\nbright_vehicle: no"}}
     Response: WANT: Satin Olive Green
-    REASON: "This is the green I want" points to the pic as the color they want, so it's the color they want even though the shop asked for a pic of their Wrangler.
+    REASON: "This is the green I want" points to the pic as the color they want, so it's the color they want even though the shop asked what color their Wrangler is right now.
 
     Ex 20:
     SHOP_LAST_REPLY: That's the best we can do on it, the satin black wrap comes with a 6 month warranty covering any peeling or bubbling. So when you get a chance, can you shoot over a pic of the exact satin black you're wanting?
@@ -174,7 +174,7 @@ def prompt() -> str:
     1. WANT is the exact color they want their vehicle to be, and it only comes from a pic, screenshot or video of that color, or a link to it in USER_MESSAGE.
     2. A pic, screenshot or video is the color they want when SHOP_LAST_REPLY asked for the exact color they want (a pic or link of it), when their text points to it as the color they want ("this color", "this one", "something like this", "in this color"), when it's a screenshot of a film brand's color page or a color swatch, a solid color included, or when it's the shop's own post they point to as the look they want. A pic of another vehicle in a color sent right after SHOP_LAST_REPLY asked for the exact color is the color they want even when their text is about something else (the price, a discount, booking), and even when its finish or shade isn't the one they typed before, like a matte black car after they said satin black: WANT is what the pic shows, named by rule 10.
     3. "Wrong one", "oops wrong pic" or "meant to send this" with a pic says the one they sent before it was the wrong one, never the one with it. The pic with it is the one they meant to send in its place, so when SHOP_LAST_REPLY asked for the exact color they want or took one in, it's the color they want.
-    4. It never is their own vehicle as it is now: a pic sent when SHOP_LAST_REPLY asked what color their vehicle is right now or for a pic of it ("What color is the Sorento right now? Send me a pic if you can"), or one their text says is their car ("here she is", "that's my truck", "here's the car"), unless their text points to it as the color they want (rule 2). A color they type with it ("Gray", "its silver", "probably blue") and their text naming the job ("color change", "wrap it") never point to the pic, so neither makes it WANT, and a service_ques like a color change wrap doesn't either, it only says how their vehicle looks now, since it can be wrapped right now.
+    4. It never is their own vehicle as it is now: a pic sent when SHOP_LAST_REPLY asked what color their vehicle is right now ("What color is the Sorento right now?") or for a pic of it once they typed that color ("Perfect, good to know it's blue, can you snap a pic of it and send it over whenever you get a chance", "When you get a chance, can you snap a pic of the Sorento and send it over, that way I can see the exact blue on it"), or one their text says is their car ("here she is", "that's my truck", "here's the car"), unless their text points to it as the color they want (rule 2). A color they type with it ("Gray", "its silver", "probably blue") and their text naming the job ("color change", "wrap it") never point to the pic, so neither makes it WANT, and a service_ques like a color change wrap doesn't either, it only says how their vehicle looks now, since it can be wrapped right now.
     5. It never is a pic, screenshot or video that shows no vehicle, film, wrap or color sample, like a meme, a selfie or a screenshot of a phone call or a chat, even when their text points to it ("can you do it this color") or SHOP_LAST_REPLY just asked for the exact color. There's no color in it the shop could get in, so the color of a shirt, a face or the background in it is never WANT.
     6. A link in USER_MESSAGE sent when SHOP_LAST_REPLY asked for the exact color, or with their text pointing to it as the color they want, is the color they want: write the color the link's words or their text name (the brand and finish too when they're there), or Color From Link when nothing names it.
     7. A color they only type ("satin green", "thinking nardo grey") with no pic, screenshot, video or link of it is never WANT, and neither is "not yet", "still looking" or any answer that doesn't send one.

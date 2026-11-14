@@ -379,6 +379,9 @@ async def owner_checked(id: str, text: str | None, attachments: list | None) -> 
     if(id != OWNER_NUMBER):
         return False
 
+    #anything he sends opens his thread back up on blooios end, answer or not
+    await asyncio.to_thread(owner.line_answered)
+
     if(not attachments):
         attachments = []
 
@@ -585,7 +588,11 @@ async def blooio_hook(request: Request):
 
         #a tapback they put on in there own chat lifts the hold on their follow ups
         if(sender != "" and reaction.get("direction") == "inbound" and reaction.get("action", "add") == "add" and not reaction.get("is_group")):
-            await asyncio.to_thread(followup.note_reaction, sender)
+            #his tapback opens his thread back up just like a text from him, and he has no follow ups
+            if(sender == OWNER_NUMBER):
+                await asyncio.to_thread(owner.line_answered)
+            else:
+                await asyncio.to_thread(followup.note_reaction, sender)
     elif(data.get("type") == "message.failed"):
         failed: dict = data.get("data")
 

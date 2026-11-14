@@ -26,6 +26,12 @@ def color_check_unmatched(answer: tuple) -> None:
 
         return
 
+    #a hil came in after the check, so his bare answer might be for that, he gets asked with the number
+    if(answer[0] == "unsure"):
+        notify.notify_owner_text(f"A HIL came in after color check #{answer[2]}, so reply Y {answer[2]} if we have that exact color, or M {answer[2]} with pics of the closest materials")
+
+        return
+
     #an old N from before M existed, the closest materials took its job
     if(answer[1] == owner.NO_ANSWER):
         notify.notify_owner_text(f"Reply Y {answer[2]} if we have that exact color, or M {answer[2]} with pics of the closest materials")

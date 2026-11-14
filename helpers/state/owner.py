@@ -84,6 +84,22 @@ NEWS_WAIT_SECONDS: int = 10
 #owner answers landing on each customer right now, a reply in progress waits for every one
 NEWS_LANDING: dict[str, int] = {}
 
+#blooio lets 4 texts into his thread till he texts back or reacts, an older thread gets more
+OWNER_LINE_CAP: int = 4
+
+#hils stay out of his thread once only this many spots are left, color checks can't wait on him
+COLOR_CHECK_ROOM: int = 2
+
+#texts that went in his blooio thread since he last texted back or reacted
+OWNER_LINE_STREAK: str = "owner_line_streak"
+
+#what the newest text in his thread was, a hil or a color check one
+OWNER_LINE_LAST: str = "owner_line_last"
+
+HIL_TEXT: str = "hil"
+
+CHECK_TEXT: str = "check"
+
 #replaces HIL after a hold reply, so there next message waits and the one after it gets one
 HELD_STATE: str = "HIL HELD"
 
@@ -287,9 +303,46 @@ def take_color_check_alert(id: str, channel: str) -> dict[str, str]:
     return log.read_info(f"color_check_{id}")
 
 
+#OWNER LINE
+
+#a text made it into his blooio thread, so it counts toward blooios cap and its the newest one there
+def line_sent(kind: str) -> None:
+    try:
+        log.next_count(OWNER_LINE_STREAK)
+
+        log.write_state(OWNER_LINE_LAST, kind)
+    except Exception as error:
+        #the text still went out, a missed count only lets a hil take one spot too many
+        print(f"OWNER LINE WRITE ERROR: {error}")
+
+#he texted back or reacted, so blooio gives his thread all its room back
+def line_answered() -> None:
+    try:
+        log.clear_state(OWNER_LINE_STREAK)
+    except Exception as error:
+        #his answer still gets read, hils just ride textbelt a bit longer than they need to
+        print(f"OWNER LINE WRITE ERROR: {error}")
+
+#true while a hil can go in his thread and still leave the color checks their spots
+def hil_room() -> bool:
+    try:
+        streak: int = log.read_count(OWNER_LINE_STREAK)
+    except Exception as error:
+        #no telling how full it is, so the hil goes over textbelt like it always did
+        print(f"OWNER LINE READ ERROR: {error}")
+
+        return False
+
+    return streak < OWNER_LINE_CAP - COLOR_CHECK_ROOM
+
+#true when a hil is the newest text in his thread, so a bare yes might be him answering it
+def hil_last() -> bool:
+    return log.read_state(OWNER_LINE_LAST) == HIL_TEXT
+
+
 #OWNER ANSWERS
 
-#answer with its letter and code, which when a bare one has many waiting, None when its not one
+#answer with its letter and code, which when a bare one has many waiting, unsure when a hil came after, None when its not one
 def color_check_answer(text: str) -> tuple | None:
     match = COLOR_ANSWER_PATTERN.match(text)
 
@@ -317,6 +370,10 @@ def color_check_answer(text: str) -> tuple | None:
         waiting_codes: list[str] = list(waiting.keys())
 
         code = waiting_codes[0]
+
+        #a hil landed in his thread after the check, so a bare yes could be him answering the hil
+        if(hil_last()):
+            return ("unsure", letter, code)
 
     return ("answer", letter, code)
 

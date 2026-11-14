@@ -86,9 +86,9 @@ def examples() -> str:
     Response: "You can reach us at (855) 494-1645."
 
     Ex 14:
-    BUSINESS_DETAILS: {"Contact Email": "lonewraps@gmail.com"}
+    BUSINESS_DETAILS: {"Contact Email": "info@lonewraps.com"}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"What about email?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Whats the best number to reach you guys at?"},"system_response_to_user_message_0":"You can reach us at (855) 494-1645."}}
-    Response: "It's lonewraps@gmail.com."
+    Response: "It's info@lonewraps.com."
 
     Ex 15:
     BUSINESS_DETAILS: {"Website": "https://filthywraps.com, service details and online quote form available"}
@@ -298,7 +298,7 @@ def examples() -> str:
 
     Ex 49:
     BUSINESS_DETAILS: {"Shop Address": ["105 S 700 E St Unit E, American Fork, UT 84003"], "Shop Building": "The gray building just south of Jack and Jill's", "Shop Address Notes": "Give EVERY location listed when asked where located, with the shop building right after the address. NOT MOBILE(DONT MENTION UNLESS ASK), Waiting area available or can just drop off and get it whenever done(DONT MENTION UNLESS ASKED)"}
-    STATE: {"current_date_time":"Monday, November 09, 2026 at 11:50 AM","current_user_message":{"user_media":{},"user_text":"Thought you were located in St. George."},"message_history":{"user_message_0":{"user_text":"hello my name is Brian F. Mckenzie, I am looking to get the service of Vinyl Wrap the vehicle I have is 2018 Lexus LS 500 F Sport"},"system_response_to_user_message_0":"Heyy Brian, this is Hazel with the Lone Wraps team, saw your quote request for a vinyl wrap on the LS 500 F Sport. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can","user_message_1":{"user_media":{"media_element_0":{"media_description":"brief_description: An upside down photo of a silver Lexus LS 500 sedan, rear view, parked in a residential driveway.\ntext_overlays: LS 500\nbright_vehicle: no"}},"user_text":""},"system_response_to_user_message_1":"Sweet, so a wrap on the LS 500 would run $2950 + tax\nHeyy! Did you want to get that wrap on the LS 500 on the schedule?"}}
+    STATE: {"current_date_time":"Monday, November 09, 2026 at 11:50 AM","current_user_message":{"user_media":{},"user_text":"Thought you were located in St. George."},"message_history":{"user_message_0":{"user_text":"hello my name is Brian F. Mckenzie, I am looking to get the service of Vinyl Wrap the vehicle I have is 2018 Lexus LS 500 F Sport"},"system_response_to_user_message_0":"Heyy Brian, this is Hazel with the Lone Wraps team, saw your quote request for a vinyl wrap on the LS 500 F Sport. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now?","user_message_1":{"user_media":{"media_element_0":{"media_description":"brief_description: An upside down photo of a silver Lexus LS 500 sedan, rear view, parked in a residential driveway.\ntext_overlays: LS 500\nbright_vehicle: no"}},"user_text":""},"system_response_to_user_message_1":"Sweet, so a wrap on the LS 500 would run $2950 + tax\nHeyy! Did you want to get that wrap on the LS 500 on the schedule?"}}
     Response: "Oh we're actually up in American Fork, so you're pretty far out then. If you're ever in the area and looking to get some work done, definitely reach out."
     REASON: St. George is hours from the shop, so the street address and the shop building stay out (business rule 5): it says the shop is up in American Fork and that they're pretty far out, then leaves the door open for whenever they're in the area, with no question and no push to make the drive.
 

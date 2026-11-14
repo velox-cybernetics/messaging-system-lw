@@ -96,9 +96,9 @@ def saved_lines(text: str) -> list[str]:
 
 #OWNER TEXTS
 
-#his color checks go over blooio so they land in the thread he answers in, not with the hand offs
+#color check texts go in his blooio thread, the same one he answers them in
 def notify_owner_text(text: str) -> None:
-    senders.send_alert("OWNER NOTIFY", senders.OWNER_NUMBER, text)
+    senders.send_owner_line("OWNER NOTIFY", owner.CHECK_TEXT, text)
 
 #the exact color they sent goes to the owner with who it is, the job and the number he answers with
 def notify_color_check(id: str, channel: str) -> None:

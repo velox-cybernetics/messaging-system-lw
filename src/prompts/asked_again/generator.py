@@ -19,13 +19,13 @@ def examples() -> str:
     REASON: The last reply already asked for the lavender with the plain follow up, so it's asked a third way, in words neither earlier ask used, still for a pic of the exact lavender (rules 1 and 2). It starts its own part on a new line after the door jambs answer, so nothing goes in front of it (rule 3).
 
     Ex 2:
-    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"how long would you need it for?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2020 camry"},"system_response_to_user_message_0":"For sure, a wrap on the Camry typically runs $2950 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now? Send me a pic if you can"}}
-    REPLY: "For the wrap we'd need the Camry for about 3 to 5 days. What color is it right now? Send me a pic if you can"
-    ASK: What color is it right now? Send me a pic if you can
+    STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"how long would you need it for?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my 2020 camry"},"system_response_to_user_message_0":"For sure, a wrap on the Camry typically runs $2950 + tax. Our vinyl wraps use high quality film and it does also come with a free 6 month warranty. What color is it right now?"}}
+    REPLY: "For the wrap we'd need the Camry for about 3 to 5 days. What color is it right now?"
+    ASK: What color is it right now?
     ASKED_BEFORE:
-    What color is it right now? Send me a pic if you can
-    Response: "What color's the Camry at right now? Shoot me a quick pic of it when you get a sec"
-    REASON: The color it is now and a pic of it still aren't in, so the same two pieces get asked for again in new words that name the Camry (rules 1 and 2). It comes right after the answer on how long, so it reads on from it with nothing in front (rule 3).
+    What color is it right now?
+    Response: "What color's the Camry at right now?"
+    REASON: The color it is now still isn't in, so it gets asked for again in new words that name the Camry, with no pic since ASK didn't ask for one (rules 1 and 2). It comes right after the answer on how long, so it reads on from it with nothing in front (rule 3).
 
     Ex 3:
     STATE: {"current_date_time":"Thursday, October 22, 2026 at 02:30 PM","current_user_message":{"user_media":{},"user_text":"how long does it take?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"how much for tint on my 2022 civic, all the windows"},"system_response_to_user_message_0":"Our ceramic tint on the sides and rear of the Civic is $450 + tax, and if you wanted to add the windshield that would be an extra $200. Do you know how dark you're wanting to go?","user_message_1":{"user_media":{},"user_text":"20 all around"},"system_response_to_user_message_1":"Sweet, 20% all around would look clean on the Civic. Did you want to hop on the schedule?","user_message_2":{"user_media":{},"user_text":"does it come with a warranty"},"system_response_to_user_message_2":"Yeah, it comes with a lifetime warranty on any bubbling or peeling. You wanting to get the Civic on the schedule?"}}
@@ -70,7 +70,7 @@ def prompt() -> str:
     #CONTEXT
     - The input is STATE, REPLY, ASK and ASKED_BEFORE.
     - STATE is the conversation as JSON. current_user_message is what they just sent, empty when the shop is reaching back out on its own with a follow up. message_history holds the conversation oldest first: user_message_N is a customer message and system_response_to_user_message_N is the shop's reply to it, with any follow ups that got no answer on its end, one per line.
-    - REPLY is the whole reply about to go out. ASK is the part of it that gets written again: one question, with the sentence right after it that finishes the same ask when there is one, like "If you do, can you shoot a pic of it over" or "Send me a pic if you can". What you write takes ASK's place in REPLY, and the rest of REPLY goes out as it is.
+    - REPLY is the whole reply about to go out. ASK is the part of it that gets written again: one question, with the sentence right after it that finishes the same ask when there is one, like "If you do, can you shoot a pic of it over" or "Send me a pic of it if you can". What you write takes ASK's place in REPLY, and the rest of REPLY goes out as it is.
     - ASKED_BEFORE is every ask the shop already sent in message_history, one per line, then any wording already tried for ASK that couldn't go out.
 
     #THE NEW WORDING

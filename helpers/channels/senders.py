@@ -11,6 +11,7 @@ from helpers.response import spacing
 from helpers.state import dashboard
 from helpers.state import ghl
 from helpers.state import log
+from helpers.state import owner
 
 
 #GLOBALS
@@ -572,7 +573,7 @@ def send_textbelt_texts(label: str, recipient: str, text: str) -> bool:
 
 #OWNER ALERTS
 
-#color checks and dev alerts go over blooio with no bubble, nobodys waiting on a reply there
+#owner and dev alerts go over blooio with no bubble, nobodys waiting on a reply there
 def send_alert(label: str, recipient: str, text: str, attachments: list[str] | None = None) -> bool:
     send_url: str = f"{BLOOIO_BASE_URL}/chats/{quote(recipient, safe='')}/messages"
 
@@ -583,8 +584,24 @@ def send_alert(label: str, recipient: str, text: str, attachments: list[str] | N
 
     return send_message(label, recipient, send_url, BLOOIO_API_KEY, payload)
 
-#the owners texts go over textbelt, and the first one it won't send tells the dev its down
+#every text that makes it into the owners blooio thread gets counted, so hils know whats left
+def send_owner_line(label: str, kind: str, text: str, attachments: list[str] | None = None) -> bool:
+    sent: bool = send_alert(label, OWNER_NUMBER, text, attachments)
+
+    if(sent):
+        owner.line_sent(kind)
+
+    return sent
+
+#hils go in his blooio thread while it has spots to spare, then textbelt, and a textbelt fail tells the dev
 def send_owner_text(label: str, text: str) -> bool:
+    if(owner.hil_room()):
+        if(send_owner_line(label, owner.HIL_TEXT, text)):
+            return True
+    else:
+        print(f"[{label}] the owner's blooio thread only has room left for color checks, so this one goes over textbelt")
+
+    #a full thread or a blooio no still gets to him over textbelt
     if(send_textbelt_texts(label, OWNER_NUMBER, text)):
         #textbelt is back, so the next time it quits the dev hears about it again
         TEXTBELT_DOWN.clear()
@@ -595,7 +612,7 @@ def send_owner_text(label: str, text: str) -> bool:
     if(len(TEXTBELT_DOWN) == 0):
         TEXTBELT_DOWN.append(label)
 
-        send_alert("DEV NOTIFY", DEV_NUMBER, f"OWNER TEXT FAILED\nLabel: {label}\nTextbelt would not send it, so the owner gets no texts till it's fixed, the logs say why")
+        send_alert("DEV NOTIFY", DEV_NUMBER, f"OWNER TEXT FAILED\nLabel: {label}\nNeither his blooio thread nor textbelt took it, so he never got it, the logs say why")
 
     return False
 
@@ -644,11 +661,11 @@ def notify_color_check(code: str, channel: str, user: str, customer: str, servic
 
     text = f"{text}\nREASON: Customer wants to know if you have this color for the {service}\nANSWERS: Y {code}, M {code}"
 
-    if(send_alert("COLOR CHECK", OWNER_NUMBER, text, media)):
+    if(send_owner_line("COLOR CHECK", owner.CHECK_TEXT, text, media)):
         return True
 
     #a pic blooio won't attach still reaches the owner as its link
     if(len(media) > 0):
-        return send_alert("COLOR CHECK", OWNER_NUMBER, f"{text}\nPics: {' '.join(media)}")
+        return send_owner_line("COLOR CHECK", owner.CHECK_TEXT, f"{text}\nPics: {' '.join(media)}")
 
     return False

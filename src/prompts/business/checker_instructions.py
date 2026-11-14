@@ -64,7 +64,7 @@ def examples() -> str:
     answer: False
     REASON: Parking is not covered, but the hours are, so the regular reply gives the hours and says it'll look into the parking (false case 5).
 
-    BUSINESS_DETAILS: {"Contact Email": "lonewraps@gmail.com"}
+    BUSINESS_DETAILS: {"Contact Email": "info@lonewraps.com"}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"What about email?"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Whats the best number to reach you guys at?"},"system_response_to_user_message_0":"You can reach us at (855) 494-1645."}}
     answer: False
     REASON: The short follow up asks for the email, and Contact Email has it.

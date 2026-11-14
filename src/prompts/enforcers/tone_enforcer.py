@@ -44,7 +44,7 @@ def examples() -> str:
     return r"""Examples:
 state: {"message_context":{},"draft_reply":"Ooh love that! What's the year/make/model?"}
 answer: follows
-state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my tacoma"},"system_response_to_user_message_0":"For sure, a wrap on the Tacoma typically runs $3450 + tax, the exact price just depends on what color it is right now. What color is it right now? Send me a pic if you can"},"draft_reply":"Sweet, so satin black on the Tacoma would run our standard price of $3450 + tax, since it's a standard color right now. Did you want to hop on the schedule?"}
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my tacoma"},"system_response_to_user_message_0":"For sure, a wrap on the Tacoma typically runs $3450 + tax, the exact price just depends on what color it is right now. What color is it right now?"},"draft_reply":"Sweet, so satin black on the Tacoma would run our standard price of $3450 + tax, since it's a standard color right now. Did you want to hop on the schedule?"}
 answer: follows
 state: {"message_context":{},"draft_reply":"tbh I'm not sure on the parking 😅 I'm still learning the ropes here since I'm new, but I'll ask the owner."}
 answer: follows
@@ -58,11 +58,11 @@ state: {"message_context":{},"draft_reply":"Sorry to hear that, let me look into
 answer: follows
 state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"we need our logo on 3 vans"},"system_response_to_user_message_0":"For sure, are you looking for a full wrap, a half wrap or just decals on them?"},"draft_reply":"Perfect, we can do the whole fleet. Do you have a vector file for your logo?"}
 answer: follows
-state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my model 3"},"system_response_to_user_message_0":"For sure, a wrap on the Model 3 typically runs $2950 + tax, the exact price just depends on what color it is right now. What color is it right now? Send me a pic if you can"},"draft_reply":"Got it! A wrap on the Model 3 would run $2950 + tax. Feel free to reach out if you have any other questions!"}
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much to wrap my model 3"},"system_response_to_user_message_0":"For sure, a wrap on the Model 3 typically runs $2950 + tax, the exact price just depends on what color it is right now. What color is it right now?"},"draft_reply":"Got it! A wrap on the Model 3 would run $2950 + tax. Feel free to reach out if you have any other questions!"}
 answer: ai_wording
 state: {"message_context":{},"draft_reply":"Great question! I'd be happy to help. Our ceramic coating lasts around 4 years and keeps the paint easier to clean."}
 answer: ai_wording
-state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf on my model y"},"system_response_to_user_message_0":"Colored PPF on the Model Y typically runs $5950 + tax for the full body, plus it comes with free side and rear window tint. What color is it right now? Send me a pic if you can"},"draft_reply":"Understood, I apologize for the confusion. The full body colored PPF on the Model Y would be $5950 + tax."}
+state: {"message_context":{"user_message_0":{"user_media":{},"user_text":"how much for colored ppf on my model y"},"system_response_to_user_message_0":"Colored PPF on the Model Y typically runs $5950 + tax for the full body, plus it comes with free side and rear window tint. What color is it right now?"},"draft_reply":"Understood, I apologize for the confusion. The full body colored PPF on the Model Y would be $5950 + tax."}
 answer: ai_wording
 state: {"message_context":{},"draft_reply":"Our hours of operation are Monday through Friday from 9AM to 5PM. I hope this helps!"}
 answer: ai_wording

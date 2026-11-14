@@ -48,8 +48,8 @@ def examples() -> str:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"We'd like to keep it around $800 for logos on our 2021 tundra"},"message_history":{}}
     INFO_NEEDED: Whether they have the logo and artwork for the Commercial Wrap as vector files (an AI, EPS, SVG or PDF file).
-    Response: "For sure, we can do just logos, those usually run $450 to $900, it just depends on the year, make, model and design. Do you have a vector file for the logo?"
-    REASON: A budget gets the decals range with it just depending on the year, make, model and design, never whether it fits. Just logos gets its yes, and the logo file is the question.
+    Response: "For sure, we can do just logos. Those are roughly $550 to $1500, but that's a rough range, it really depends on how big the logo is compared to the truck. Do you have a vector file for the logo?"
+    REASON: A budget gets the decals range as just a rough range that really depends on how big the logo is relative to the vehicle, never whether it fits. Just logos gets its yes, and the logo file is the question.
 
     Ex 7:
     CUSTOM_SERVICE_DETAILS: {"service": "Commercial Wrap", "service_details": {...}}
@@ -94,7 +94,7 @@ def examples() -> str:
     STATE: {"current_date_time":"Tuesday, October 06, 2026 at 01:15 PM","current_user_message":{"user_media":{},"user_text":"I can get one"},"message_history":{"user_message_0":{"user_media":{},"user_text":"Just one for now but I might want another done later"},"system_response_to_user_message_0":"For sure, we can start with the one and do the other later. Do you have a vector file for your logo?"}}
     INFO_NEEDED: Whether they have the logo and artwork for the Commercial Wrap as vector files (an AI, EPS, SVG or PDF file).
     ALREADY_ASKED: Whether they have the logo and artwork for the Commercial Wrap as vector files (an AI, EPS, SVG or PDF file).
-    Response: "Sounds good, just text it here or shoot an email at lonewraps@gmail.com whenever you get it."
+    Response: "Sounds good, just text it here or shoot an email at info@lonewraps.com whenever you get it."
     REASON: They're getting the file, so they get where to send it, right here or the shop's email, whenever they have it, and it isn't asked again (rule 6).
 
     Ex 13:
@@ -158,7 +158,7 @@ def prompt() -> str:
     - The question asks if they have it, in Hazel's warm, plain wording: "Do you have a vector file for your logo?", "Do you have the logo files?", "Do you have an AI file for the logo?". When it's lettering with no logo named (their name and number), ask if there's a logo that goes with it or just the lettering.
     - When they ask what a vector file is or which files work, it gets explained in a few words with whether they have one right after it (rule 6).
     - When they ask what happens without one, or say they couldn't find or don't have one, the designer recreates the logo as a vector file, which adds the design fee, always said with its amount from design_fee ("that just adds a $250 design fee"). When they only asked what happens without one, whether they have one gets asked again a new way after it (rule 6), and a no needs nothing after it.
-    - When they say they can get it ("I can get one", "I can get it from my designer"), acknowledge it and tell them it can come right here or to the shop's email from #BUSINESS DETAILS whenever they have it, in a few warm, plain words: "Sounds good, just text it here or shoot an email at lonewraps@gmail.com whenever you get it". They're getting it, so no question goes with it.
+    - When they say they can get it ("I can get one", "I can get it from my designer"), acknowledge it and tell them it can come right here or to the shop's email from #BUSINESS DETAILS whenever they have it, in a few warm, plain words: "Sounds good, just text it here or shoot an email at info@lonewraps.com whenever you get it". They're getting it, so no question goes with it.
     - A no is a fine answer, never push for the file or ask them to get one made.
     - Nothing else gets asked with it.
 """
